@@ -67,11 +67,10 @@ export default function SettingsPage() {
           whileTap={{ scale: 0.98 }}
           onClick={handleSave}
           disabled={isSaving}
-          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium transition-colors shadow-sm ${
-            showSuccess
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium transition-colors shadow-sm ${showSuccess
               ? "bg-emerald-500 hover:bg-emerald-600 text-white"
               : "bg-indigo-600 hover:bg-indigo-700 text-white"
-          }`}
+            }`}
         >
           <AnimatePresence mode="wait">
             {showSuccess ? (
@@ -322,6 +321,74 @@ export default function SettingsPage() {
                 />
                 <div className="w-11 h-6 bg-zinc-200 dark:bg-zinc-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
               </label>
+            </div>
+
+            {/* Theme Colors */}
+            <div className="col-span-1 md:col-span-2 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+              <label className="block text-sm font-medium text-zinc-900 dark:text-white mb-2">
+                اللون الأساسي للواجهة
+              </label>
+              <div className="flex flex-wrap gap-3 mt-4">
+                {[
+                  { id: "indigo", color: "bg-indigo-500", name: "نيلي" },
+                  { id: "emerald", color: "bg-emerald-500", name: "زمردي" },
+                  { id: "rose", color: "bg-rose-500", name: "وردي" },
+                  { id: "amber", color: "bg-amber-500", name: "كهرماني" },
+                  { id: "cyan", color: "bg-cyan-500", name: "سماوي" },
+                  { id: "violet", color: "bg-violet-500", name: "بنفسجي" },
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() =>
+                      setLocalSettings({
+                        ...localSettings,
+                        activeTheme: t.id as any,
+                      })
+                    }
+                    className={`w-12 h-12 rounded-full ${t.color
+                      } flex items-center justify-center transition-all duration-300 shadow-sm ${(localSettings.activeTheme || "indigo") === t.id
+                        ? "ring-4 ring-offset-2 ring-indigo-500/50 dark:ring-indigo-500/50 dark:ring-offset-zinc-900 scale-110"
+                        : "hover:scale-110"
+                      }`}
+                    title={t.name}
+                  >
+                    {(localSettings.activeTheme || "indigo") === t.id && (
+                      <Check className="w-6 h-6 text-white" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Shape Settings */}
+            <div className="col-span-1 md:col-span-2 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+              <label className="block text-sm font-medium text-zinc-900 dark:text-white mb-2">
+                شكل الواجهة (زوايا العناصر)
+              </label>
+              <div className="flex gap-4 mt-4">
+                {[
+                  { id: "none", name: "مسطح (حواف حادة)", class: "rounded-none", icon: <div className="w-6 h-6 border-2 border-current rounded-none" /> },
+                  { id: "default", name: "طبيعي (انحناء متوسط)", class: "rounded-xl", icon: <div className="w-6 h-6 border-2 border-current rounded-xl" /> },
+                  { id: "full", name: "دائري (انحناء كامل)", class: "rounded-full", icon: <div className="w-6 h-6 border-2 border-current rounded-full" /> },
+                ].map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() =>
+                      setLocalSettings({
+                        ...localSettings,
+                        borderRadius: s.id as any,
+                      })
+                    }
+                    className={`flex-1 py-4 px-4 border-2 transition-all flex flex-col items-center justify-center gap-3 font-medium ${s.class} ${(localSettings.borderRadius || "default") === s.id
+                        ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300"
+                        : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700"
+                      }`}
+                  >
+                    {s.icon}
+                    <span>{s.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>

@@ -112,6 +112,9 @@ const defaultSettings: Settings = {
   receiptHeader: "أهلاً بكم في متجرنا",
   receiptFooter: "شكراً لتسوقكم معنا",
   theme: "system",
+  activeTheme: "indigo",
+  cardStyle: "default",
+  borderRadius: "default",
   primaryColor: "#4f46e5",
   enableSounds: true,
   preventBelowCost: true,
@@ -200,6 +203,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Handle Theme
   useEffect(() => {
     const root = document.documentElement;
+    const body = document.body;
     const isDark =
       settings.theme === "dark" ||
       (settings.theme === "system" &&
@@ -210,7 +214,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } else {
       root.classList.remove("dark");
     }
-  }, [settings.theme]);
+
+    // Apply color theme
+    body.classList.remove(
+      "theme-emerald",
+      "theme-rose",
+      "theme-amber",
+      "theme-cyan",
+      "theme-violet"
+    );
+    if (settings.activeTheme && settings.activeTheme !== "indigo") {
+      body.classList.add(`theme-${settings.activeTheme}`);
+    }
+
+    // Apply shape theme
+    body.classList.remove("shape-flat", "shape-rounded");
+    if (settings.borderRadius === "none") {
+      body.classList.add("shape-flat");
+    } else if (settings.borderRadius === "full") {
+      body.classList.add("shape-rounded");
+    }
+  }, [settings.theme, settings.activeTheme, settings.borderRadius]);
 
   const playSound = (type: "success" | "error" | "click") => {
     if (!settings.enableSounds) return;

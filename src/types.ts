@@ -50,13 +50,13 @@ export interface Order {
   subtotal: number;
   tax: number;
   status:
-    | "pending"
-    | "processing"
-    | "ready"
-    | "shipped"
-    | "completed"
-    | "cancelled"
-    | "returned";
+  | "pending"
+  | "processing"
+  | "ready"
+  | "shipped"
+  | "completed"
+  | "cancelled"
+  | "returned";
   items: CartItem[];
   customerName?: string;
   customerId?: string;
@@ -136,6 +136,9 @@ export interface Settings {
   receiptHeader: string;
   receiptFooter: string;
   theme: "light" | "dark" | "system";
+  activeTheme?: "indigo" | "emerald" | "rose" | "amber" | "cyan" | "violet";
+  cardStyle?: "flat" | "shadow" | "glass" | "default";
+  borderRadius?: "none" | "default" | "full";
   primaryColor: string;
   enableSounds: boolean;
   preventBelowCost: boolean;
@@ -187,12 +190,12 @@ export interface Employee {
 export interface Transaction {
   id: string;
   type:
-    | "sale"
-    | "purchase"
-    | "expense"
-    | "income"
-    | "payment_in"
-    | "payment_out";
+  | "sale"
+  | "purchase"
+  | "expense"
+  | "income"
+  | "payment_in"
+  | "payment_out";
   amount: number;
   date: string;
   description: string;
