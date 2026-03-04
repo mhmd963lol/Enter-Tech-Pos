@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Tajawal", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+/* Hide native number input spinners */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.privacy-mode .privacy-blur,
+.privacy-mode .blur-in-privacy,
+.privacy-mode td:nth-child(n+3):nth-last-child(n+2) {
+  filter: blur(5px);
+  user-select: none;
+  transition: filter 0.2s ease;
+}
+.privacy-mode .privacy-blur:hover,
+.privacy-mode .blur-in-privacy:hover {
+  filter: blur(0px);
+}
