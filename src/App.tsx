@@ -5,6 +5,7 @@
 
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { AppProvider, useAppContext } from "./context/AppContext";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
@@ -124,6 +125,7 @@ export default function App() {
     <AppProvider>
       <BrowserRouter>
         <AppContent />
+        <SpeedInsights />
       </BrowserRouter>
     </AppProvider>
   );
