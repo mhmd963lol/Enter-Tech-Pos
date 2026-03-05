@@ -136,6 +136,10 @@ export interface Settings {
   receiptHeader: string;
   receiptFooter: string;
   theme: "light" | "dark" | "system";
+
+  // The new Master Theme overriding setting
+  masterTheme: "default" | "gaming" | "carbon" | "luxury";
+
   activeTheme?: "indigo" | "emerald" | "rose" | "amber" | "cyan" | "violet" | "gaming";
   cardStyle?: "flat" | "shadow" | "glass" | "default";
   borderRadius?: "none" | "default" | "full";
