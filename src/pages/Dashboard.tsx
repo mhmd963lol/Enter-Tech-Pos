@@ -77,7 +77,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="fluid-grid">
         {stats.map((stat, index) => (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -166,13 +166,12 @@ export default function Dashboard() {
                     {order.total.toFixed(2)} {settings.currency}
                   </p>
                   <span
-                    className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      order.status === "completed"
+                    className={`text-xs px-2 py-1 rounded-full font-medium ${order.status === "completed"
                         ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
                         : order.status === "pending"
                           ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400"
                           : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
-                    }`}
+                      }`}
                   >
                     {order.status === "completed"
                       ? "مكتمل"

@@ -178,7 +178,7 @@ export default function POS() {
           </div>
 
           <div className="flex-1 overflow-auto p-4">
-            <div className="grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4">
+            <div className="fluid-grid">
               {filteredProducts.map((product) => (
                 <motion.div
                   key={product.id}
@@ -255,7 +255,7 @@ export default function POS() {
         </div>
 
         {/* Cart Section */}
-        <div className="w-full lg:w-96 flex flex-col bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden shrink-0 lg:shrink-0 min-h-0 max-h-full">
+        <div className="w-full lg:w-96 flex flex-col bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden shrink-0 min-h-0 max-h-full">
           <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex items-center gap-2">
             <ShoppingCart className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
             <h2 className="font-bold text-zinc-900 dark:text-white">
@@ -291,7 +291,7 @@ export default function POS() {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm text-zinc-900 dark:text-white truncate" title={item.name}>
+                        <h4 className="font-medium text-sm text-zinc-900 dark:text-white truncate">
                           {item.name}
                         </h4>
                         <div className="flex items-center gap-2 mt-1">
@@ -703,56 +703,58 @@ export default function POS() {
                 استلام جهاز
               </button>
             </div>
-            <table className="w-full text-right text-sm">
-              <thead>
-                <tr className="text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800">
-                  <th className="pb-2 font-medium w-[28%] truncate text-right">العميل</th>
-                  <th className="pb-2 font-medium w-[32%] truncate text-right">الجهاز</th>
-                  <th className="pb-2 font-medium w-[22%] truncate text-right">الحالة</th>
-                  <th className="pb-2 font-medium w-[18%] truncate text-right">التكلفة</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                {maintenanceJobs.slice(0, 3).map((job) => (
-                  <tr key={job.id} className="text-zinc-700 dark:text-zinc-300">
-                    <td className="py-2 truncate max-w-0" title={job.customerName}>{job.customerName}</td>
-                    <td className="py-2 truncate max-w-0" title={job.device}>{job.device}</td>
-                    <td className="py-2">
-                      {job.status === "pending" && (
-                        <span className="text-amber-600 dark:text-amber-400">
-                          قيد الانتظار
-                        </span>
-                      )}
-                      {job.status === "in_progress" && (
-                        <span className="text-blue-600 dark:text-blue-400">
-                          جاري العمل
-                        </span>
-                      )}
-                      {job.status === "ready" && (
-                        <span className="text-emerald-600 dark:text-emerald-400">
-                          جاهز للتسليم
-                        </span>
-                      )}
-                      {job.status === "paid" && (
-                        <span className="text-purple-600 dark:text-purple-400">
-                          تم الدفع والتسليم
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-2 font-medium">
-                      {job.cost} {settings.currency}
-                    </td>
+            <div className="table-responsive-wrapper">
+              <table className="w-full text-right text-sm">
+                <thead>
+                  <tr className="text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800">
+                    <th className="pb-2 font-medium w-[28%]">العميل</th>
+                    <th className="pb-2 font-medium w-[32%]">الجهاز</th>
+                    <th className="pb-2 font-medium w-[22%]">الحالة</th>
+                    <th className="pb-2 font-medium w-[18%]">التكلفة</th>
                   </tr>
-                ))}
-                {maintenanceJobs.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="py-4 text-center text-zinc-500">
-                      لا توجد أجهزة في الصيانة حالياً
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  {maintenanceJobs.slice(0, 3).map((job) => (
+                    <tr key={job.id} className="text-zinc-700 dark:text-zinc-300">
+                      <td className="py-2 whitespace-normal">{job.customerName}</td>
+                      <td className="py-2 whitespace-normal">{job.device}</td>
+                      <td className="py-2">
+                        {job.status === "pending" && (
+                          <span className="text-amber-600 dark:text-amber-400">
+                            قيد الانتظار
+                          </span>
+                        )}
+                        {job.status === "in_progress" && (
+                          <span className="text-blue-600 dark:text-blue-400">
+                            جاري العمل
+                          </span>
+                        )}
+                        {job.status === "ready" && (
+                          <span className="text-emerald-600 dark:text-emerald-400">
+                            جاهز للتسليم
+                          </span>
+                        )}
+                        {job.status === "paid" && (
+                          <span className="text-purple-600 dark:text-purple-400">
+                            تم الدفع والتسليم
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2 font-medium">
+                        {job.cost} {settings.currency}
+                      </td>
+                    </tr>
+                  ))}
+                  {maintenanceJobs.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="py-4 text-center text-zinc-500">
+                        لا توجد أجهزة في الصيانة حالياً
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

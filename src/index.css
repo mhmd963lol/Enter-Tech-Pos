@@ -139,6 +139,44 @@ table {
   white-space: normal;
 }
 
+/* Fluid typography and layout scaling utilities */
+html {
+  font-size: clamp(14px, 1vw + 0.5rem, 16px);
+}
+
+.fluid-container {
+  width: 100%;
+  max-width: 100%;
+  padding-inline: clamp(1rem, 5vw, 2rem);
+}
+
+.fluid-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(clamp(250px, 30vw, 350px), 1fr));
+  gap: clamp(1rem, 2vw, 1.5rem);
+}
+
+.dynamic-text-wrap {
+  text-wrap: pretty;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+/* Prevent image overflows */
+img, video, svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make tables scrollable implicitly where needed */
+.table-responsive-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Hide native number input spinners */
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {

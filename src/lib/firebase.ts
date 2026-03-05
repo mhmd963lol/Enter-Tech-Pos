@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAnalytics, isSupported } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 // Firebase configuration — reads from environment variables
 // For local dev: set values in .env file
@@ -18,11 +19,12 @@ const firebaseConfig = {
 // Prevent duplicate app initialization (e.g., during HMR in dev)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
+const auth = getAuth(app);
+const db = getFirestore(app);
+
 // Analytics is only supported in browser environments (not SSR/Node)
 const analyticsPromise = isSupported().then((supported) =>
   supported ? getAnalytics(app) : null
 );
 
-const auth = getAuth(app);
-
-export { app, auth, analyticsPromise };
+export { app, auth, db, analyticsPromise };

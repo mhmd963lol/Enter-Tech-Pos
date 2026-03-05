@@ -5,8 +5,6 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { onAuthStateChanged, signOut as firebaseSignOut } from "firebase/auth";
-import { auth } from "../lib/firebase";
 import {
   Product,
   Order,
@@ -27,11 +25,12 @@ import {
 } from "../types";
 import { mockProducts, mockOrders } from "../data/mockData";
 import { useLocalStorage } from "../hooks/useLocalStorage";
-import toast from "react-hot-toast";
+import { auth, db } from "../lib/firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 interface AppContextType {
   user: User | null;
-  isAuthLoading: boolean;
   products: Product[];
   categories: Category[];
   orders: Order[];
@@ -129,8 +128,7 @@ const defaultSettings: Settings = {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [user, setUser] = useLocalStorage<User | null>("app_user", null);
   const [products, setProducts] = useLocalStorage<Product[]>(
     "app_products",
     mockProducts,
@@ -206,25 +204,74 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  // Authentication Listener
+  // Handle Authentication and restore data from Firestore
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Map Firebase user to our User type
-        setUser({
-          id: firebaseUser.uid,
-          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || "مستخدم",
-          role: "admin", // Defaulting to admin, in real app fetch from Firestore
-          email: firebaseUser.email || undefined,
-        });
-      } else {
-        setUser(null);
-      }
-      setIsAuthLoading(false);
-    });
+        try {
+          const userDocRef = doc(db, "users", firebaseUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
 
+          if (userDocSnap.exists()) {
+            const data = userDocSnap.data();
+            if (data.products) setProducts(data.products);
+            if (data.categories) setCategories(data.categories);
+            if (data.orders) setOrders(data.orders);
+            if (data.cart) setCart(data.cart);
+            if (data.settings) setSettings(data.settings);
+            if (data.returns) setReturns(data.returns);
+            if (data.maintenanceJobs) setMaintenanceJobs(data.maintenanceJobs);
+            if (data.expenses) setExpenses(data.expenses);
+            if (data.incomes) setIncomes(data.incomes);
+            if (data.customers) setCustomers(data.customers);
+            if (data.notifications) setNotifications(data.notifications);
+            if (data.suppliers) setSuppliers(data.suppliers);
+            if (data.purchases) setPurchases(data.purchases);
+            if (data.employees) setEmployees(data.employees);
+            if (data.transactions) setTransactions(data.transactions);
+          }
+        } catch (error) {
+          console.error("Error fetching user data from Firestore", error);
+        }
+      }
+    });
     return () => unsubscribe();
   }, []);
+
+  // Debounced Sync to Firestore
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        await setDoc(doc(db, "users", user.id), {
+          products,
+          categories,
+          orders,
+          cart,
+          settings,
+          returns,
+          maintenanceJobs,
+          expenses,
+          incomes,
+          customers,
+          notifications,
+          suppliers,
+          purchases,
+          employees,
+          transactions
+        }, { merge: true });
+      } catch (error) {
+        console.error("Error syncing data to Firestore", error);
+      }
+    }, 2000);
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    products, categories, orders, cart, settings, returns,
+    maintenanceJobs, expenses, incomes, customers,
+    notifications, suppliers, purchases, employees, transactions, user?.id
+  ]);
 
   // Handle Theme
   useEffect(() => {
@@ -430,32 +477,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const login = (userData: User) => setUser(userData);
-
   const logout = async () => {
-    try {
-      await firebaseSignOut(auth);
-      setUser(null);
-      toast.success("تم تسجيل الخروج بنجاح");
-    } catch (error) {
-      toast.error("حدث خطأ أثناء تسجيل الخروج");
-    }
+    await signOut(auth);
+    setUser(null);
   };
-
   const togglePrivacyMode = () => setIsPrivacyMode(!isPrivacyMode);
 
   const addToCart = (product: Product) => {
+    playSound("click");
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id);
-
-      // Check inventory
-      const currentQuantity = existing ? existing.quantity : 0;
-      if (product.trackInventory !== false && currentQuantity >= product.stock) {
-        playSound("error");
-        toast.error(`لا يمكنك تجاوز المخزون المتاح (${product.stock})`);
-        return prev;
-      }
-
-      playSound("click");
       if (existing) {
         return prev.map((item) =>
           item.id === product.id
@@ -477,21 +508,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       removeFromCart(productId);
       return;
     }
-
-    // Find the product to check stock
-    const product = products.find(p => p.id === productId);
-    if (product && product.trackInventory !== false && quantity > product.stock) {
-      playSound("error");
-      toast.error(`المخزون المتوفر هو ${product.stock} فقط`);
-      // Update quantity to max available instead of rejecting completely
-      setCart((prev) =>
-        prev.map((item) =>
-          item.id === productId ? { ...item, quantity: product.stock } : item,
-        ),
-      );
-      return;
-    }
-
     playSound("click");
     setCart((prev) =>
       prev.map((item) =>
