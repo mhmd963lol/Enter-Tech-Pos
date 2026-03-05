@@ -49,6 +49,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 import { Toaster } from "react-hot-toast";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 function AppContent() {
   const { user, isAuthLoading } = useAppContext();
@@ -64,6 +65,7 @@ function AppContent() {
   return (
     <>
       <Toaster position="top-center" />
+      <SpeedInsights />
       <Routes>
         <Route
           path="/login"
