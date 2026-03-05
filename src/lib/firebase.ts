@@ -17,10 +17,21 @@ const firebaseConfig = {
 };
 
 // Prevent duplicate app initialization (e.g., during HMR in dev)
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+let app;
+let auth: any = null;
+let db: any = null;
 
-const auth = getAuth(app);
-const db = getFirestore(app);
+try {
+  if (!firebaseConfig.apiKey) {
+    console.warn("Firebase configuration is missing! Please set VITE_FIREBASE_API_KEY in your environment variables.");
+  } else {
+    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    auth = getAuth(app);
+    db = getFirestore(app);
+  }
+} catch (error) {
+  console.error("Firebase initialization error:", error);
+}
 
 // Analytics is only supported in browser environments (not SSR/Node)
 const analyticsPromise = isSupported().then((supported) =>

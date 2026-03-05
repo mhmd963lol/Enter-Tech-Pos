@@ -29,6 +29,7 @@ import { auth, db } from "../lib/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
+
 interface AppContextType {
   user: User | null;
   products: Product[];
@@ -206,6 +207,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Handle Authentication and restore data from Firestore
   useEffect(() => {
+    if (!auth) {
+      console.warn("Auth object is null, skipping auth state listener (Check Firebase config).");
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
@@ -241,6 +246,79 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Debounced Sync to Firestore
   useEffect(() => {
     if (!user?.id) return;
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        await setDoc(doc(db, "users", user.id), {
+          products,
+          categories,
+          orders,
+          cart,
+          settings,
+          returns,
+          maintenanceJobs,
+          expenses,
+          incomes,
+          customers,
+          notifications,
+          suppliers,
+          purchases,
+          employees,
+          transactions
+        }, { merge: true });
+      } catch (error) {
+        console.error("Error syncing data to Firestore", error);
+      }
+    }, 2000);
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    products, categories, orders, cart, settings, returns,
+    maintenanceJobs, expenses, incomes, customers,
+    notifications, suppliers, purchases, employees, transactions, user?.id
+  ]);
+
+  // Handle Authentication and restore data from Firestore
+  useEffect(() => {
+    if (!auth) {
+      console.warn("Auth object is null, skipping auth state listener (Check Firebase config).");
+      return;
+    }
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const userDocRef = doc(db, "users", firebaseUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
+
+          if (userDocSnap.exists()) {
+            const data = userDocSnap.data();
+            if (data.products) setProducts(data.products);
+            if (data.categories) setCategories(data.categories);
+            if (data.orders) setOrders(data.orders);
+            if (data.cart) setCart(data.cart);
+            if (data.settings) setSettings(data.settings);
+            if (data.returns) setReturns(data.returns);
+            if (data.maintenanceJobs) setMaintenanceJobs(data.maintenanceJobs);
+            if (data.expenses) setExpenses(data.expenses);
+            if (data.incomes) setIncomes(data.incomes);
+            if (data.customers) setCustomers(data.customers);
+            if (data.notifications) setNotifications(data.notifications);
+            if (data.suppliers) setSuppliers(data.suppliers);
+            if (data.purchases) setPurchases(data.purchases);
+            if (data.employees) setEmployees(data.employees);
+            if (data.transactions) setTransactions(data.transactions);
+          }
+        } catch (error) {
+          console.error("Error fetching user data from Firestore", error);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Debounced Sync to Firestore
+  useEffect(() => {
+    if (!user?.id || !db) return;
 
     const timeoutId = setTimeout(async () => {
       try {
@@ -478,7 +556,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const login = (userData: User) => setUser(userData);
   const logout = async () => {
-    await signOut(auth);
+    if (auth) {
+      await signOut(auth);
+    }
     setUser(null);
   };
   const togglePrivacyMode = () => setIsPrivacyMode(!isPrivacyMode);
