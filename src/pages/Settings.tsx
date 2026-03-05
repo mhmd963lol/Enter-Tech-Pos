@@ -323,6 +323,47 @@ export default function SettingsPage() {
               </label>
             </div>
 
+            {/* Master Themes */}
+            <div className="col-span-1 md:col-span-2 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+              <label className="block text-lg font-bold text-zinc-900 dark:text-white mb-1">
+                الثيم الشامل (Master Theme)
+              </label>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+                يغير خلفيات التطبيق بالكامل، الحركات، والأصوات التفاعلية لشكل شامل جديد كلياً.
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                {[
+                  { id: "default", name: "الأساسي", desc: "نظيف وعملي", bg: "bg-gradient-to-br from-indigo-50 to-white dark:from-zinc-800 dark:to-zinc-900", border: "border-indigo-200 dark:border-zinc-700", text: "text-zinc-900 dark:text-white" },
+                  { id: "gaming", name: "جيمنج 🎮", desc: "ألوان نيون ساطعة", bg: "bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSIjMDUwNTA1Ij48L3JlY3Q+CjxwYXRoIGQ9Ik0wIDBMOCA4Wk04IDBMMCA4WiIgc3Ryb2tlPSIjMDU1IGFsdGgiIHN0cm9rZS13aWR0aD0iMSI+PC9wYXRoPgo8L3N2Zz4=')] bg-zinc-950", border: "border-fuchsia-500/50", text: "text-white" },
+                  { id: "carbon", name: "كاربون فايبر 🏎️", desc: "نمط سيارات رياضية", bg: "bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMTExIj48L3JlY3Q+CjxyZWN0IHdpZHRoPSIzIiBoZWlnaHQ9IjMiIGZpbGw9IiMxYTFhMWEiPjwvcmVjdD4KPC9zdmc+')] bg-[#1a1a1a]", border: "border-zinc-700", text: "text-gray-200" },
+                  { id: "luxury", name: "ڤي آي بي 💎", desc: "فخامة وهدوء", bg: "bg-gradient-to-br from-slate-800 to-slate-950", border: "border-amber-500/50", text: "text-amber-100" },
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() =>
+                      setLocalSettings({
+                        ...localSettings,
+                        masterTheme: t.id as any,
+                      })
+                    }
+                    className={`relative overflow-hidden group flex flex-col items-start p-4 border-2 transition-all rounded-xl text-right h-full ${t.bg} ${(localSettings.masterTheme || "default") === t.id
+                        ? t.border + " ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-zinc-950 shadow-lg scale-105 z-10"
+                        : "border-transparent hover:border-zinc-300 dark:hover:border-zinc-700 opacity-90 hover:opacity-100"
+                      }`}
+                  >
+                    {/* Glowing effect for active */}
+                    {(localSettings.masterTheme || "default") === t.id && (
+                      <div className="absolute inset-0 bg-white/5 dark:bg-white/10" />
+                    )}
+                    <div className="relative z-10">
+                      <h4 className={`font-bold text-lg mb-1 ${t.text}`}>{t.name}</h4>
+                      <p className={`text-xs ${t.text} opacity-70`}>{t.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Theme Colors */}
             <div className="col-span-1 md:col-span-2 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
               <label className="block text-sm font-medium text-zinc-900 dark:text-white mb-2">
@@ -506,6 +547,6 @@ export default function SettingsPage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </div >
   );
 }

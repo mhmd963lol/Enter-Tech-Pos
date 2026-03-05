@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import NotificationPanel from "./NotificationPanel";
+import ThemePageTransition from "./ThemePageTransition";
 
 interface NavItem {
   icon: React.ElementType;
@@ -133,11 +134,10 @@ const SidebarItem: React.FC<{
       <div className="mb-1">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors ${
-            isActive || isOpen
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors ${isActive || isOpen
               ? "bg-indigo-50/50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
               : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
-          }`}
+            }`}
         >
           <div className="flex items-center gap-3">
             <item.icon
@@ -159,10 +159,9 @@ const SidebarItem: React.FC<{
                 to={subItem.to}
                 onClick={isMobile ? closeMobile : undefined}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
-                    isActive
-                      ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20 font-medium"
-                      : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-200"
+                  `flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive
+                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20 font-medium"
+                    : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-200"
                   }`
                 }
               >
@@ -181,10 +180,9 @@ const SidebarItem: React.FC<{
       to={item.to!}
       onClick={isMobile ? closeMobile : undefined}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-4 py-3 rounded-xl transition-all mb-1 ${
-          isActive
-            ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium"
-            : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-200"
+        `flex items-center gap-3 px-4 py-3 rounded-xl transition-all mb-1 ${isActive
+          ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium"
+          : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-200"
         }`
       }
     >
@@ -246,11 +244,10 @@ export default function Layout() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 right-0 z-50 w-72 bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 transform transition-transform duration-300 ease-in-out flex flex-col ${
-          isMobileMenuOpen
+        className={`fixed lg:static inset-y-0 right-0 z-50 w-72 bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 transform transition-transform duration-300 ease-in-out flex flex-col ${isMobileMenuOpen
             ? "translate-x-0"
             : "translate-x-full lg:translate-x-0"
-        }`}
+          }`}
       >
         <div className="p-6 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800">
           <div className="flex items-center gap-3">
@@ -388,8 +385,10 @@ export default function Layout() {
 
         {/* Page Content */}
         <div className="flex-1 overflow-auto p-4 lg:p-8">
-          <div className="max-w-7xl mx-auto">
-            <Outlet />
+          <div className="max-w-7xl mx-auto h-full">
+            <ThemePageTransition>
+              <Outlet />
+            </ThemePageTransition>
           </div>
         </div>
       </main>

@@ -278,11 +278,47 @@ export default function Products() {
                   const categoryName = category
                     ? category.name
                     : product.category;
+
+                  // Custom animations per master theme
+                  let masterVariants = {};
+                  const master = settings.masterTheme || "default";
+                  if (master === "gaming") {
+                    // Shatter / Zoom out fast
+                    masterVariants = {
+                      initial: { opacity: 0, scale: 0.8, x: -20 },
+                      animate: { opacity: 1, scale: 1, x: 0 },
+                      exit: { opacity: 0, scale: 0.5, y: -50, rotate: 10, transition: { duration: 0.2 } },
+                    };
+                  } else if (master === "luxury") {
+                    // Smooth slide down
+                    masterVariants = {
+                      initial: { opacity: 0, y: 20 },
+                      animate: { opacity: 1, y: 0 },
+                      exit: { opacity: 0, y: 50, transition: { duration: 0.4, ease: "easeIn" } },
+                    };
+                  } else if (master === "carbon") {
+                    // Slide out right fast
+                    masterVariants = {
+                      initial: { opacity: 0, x: 30 },
+                      animate: { opacity: 1, x: 0 },
+                      exit: { opacity: 0, x: -100, transition: { duration: 0.25 } },
+                    };
+                  } else {
+                    // Default
+                    masterVariants = {
+                      initial: { opacity: 0, y: 10 },
+                      animate: { opacity: 1, y: 0 },
+                      exit: { opacity: 0, scale: 0.95 },
+                    };
+                  }
+
                   return (
                     <motion.tr
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
+                      layout
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
+                      variants={masterVariants}
                       key={product.id}
                       className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors"
                     >
