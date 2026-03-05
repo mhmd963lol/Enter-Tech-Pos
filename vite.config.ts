@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), tailwindcss()],
     define: {
+      // Gemini API key (legacy process.env pattern)
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },
     resolve: {
@@ -17,7 +18,6 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
     },
     build: {
@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: {
             'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-            'firebase-vendor': ['firebase/app', 'firebase/analytics', 'firebase/auth', 'firebase/firestore'],
+            'firebase-vendor': ['firebase/app', 'firebase/analytics'],
             'ui-vendor': ['lucide-react', 'recharts', 'motion'],
           }
         }

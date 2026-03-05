@@ -20,18 +20,18 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. إعداد Node.js
+      # 2. إعداد Node.js مع cache للسرعة
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      # 3. تثبيت المكتبات
+      # 3. تثبيت المكتبات (ci أسرع وأكثر أماناً من install في CI)
       - name: Install Dependencies
         run: npm ci
 
-      # 4. إنشاء متغيرات البيئة من GitHub Secrets
+      # 4. إنشاء ملف .env من GitHub Secrets
       - name: Create .env file
         run: |
           echo "VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY }}" >> .env
@@ -42,12 +42,26 @@ jobs:
           echo "VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID }}" >> .env
           echo "VITE_FIREBASE_MEASUREMENT_ID=${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}" >> .env
 
-      # 5. بناء المشروع
+      # 5. التحقق من TypeScript (بناء نظيف بدون أخطاء)
+      - name: TypeScript Check
+        run: npm run lint
+
+      # 6. بناء المشروع للإنتاج
       - name: Build Project
         run: npm run build
 
-      # 6. نشر على Firebase Hosting (فقط عند Push للـ main، لا عند pull_request)
-      - name: Deploy to Firebase Hosting
+      # 7. التحقق من وجود مجلد dist بعد البناء
+      - name: Verify Build Output
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "ERROR: dist folder not found after build!"
+            exit 1
+          fi
+          echo "Build successful! Files in dist:"
+          ls -la dist/
+
+      # 8. نشر على Firebase Hosting (الموقع الحي — فقط عند Push)
+      - name: Deploy to Firebase Hosting (Live)
         if: github.event_name == 'push'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -56,7 +70,7 @@ jobs:
           channelId: live
           projectId: enter-tech-pos
 
-      # 7. نشر مؤقت (Preview) عند Pull Request
+      # 9. نشر Preview مؤقت (عند Pull Request للمراجعة)
       - name: Deploy Preview to Firebase Hosting
         if: github.event_name == 'pull_request'
         uses: FirebaseExtended/action-hosting-deploy@v0
@@ -64,3 +78,5 @@ jobs:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
           projectId: enter-tech-pos
+          # Preview channels expire after 7 days automatically
+          expires: 7d

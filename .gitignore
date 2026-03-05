@@ -1,8 +1,37 @@
+# Dependencies
 node_modules/
+
+# Build output
 build/
 dist/
+
+# Test coverage
 coverage/
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# Logs
 *.log
-.env*
+npm-debug.log*
+
+# Environment files (NEVER commit secrets!)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 !.env.example
+
+# Firebase
+.firebase/
+firebase-debug.log
+.firebaserc.local
+
+# Vite cache
+.vite/
+
+# IDE
+.vscode/
+.idea/
