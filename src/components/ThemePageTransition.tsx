@@ -12,42 +12,45 @@ export default function ThemePageTransition({ children }: ThemePageTransitionPro
     const location = useLocation();
     const master = settings.masterTheme || 'default';
 
-    // Define different animation variants based on the master theme
+    // Fast, visually impactful transitions per-theme
     let variants = {};
     let transition = {};
 
     if (master === 'gaming') {
-        // Fast, springy, scaling effect
+        // Cyberpunk: instant warp-in from bottom + glitch-like offset
         variants = {
-            initial: { opacity: 0, scale: 0.9, y: 20 },
-            animate: { opacity: 1, scale: 1, y: 0 },
-            exit: { opacity: 0, scale: 1.1, y: -20 },
+            initial: { opacity: 0, y: 30, scaleX: 0.97, skewX: '0.5deg' },
+            animate: { opacity: 1, y: 0, scaleX: 1, skewX: '0deg' },
+            exit: { opacity: 0, y: -30, scaleX: 1.03, skewX: '-0.5deg' },
         };
-        transition = { type: 'spring', stiffness: 300, damping: 20 };
+        transition = { type: 'spring', stiffness: 500, damping: 28, mass: 0.6 };
+
     } else if (master === 'luxury') {
-        // Slow, smooth fade
+        // Luxury: silky fade with subtle lift-and-blur
         variants = {
-            initial: { opacity: 0, filter: 'blur(10px)' },
-            animate: { opacity: 1, filter: 'blur(0px)' },
-            exit: { opacity: 0, filter: 'blur(10px)' },
+            initial: { opacity: 0, y: 16, filter: 'blur(4px)' },
+            animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
+            exit: { opacity: 0, y: -16, filter: 'blur(4px)' },
         };
-        transition = { duration: 0.5, ease: 'easeInOut' };
+        transition = { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] };
+
     } else if (master === 'carbon') {
-        // Sharp slide from side
+        // Carbon: fast mechanical slide from side, sharp
         variants = {
-            initial: { opacity: 0, x: -50 },
-            animate: { opacity: 1, x: 0 },
-            exit: { opacity: 0, x: 50 },
+            initial: { opacity: 0, x: 40, scale: 0.98 },
+            animate: { opacity: 1, x: 0, scale: 1 },
+            exit: { opacity: 0, x: -40, scale: 0.98 },
         };
-        transition = { duration: 0.3, ease: 'easeOut' };
+        transition = { duration: 0.22, ease: [0.4, 0, 0.2, 1] };
+
     } else {
-        // Default subtle fade and slide content up
+        // Default: clean quick fade-up
         variants = {
-            initial: { opacity: 0, y: 10 },
+            initial: { opacity: 0, y: 8 },
             animate: { opacity: 1, y: 0 },
-            exit: { opacity: 0, y: -10 },
+            exit: { opacity: 0, y: -8 },
         };
-        transition = { duration: 0.2 };
+        transition = { duration: 0.15, ease: 'easeOut' };
     }
 
     return (

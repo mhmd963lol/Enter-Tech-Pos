@@ -431,9 +431,62 @@ export default function SettingsPage() {
                   </button>
                 ))}
               </div>
+
+            {/* Font Selection */}
+            <div className="col-span-1 md:col-span-2 mt-2 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+              <label className="block text-sm font-bold text-zinc-900 dark:text-white mb-1">
+                خط التطبيق
+              </label>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
+                اختر خطاً مناسباً — يدعم العربية والتركية والإنجليزية
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {[
+                  { id: "", name: "تجوال (افتراضي)", fontFamily: "'Tajawal', sans-serif", preview: "أبجد هوز" },
+                  { id: "Cairo", name: "القاهرة", fontFamily: "'Cairo', sans-serif", preview: "أبجد هوز" },
+                  { id: "Almarai", name: "المراعي", fontFamily: "'Almarai', sans-serif", preview: "أبجد هوز" },
+                  { id: "IBM Plex", name: "IBM عربي", fontFamily: "'IBM Plex Sans Arabic', sans-serif", preview: "أبجد هوز" },
+                  { id: "Readex Pro", name: "ريدكس برو", fontFamily: "'Readex Pro', sans-serif", preview: "أبجد هوز" },
+                  { id: "Rubik", name: "روبيك (AR/TR/EN)", fontFamily: "'Rubik', sans-serif", preview: "Aa أج" },
+                  { id: "Inter", name: "إنتر (EN)", fontFamily: "'Inter', sans-serif", preview: "AaBbCc" },
+                  { id: "Outfit", name: "أوتفيت (EN)", fontFamily: "'Outfit', sans-serif", preview: "AaBbCc" },
+                  { id: "Exo 2", name: "إكسو 2 (Gaming)", fontFamily: "'Exo 2', sans-serif", preview: "Aa0!?" },
+                ].map((f) => {
+                  const isSelected =
+                    f.id === "" ? !localSettings.fontFamily : localSettings.fontFamily === f.fontFamily;
+                  return (
+                    <button
+                      key={f.id || "default"}
+                      onClick={() =>
+                        setLocalSettings({
+                          ...localSettings,
+                          fontFamily: f.id === "" ? undefined : f.fontFamily,
+                        })
+                      }
+                      className={`flex flex-col items-center justify-center gap-1 p-3 rounded-xl border-2 transition-all ${
+                        isSelected
+                          ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 ring-2 ring-indigo-300 dark:ring-indigo-800"
+                          : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 hover:border-zinc-300 dark:hover:border-zinc-600"
+                      }`}
+                    >
+                      <span
+                        className="text-xl font-medium text-zinc-800 dark:text-zinc-200"
+                        style={{ fontFamily: f.fontFamily }}
+                      >
+                        {f.preview}
+                      </span>
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">{f.name}</span>
+                      {isSelected && (
+                        <span className="text-[10px] bg-indigo-500 text-white px-1.5 py-0.5 rounded-full">مُختار</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
         {/* Invoice Settings */}
         <div className="p-6 border-b border-zinc-100 dark:border-zinc-800">

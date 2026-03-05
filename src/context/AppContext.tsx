@@ -244,10 +244,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
       "theme-master-carbon",
       "theme-master-luxury"
     );
-    if (settings.masterTheme) {
+    if (settings.masterTheme && settings.masterTheme !== "default") {
       body.classList.add(`theme-master-${settings.masterTheme}`);
+      // Master themes force dark mode for best look
+      root.classList.add("dark");
     }
-  }, [settings.theme, settings.activeTheme, settings.borderRadius, settings.masterTheme]);
+
+    // Apply Font Family
+    if (settings.fontFamily) {
+      body.style.fontFamily = settings.fontFamily;
+      // Also override Tailwind's CSS var
+      document.documentElement.style.setProperty("--font-sans", settings.fontFamily);
+    } else {
+      body.style.fontFamily = "";
+      document.documentElement.style.removeProperty("--font-sans");
+    }
+  }, [settings.theme, settings.activeTheme, settings.borderRadius, settings.masterTheme, settings.fontFamily]);
 
   const playSound = (type: "success" | "error" | "click") => {
     if (!settings.enableSounds) return;

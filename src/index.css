@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=Cairo:wght@400;500;600;700;800&family=Almarai:wght@300;400;700;800&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Readex+Pro:wght@300;400;500;600;700&family=Rubik:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,400;0,500;0,700;1,400&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -8,7 +8,10 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
-/* Colors Themes */
+/* ========================================= 
+   COLOR THEMES (accent overrides)
+   ========================================= */
+
 body.theme-emerald {
   --color-indigo-50: #ecfdf5;
   --color-indigo-100: #d1fae5;
@@ -80,7 +83,6 @@ body.theme-violet {
 }
 
 body.theme-gaming {
-  /* Neon Fuchsia / Pink - Cyberpunk Gaming Vibe */
   --color-indigo-50: #fdf4ff;
   --color-indigo-100: #fae8ff;
   --color-indigo-200: #f5d0fe;
@@ -143,67 +145,289 @@ input[type=number] {
 }
 
 /* =========================================
-   MASTER THEMES BACKGROUNDS & STYLES
+   MASTER THEMES - FULL APP OVERHAUL
    ========================================= */
 
-/* 1. Gaming Theme (Cyberpunk/Grid) */
+/* ========================
+   1. GAMING THEME (Cyberpunk Neon)
+   ======================== */
+
 body.theme-master-gaming {
-  background-color: #050505;
+  background-color: #040406;
   background-image:
-    linear-gradient(rgba(120, 0, 255, 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(120, 0, 255, 0.1) 1px, transparent 1px);
-  background-size: 30px 30px;
-  background-position: center center;
-  color: #fff;
+    linear-gradient(rgba(139, 0, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 0, 255, 0.08) 1px, transparent 1px),
+    radial-gradient(ellipse at 10% 10%, rgba(255, 0, 200, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 90%, rgba(0, 200, 255, 0.06) 0%, transparent 50%);
+  background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
+  color: #e0e0f0;
 }
 
-body.theme-master-gaming .glass,
+/* Sidebar & Header in Gaming */
 body.theme-master-gaming .bg-white,
-body.theme-master-gaming .bg-zinc-50,
+body.theme-master-gaming aside,
+body.theme-master-gaming header {
+  background-color: rgba(8, 4, 20, 0.95) !important;
+  border-color: rgba(200, 0, 255, 0.2) !important;
+}
+
+/* Cards, Tables, Panels */
+body.theme-master-gaming .bg-zinc-950,
+body.theme-master-gaming .bg-zinc-900,
 body.theme-master-gaming .dark\:bg-zinc-950,
-body.theme-master-gaming .dark\:bg-zinc-900 {
-  background-color: rgba(10, 10, 15, 0.85) !important;
-  backdrop-filter: blur(12px);
-  border-color: rgba(255, 0, 255, 0.2) !important;
-  box-shadow: 0 0 15px rgba(255, 0, 255, 0.05);
+body.theme-master-gaming .dark\:bg-zinc-900,
+body.theme-master-gaming .bg-zinc-50,
+body.theme-master-gaming .dark\:bg-zinc-900\/50 {
+  background-color: rgba(12, 6, 30, 0.92) !important;
+  border-color: rgba(180, 0, 255, 0.15) !important;
+  box-shadow: 0 0 20px rgba(180, 0, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
 }
 
-/* 2. Carbon Fiber Theme (Sport/Mechanical) */
+/* Gaming: Fix text visibility */
+body.theme-master-gaming h1,
+body.theme-master-gaming h2,
+body.theme-master-gaming h3,
+body.theme-master-gaming h4,
+body.theme-master-gaming .text-zinc-900,
+body.theme-master-gaming .dark\:text-white {
+  color: #f0e6ff !important;
+}
+
+body.theme-master-gaming .text-zinc-500,
+body.theme-master-gaming .text-zinc-400,
+body.theme-master-gaming .dark\:text-zinc-400 {
+  color: #a090c0 !important;
+}
+
+body.theme-master-gaming .text-zinc-600,
+body.theme-master-gaming .dark\:text-zinc-300 {
+  color: #c0b0e0 !important;
+}
+
+/* Table rows */
+body.theme-master-gaming .divide-zinc-100,
+body.theme-master-gaming .dark\:divide-zinc-800,
+body.theme-master-gaming .border-zinc-100,
+body.theme-master-gaming .dark\:border-zinc-800 {
+  border-color: rgba(160, 0, 220, 0.15) !important;
+}
+
+body.theme-master-gaming tbody tr:hover {
+  background-color: rgba(130, 0, 255, 0.07) !important;
+}
+
+/* Gaming Glow pulse animation on glowing elements */
+@keyframes gaming-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 15px rgba(200, 0, 255, 0.1), 0 0 30px rgba(0, 100, 255, 0.05);
+  }
+
+  50% {
+    box-shadow: 0 0 25px rgba(200, 0, 255, 0.2), 0 0 50px rgba(0, 100, 255, 0.1);
+  }
+}
+
+body.theme-master-gaming .rounded-2xl,
+body.theme-master-gaming .rounded-xl {
+  animation: gaming-pulse 3s ease-in-out infinite;
+}
+
+/* ========================
+   2. CARBON FIBER THEME (Sport / Mechanical)
+   ======================== */
+
 body.theme-master-carbon {
-  background-color: #1a1a1a;
+  background-color: #111;
+  /* Carbon fiber weave pattern */
   background-image:
-    repeating-linear-gradient(45deg, #111 25%, transparent 25%, transparent 75%, #111 75%, #111),
-    repeating-linear-gradient(45deg, #111 25%, #1a1a1a 25%, #1a1a1a 75%, #111 75%, #111);
-  background-position: 0 0, 10px 10px;
-  background-size: 20px 20px;
-  color: #e5e5e5;
+    repeating-linear-gradient(45deg,
+      rgba(255, 255, 255, 0.015) 0px,
+      rgba(255, 255, 255, 0.015) 1px,
+      transparent 1px,
+      transparent 50%),
+    repeating-linear-gradient(-45deg,
+      rgba(255, 255, 255, 0.015) 0px,
+      rgba(255, 255, 255, 0.015) 1px,
+      transparent 1px,
+      transparent 50%),
+    repeating-linear-gradient(0deg,
+      rgba(0, 0, 0, 0.3) 0px,
+      rgba(0, 0, 0, 0.3) 2px,
+      transparent 2px,
+      transparent 10px);
+  background-size: 10px 10px, 10px 10px, 10px 10px;
+  color: #d0d0d0;
 }
 
-body.theme-master-carbon .glass,
+/* Carbon Sidebar & Header */
 body.theme-master-carbon .bg-white,
-body.theme-master-carbon .bg-zinc-50,
+body.theme-master-carbon aside,
+body.theme-master-carbon header {
+  background-color: #0d0d0d !important;
+  border-color: rgba(80, 80, 80, 0.4) !important;
+  background-image: none !important;
+}
+
+/* Carbon Cards */
+body.theme-master-carbon .bg-zinc-950,
+body.theme-master-carbon .bg-zinc-900,
 body.theme-master-carbon .dark\:bg-zinc-950,
-body.theme-master-carbon .dark\:bg-zinc-900 {
-  background-color: rgba(20, 20, 20, 0.9) !important;
-  backdrop-filter: blur(10px);
-  border-color: rgba(80, 80, 80, 0.5) !important;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), 0 4px 6px rgba(0, 0, 0, 0.5);
+body.theme-master-carbon .dark\:bg-zinc-900,
+body.theme-master-carbon .bg-zinc-50,
+body.theme-master-carbon .dark\:bg-zinc-900\/50 {
+  background-color: #181818 !important;
+  background-image: none !important;
+  border-color: rgba(60, 60, 60, 0.5) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 12px rgba(0, 0, 0, 0.5) !important;
 }
 
-/* 3. Luxury Theme (Elegant/Smooth) */
+/* Carbon: text */
+body.theme-master-carbon h1,
+body.theme-master-carbon h2,
+body.theme-master-carbon h3,
+body.theme-master-carbon h4,
+body.theme-master-carbon .text-zinc-900,
+body.theme-master-carbon .dark\:text-white {
+  color: #e8e8e8 !important;
+}
+
+body.theme-master-carbon .text-zinc-500,
+body.theme-master-carbon .text-zinc-400,
+body.theme-master-carbon .dark\:text-zinc-400 {
+  color: #888 !important;
+}
+
+body.theme-master-carbon .text-zinc-600,
+body.theme-master-carbon .dark\:text-zinc-300 {
+  color: #aaa !important;
+}
+
+body.theme-master-carbon .divide-zinc-100,
+body.theme-master-carbon .dark\:divide-zinc-800,
+body.theme-master-carbon .border-zinc-100,
+body.theme-master-carbon .dark\:border-zinc-800 {
+  border-color: rgba(55, 55, 55, 0.8) !important;
+}
+
+body.theme-master-carbon tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Carbon: Red accent highlight on active elements */
+body.theme-master-carbon .bg-indigo-600 {
+  background-color: #cc0000 !important;
+}
+
+body.theme-master-carbon .text-indigo-600,
+body.theme-master-carbon .dark\:text-indigo-400 {
+  color: #ff3333 !important;
+}
+
+body.theme-master-carbon .bg-indigo-50,
+body.theme-master-carbon .dark\:bg-indigo-900\/20 {
+  background-color: rgba(200, 0, 0, 0.1) !important;
+}
+
+/* ========================
+   3. LUXURY THEME (VIP / Prestige)
+   ======================== */
+
 body.theme-master-luxury {
-  background: radial-gradient(circle at 50% 0%, #1e293b, #0f172a);
+  background-color: #080c14;
+  background-image:
+    radial-gradient(ellipse at 0% 0%, rgba(180, 140, 60, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 100% 100%, rgba(100, 60, 180, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(10, 30, 80, 0.8) 0%, transparent 70%);
   background-attachment: fixed;
-  color: #f8fafc;
+  color: #e8e0d0;
 }
 
-body.theme-master-luxury .glass,
+/* Luxury Sidebar & Header */
 body.theme-master-luxury .bg-white,
-body.theme-master-luxury .bg-zinc-50,
+body.theme-master-luxury aside,
+body.theme-master-luxury header {
+  background: linear-gradient(135deg, rgba(10, 14, 28, 0.98), rgba(6, 10, 22, 0.98)) !important;
+  border-color: rgba(180, 150, 80, 0.15) !important;
+  background-image: none !important;
+}
+
+/* Luxury Cards */
+body.theme-master-luxury .bg-zinc-950,
+body.theme-master-luxury .bg-zinc-900,
 body.theme-master-luxury .dark\:bg-zinc-950,
-body.theme-master-luxury .dark\:bg-zinc-900 {
-  background-color: rgba(15, 23, 42, 0.7) !important;
-  backdrop-filter: blur(20px);
-  border-color: rgba(255, 255, 255, 0.05) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+body.theme-master-luxury .dark\:bg-zinc-900,
+body.theme-master-luxury .bg-zinc-50,
+body.theme-master-luxury .dark\:bg-zinc-900\/50 {
+  background: rgba(12, 16, 34, 0.8) !important;
+  background-image: none !important;
+  backdrop-filter: blur(16px);
+  border-color: rgba(180, 150, 80, 0.12) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(200, 170, 100, 0.08) !important;
+}
+
+/* Luxury: text */
+body.theme-master-luxury h1,
+body.theme-master-luxury h2,
+body.theme-master-luxury h3,
+body.theme-master-luxury h4,
+body.theme-master-luxury .text-zinc-900,
+body.theme-master-luxury .dark\:text-white {
+  color: #f0e8d8 !important;
+}
+
+body.theme-master-luxury .text-zinc-500,
+body.theme-master-luxury .text-zinc-400,
+body.theme-master-luxury .dark\:text-zinc-400 {
+  color: rgba(200, 180, 140, 0.7) !important;
+}
+
+body.theme-master-luxury .text-zinc-600,
+body.theme-master-luxury .dark\:text-zinc-300 {
+  color: rgba(220, 200, 160, 0.85) !important;
+}
+
+body.theme-master-luxury .divide-zinc-100,
+body.theme-master-luxury .dark\:divide-zinc-800,
+body.theme-master-luxury .border-zinc-100,
+body.theme-master-luxury .dark\:border-zinc-800 {
+  border-color: rgba(170, 140, 70, 0.12) !important;
+}
+
+body.theme-master-luxury tbody tr:hover {
+  background-color: rgba(180, 150, 80, 0.04) !important;
+}
+
+/* Luxury: Gold accent */
+body.theme-master-luxury .bg-indigo-600 {
+  background: linear-gradient(135deg, #b8962e, #d4af37) !important;
+  color: #1a1200 !important;
+}
+
+body.theme-master-luxury .text-indigo-600,
+body.theme-master-luxury .dark\:text-indigo-400 {
+  color: #d4af37 !important;
+}
+
+body.theme-master-luxury .bg-indigo-50,
+body.theme-master-luxury .dark\:bg-indigo-900\/20 {
+  background-color: rgba(180, 150, 40, 0.1) !important;
+}
+
+/* Luxury: Gold shimmer on borders */
+@keyframes luxury-shimmer {
+
+  0%,
+  100% {
+    border-color: rgba(180, 150, 80, 0.12);
+  }
+
+  50% {
+    border-color: rgba(212, 175, 55, 0.2);
+  }
+}
+
+body.theme-master-luxury .rounded-2xl {
+  animation: luxury-shimmer 4s ease-in-out infinite;
 }

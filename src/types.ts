@@ -147,6 +147,7 @@ export interface Settings {
   enableSounds: boolean;
   preventBelowCost: boolean;
   adminPin: string; // 4-digit PIN for overrides
+  fontFamily?: string; // CSS font-family string
 }
 
 export interface Supplier {
