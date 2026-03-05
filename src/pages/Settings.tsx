@@ -68,8 +68,8 @@ export default function SettingsPage() {
           onClick={handleSave}
           disabled={isSaving}
           className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium transition-colors shadow-sm ${showSuccess
-              ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-              : "bg-indigo-600 hover:bg-indigo-700 text-white"
+            ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+            : "bg-indigo-600 hover:bg-indigo-700 text-white"
             }`}
         >
           <AnimatePresence mode="wait">
@@ -336,6 +336,7 @@ export default function SettingsPage() {
                   { id: "amber", color: "bg-amber-500", name: "كهرماني" },
                   { id: "cyan", color: "bg-cyan-500", name: "سماوي" },
                   { id: "violet", color: "bg-violet-500", name: "بنفسجي" },
+                  { id: "gaming", color: "bg-fuchsia-500", name: "جيمنج (Gaming)" },
                 ].map((t) => (
                   <button
                     key={t.id}
@@ -380,8 +381,8 @@ export default function SettingsPage() {
                       })
                     }
                     className={`flex-1 py-4 px-4 border-2 transition-all flex flex-col items-center justify-center gap-3 font-medium ${s.class} ${(localSettings.borderRadius || "default") === s.id
-                        ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300"
-                        : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700"
+                      ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300"
+                      : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700"
                       }`}
                   >
                     {s.icon}

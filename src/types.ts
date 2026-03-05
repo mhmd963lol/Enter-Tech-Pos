@@ -136,7 +136,7 @@ export interface Settings {
   receiptHeader: string;
   receiptFooter: string;
   theme: "light" | "dark" | "system";
-  activeTheme?: "indigo" | "emerald" | "rose" | "amber" | "cyan" | "violet";
+  activeTheme?: "indigo" | "emerald" | "rose" | "amber" | "cyan" | "violet" | "gaming";
   cardStyle?: "flat" | "shadow" | "glass" | "default";
   borderRadius?: "none" | "default" | "full";
   primaryColor: string;
