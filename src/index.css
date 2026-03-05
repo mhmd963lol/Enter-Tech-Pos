@@ -117,16 +117,14 @@ body.shape-rounded {
 
 body {
   font-family: var(--font-sans);
-  overflow-wrap: break-word;
-  word-break: break-word;
+  text-wrap: pretty;
 }
 
 /* Global text overflow prevention */
 td,
 th {
-  overflow-wrap: break-word;
-  word-break: break-word;
-  max-width: 0;
+  text-wrap: pretty;
+  vertical-align: middle;
 }
 
 table {

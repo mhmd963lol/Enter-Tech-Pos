@@ -3,6 +3,13 @@ import { useAppContext } from "../context/AppContext";
 import { User, Shield, Key, Save, Check } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import toast from "react-hot-toast";
+import { auth } from "../lib/firebase";
+import {
+  updatePassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updateProfile
+} from "firebase/auth";
 
 export default function AccountSettings() {
   const { user, dbInfo } = useAppContext();
@@ -20,7 +27,7 @@ export default function AccountSettings() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (
@@ -32,9 +39,39 @@ export default function AccountSettings() {
     }
 
     setIsSaving(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSaving(false);
+
+    try {
+      const currentUser = auth.currentUser;
+
+      if (!currentUser || !currentUser.email) {
+        toast.error("الرجاء تسجيل الدخول مجدداً");
+        setIsSaving(false);
+        return;
+      }
+
+      // Update Name if changed
+      if (formData.name !== user?.name) {
+        await updateProfile(currentUser, {
+          displayName: formData.name
+        });
+      }
+
+      // Update Password if provided
+      if (formData.newPassword) {
+        if (!formData.currentPassword) {
+          toast.error("يجب إدخال كلمة المرور الحالية لتغيير كلمة المرور");
+          setIsSaving(false);
+          return;
+        }
+
+        // Re-authenticate first
+        const credential = EmailAuthProvider.credential(currentUser.email, formData.currentPassword);
+        await reauthenticateWithCredential(currentUser, credential);
+
+        // Update password
+        await updatePassword(currentUser, formData.newPassword);
+      }
+
       setShowSuccess(true);
       toast.success("تم تحديث البيانات بنجاح");
 
@@ -46,7 +83,18 @@ export default function AccountSettings() {
       }));
 
       setTimeout(() => setShowSuccess(false), 2000);
-    }, 800);
+    } catch (error: any) {
+      console.error("Profile update error:", error);
+      if (error.code === 'auth/invalid-credential') {
+        toast.error("كلمة المرور الحالية غير صحيحة");
+      } else if (error.code === 'auth/weak-password') {
+        toast.error("كلمة المرور الجديدة ضعيفة جداً");
+      } else {
+        toast.error("حدث خطأ أثناء حفظ التعديلات");
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -163,11 +211,10 @@ export default function AccountSettings() {
                   whileTap={{ scale: 0.98 }}
                   type="submit"
                   disabled={isSaving}
-                  className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-colors shadow-sm ${
-                    showSuccess
+                  className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-colors shadow-sm ${showSuccess
                       ? "bg-emerald-500 hover:bg-emerald-600 text-white"
                       : "bg-indigo-600 hover:bg-indigo-700 text-white"
-                  }`}
+                    }`}
                 >
                   <AnimatePresence mode="wait">
                     {showSuccess ? (

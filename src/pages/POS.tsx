@@ -178,7 +178,7 @@ export default function POS() {
           </div>
 
           <div className="flex-1 overflow-auto p-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4">
               {filteredProducts.map((product) => (
                 <motion.div
                   key={product.id}
@@ -195,8 +195,8 @@ export default function POS() {
                         : 1,
                   }}
                   className={`relative flex flex-col items-center text-center p-4 rounded-2xl border transition-all ${product.trackInventory !== false && product.stock === 0
-                      ? "opacity-50 cursor-not-allowed border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50"
-                      : "border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md bg-white dark:bg-zinc-950 cursor-pointer"
+                    ? "opacity-50 cursor-not-allowed border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50"
+                    : "border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md bg-white dark:bg-zinc-950 cursor-pointer"
                     }`}
                   onClick={() => {
                     if (product.trackInventory === false || product.stock > 0)
@@ -255,7 +255,7 @@ export default function POS() {
         </div>
 
         {/* Cart Section */}
-        <div className="w-full lg:w-96 flex flex-col bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden shrink-0 min-h-0 max-h-full">
+        <div className="w-full lg:w-96 flex flex-col bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden shrink-0 lg:shrink-0 min-h-0 max-h-full">
           <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex items-center gap-2">
             <ShoppingCart className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
             <h2 className="font-bold text-zinc-900 dark:text-white">
@@ -291,7 +291,7 @@ export default function POS() {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm text-zinc-900 dark:text-white truncate">
+                        <h4 className="font-medium text-sm text-zinc-900 dark:text-white truncate" title={item.name}>
                           {item.name}
                         </h4>
                         <div className="flex items-center gap-2 mt-1">
@@ -440,8 +440,8 @@ export default function POS() {
                 <button
                   onClick={() => setPaymentMethod("cash")}
                   className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${paymentMethod === "cash"
-                      ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400"
-                      : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                    ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400"
+                    : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
                     }`}
                 >
                   <Banknote className="w-4 h-4" />
@@ -450,8 +450,8 @@ export default function POS() {
                 <button
                   onClick={() => setPaymentMethod("card")}
                   className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${paymentMethod === "card"
-                      ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400"
-                      : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                    ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400"
+                    : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
                     }`}
                 >
                   <CreditCard className="w-4 h-4" />
@@ -460,8 +460,8 @@ export default function POS() {
                 <button
                   onClick={() => setPaymentMethod("debt")}
                   className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${paymentMethod === "debt"
-                      ? "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400"
-                      : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                    ? "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400"
+                    : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
                     }`}
                 >
                   <ShieldAlert className="w-4 h-4" />
@@ -470,8 +470,8 @@ export default function POS() {
                 <button
                   onClick={() => setPaymentMethod("split")}
                   className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${paymentMethod === "split"
-                      ? "bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-400"
-                      : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                    ? "bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-400"
+                    : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
                     }`}
                 >
                   <div className="flex -space-x-2">
@@ -706,17 +706,17 @@ export default function POS() {
             <table className="w-full text-right text-sm">
               <thead>
                 <tr className="text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800">
-                  <th className="pb-2 font-medium w-[28%]">العميل</th>
-                  <th className="pb-2 font-medium w-[32%]">الجهاز</th>
-                  <th className="pb-2 font-medium w-[22%]">الحالة</th>
-                  <th className="pb-2 font-medium w-[18%]">التكلفة</th>
+                  <th className="pb-2 font-medium w-[28%] truncate text-right">العميل</th>
+                  <th className="pb-2 font-medium w-[32%] truncate text-right">الجهاز</th>
+                  <th className="pb-2 font-medium w-[22%] truncate text-right">الحالة</th>
+                  <th className="pb-2 font-medium w-[18%] truncate text-right">التكلفة</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                 {maintenanceJobs.slice(0, 3).map((job) => (
                   <tr key={job.id} className="text-zinc-700 dark:text-zinc-300">
-                    <td className="py-2 whitespace-normal">{job.customerName}</td>
-                    <td className="py-2 whitespace-normal">{job.device}</td>
+                    <td className="py-2 truncate max-w-0" title={job.customerName}>{job.customerName}</td>
+                    <td className="py-2 truncate max-w-0" title={job.device}>{job.device}</td>
                     <td className="py-2">
                       {job.status === "pending" && (
                         <span className="text-amber-600 dark:text-amber-400">

@@ -8,25 +8,40 @@ import {
   Upload,
   Moon,
   Sun,
+  Mail,
+  Lock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { auth } from "../lib/firebase";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile
+} from "firebase/auth";
+import toast from "react-hot-toast";
 
 export default function Login() {
-  const { login, settings, updateSettings } = useAppContext();
-  const [role, setRole] = useState<"admin" | "cashier">("admin");
+  const { settings, updateSettings } = useAppContext();
   const [isSetup, setIsSetup] = useState(settings.storeName === "متجري");
+  const [view, setView] = useState<"login" | "register">("login");
+  const [isLoading, setIsLoading] = useState(false);
 
   const [setupData, setSetupData] = useState({
     storeName: "",
     currency: "ر.س",
-    adminName: "",
-    adminPassword: "",
     adminPin: "0000",
   });
 
   const [loginData, setLoginData] = useState({
-    username: "",
+    email: "",
     password: "",
+  });
+
+  const [registerData, setRegisterData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
 
   const handleSetup = (e: React.FormEvent) => {
@@ -36,24 +51,69 @@ export default function Login() {
       currency: setupData.currency,
       adminPin: setupData.adminPin,
     });
-    // In a real app, save admin credentials securely
-    login({
-      id: "admin-1",
-      name: setupData.adminName || "مدير النظام",
-      role: "admin",
-      pin: setupData.adminPin,
-    });
+    setIsSetup(false);
+    setView("register"); // Automatically go to register the first admin
+    toast.success("تم إعداد المتجر بنجاح! يرجى إنشاء حساب المدير الأول.");
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, verify credentials
-    login({
-      id: Math.random().toString(36).substring(7),
-      name: role === "admin" ? "مدير النظام" : "كاشير 1",
-      role: role,
-      pin: role === "admin" ? settings.adminPin : undefined,
-    });
+    if (!loginData.email || !loginData.password) {
+      toast.error("يرجى إدخال البريد الإلكتروني وكلمة المرور");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, loginData.email, loginData.password);
+      toast.success("تم تسجيل الدخول بنجاح");
+    } catch (error: any) {
+      console.error("Login error:", error);
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        toast.error("البريد الإلكتروني أو كلمة المرور غير صحيحة");
+      } else {
+        toast.error("حدث خطأ أثناء تسجيل الدخول");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (registerData.password !== registerData.confirmPassword) {
+      toast.error("كلمات المرور غير متطابقة");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        registerData.email,
+        registerData.password
+      );
+
+      // Update profile with name
+      if (userCredential.user) {
+        await updateProfile(userCredential.user, {
+          displayName: registerData.name
+        });
+      }
+
+      toast.success("تم إنشاء الحساب وتسجيل الدخول بنجاح");
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      if (error.code === 'auth/email-already-in-use') {
+        toast.error("البريد الإلكتروني مستخدم بالفعل");
+      } else if (error.code === 'auth/weak-password') {
+        toast.error("كلمة المرور ضعيفة جداً (يجب أن تكون 6 أحرف على الأقل)");
+      } else {
+        toast.error("حدث خطأ أثناء إنشاء الحساب");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const toggleTheme = () => {
@@ -152,29 +212,12 @@ export default function Login() {
 
               <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
                 <h3 className="text-sm font-bold text-zinc-900 dark:text-white mb-4">
-                  بيانات مدير النظام
+                  إعدادات الحماية الأساسية
                 </h3>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      اسم المدير
-                    </label>
-                    <input
-                      required
-                      type="text"
-                      className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all"
-                      value={setupData.adminName}
-                      onChange={(e) =>
-                        setSetupData({
-                          ...setupData,
-                          adminName: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      رمز PIN (4 أرقام للصلاحيات)
+                      رمز PIN الموحد للمدير (4 أرقام)
                     </label>
                     <input
                       required
@@ -188,6 +231,9 @@ export default function Login() {
                         setSetupData({ ...setupData, adminPin: e.target.value })
                       }
                     />
+                    <p className="text-xs text-zinc-500 mt-2 text-center">
+                      يُستخدم رمز الـ PIN للسماح بالعمليات الحساسة (مثل البيع بأقل من التكلفة) داخل التطبيق.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -208,7 +254,7 @@ export default function Login() {
                   onClick={() => setIsSetup(false)}
                   className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
                 >
-                  لدي حساب بالفعل؟ تسجيل الدخول
+                  تخطي الإعداد (مُعد مسبقاً)
                 </button>
               </div>
             </form>
@@ -243,90 +289,183 @@ export default function Login() {
                 {settings.storeName}
               </h1>
               <p className="text-indigo-100 relative z-10">
-                تسجيل الدخول للنظام
+                {view === "login" ? "تسجيل الدخول للنظام" : "إنشاء حساب جديد"}
               </p>
             </div>
 
-            <form onSubmit={handleLogin} className="p-8 space-y-6">
-              <div className="space-y-4">
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  اختر نوع الحساب
-                </label>
-                <div className="grid grid-cols-2 gap-4">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="button"
-                    onClick={() => setRole("admin")}
-                    className={`flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all ${
-                      role === "admin"
-                        ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400"
-                        : "border-zinc-200 dark:border-zinc-800 hover:border-indigo-200 dark:hover:border-indigo-800 text-zinc-600 dark:text-zinc-400"
+            <div className="px-8 pt-6">
+              <div className="flex p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl">
+                <button
+                  onClick={() => setView("login")}
+                  className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${view === "login"
+                    ? "bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                     }`}
-                  >
-                    <ShieldCheck className="w-8 h-8" />
-                    <span className="font-medium">مدير النظام</span>
-                  </motion.button>
-
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="button"
-                    onClick={() => setRole("cashier")}
-                    className={`flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all ${
-                      role === "cashier"
-                        ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400"
-                        : "border-zinc-200 dark:border-zinc-800 hover:border-indigo-200 dark:hover:border-indigo-800 text-zinc-600 dark:text-zinc-400"
+                >
+                  تسجيل الدخول
+                </button>
+                <button
+                  onClick={() => setView("register")}
+                  className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${view === "register"
+                    ? "bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                     }`}
-                  >
-                    <UserCircle className="w-8 h-8" />
-                    <span className="font-medium">كاشير</span>
-                  </motion.button>
-                </div>
+                >
+                  إنشاء حساب
+                </button>
               </div>
+            </div>
 
-              <div className="space-y-4">
+            {view === "login" ? (
+              <form onSubmit={handleLogin} className="p-8 space-y-5">
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                    اسم المستخدم
+                    البريد الإلكتروني
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={loginData.username}
-                    onChange={(e) =>
-                      setLoginData({ ...loginData, username: e.target.value })
-                    }
-                    placeholder={role === "admin" ? "admin" : "cashier"}
-                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all"
-                  />
+                  <div className="relative">
+                    <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+                    <input
+                      type="email"
+                      required
+                      value={loginData.email}
+                      onChange={(e) =>
+                        setLoginData({ ...loginData, email: e.target.value })
+                      }
+                      placeholder="admin@example.com"
+                      className="w-full pl-4 pr-10 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-left"
+                      dir="ltr"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                     كلمة المرور
                   </label>
-                  <input
-                    type="password"
-                    required
-                    value={loginData.password}
-                    onChange={(e) =>
-                      setLoginData({ ...loginData, password: e.target.value })
-                    }
-                    placeholder="123456"
-                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all"
-                  />
+                  <div className="relative">
+                    <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+                    <input
+                      type="password"
+                      required
+                      value={loginData.password}
+                      onChange={(e) =>
+                        setLoginData({ ...loginData, password: e.target.value })
+                      }
+                      placeholder="••••••••"
+                      className="w-full pl-4 pr-10 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-left tracking-widest"
+                      dir="ltr"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="submit"
-                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-lg transition-colors shadow-sm"
-              >
-                دخول
-              </motion.button>
-            </form>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full py-3.5 mt-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white rounded-xl font-bold text-lg transition-colors shadow-sm flex justify-center items-center"
+                >
+                  {isLoading ? (
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    "دخول"
+                  )}
+                </motion.button>
+              </form>
+            ) : (
+              <form onSubmit={handleRegister} className="p-8 space-y-4 pt-6">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    الاسم بالكامل
+                  </label>
+                  <div className="relative">
+                    <UserCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+                    <input
+                      type="text"
+                      required
+                      value={registerData.name}
+                      onChange={(e) =>
+                        setRegisterData({ ...registerData, name: e.target.value })
+                      }
+                      placeholder="مثال: أحمد محمد"
+                      className="w-full pl-4 pr-10 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    البريد الإلكتروني
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+                    <input
+                      type="email"
+                      required
+                      value={registerData.email}
+                      onChange={(e) =>
+                        setRegisterData({ ...registerData, email: e.target.value })
+                      }
+                      placeholder="admin@example.com"
+                      className="w-full pl-4 pr-10 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-left"
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    كلمة المرور
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+                    <input
+                      type="password"
+                      required
+                      minLength={6}
+                      value={registerData.password}
+                      onChange={(e) =>
+                        setRegisterData({ ...registerData, password: e.target.value })
+                      }
+                      placeholder="••••••••"
+                      className="w-full pl-4 pr-10 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-left tracking-widest"
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    تأكيد كلمة المرور
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+                    <input
+                      type="password"
+                      required
+                      minLength={6}
+                      value={registerData.confirmPassword}
+                      onChange={(e) =>
+                        setRegisterData({ ...registerData, confirmPassword: e.target.value })
+                      }
+                      placeholder="••••••••"
+                      className="w-full pl-4 pr-10 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-left tracking-widest"
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full py-3.5 mt-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white rounded-xl font-bold text-lg transition-colors shadow-sm flex justify-center items-center"
+                >
+                  {isLoading ? (
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    "إنشاء حساب"
+                  )}
+                </motion.button>
+              </form>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

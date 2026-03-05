@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAnalytics, isSupported } from "firebase/analytics";
+import { getAuth } from "firebase/auth";
 
 // Firebase configuration — reads from environment variables
 // For local dev: set values in .env file
@@ -22,4 +23,6 @@ const analyticsPromise = isSupported().then((supported) =>
   supported ? getAnalytics(app) : null
 );
 
-export { app, analyticsPromise };
+const auth = getAuth(app);
+
+export { app, auth, analyticsPromise };

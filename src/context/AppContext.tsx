@@ -5,6 +5,8 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import { onAuthStateChanged, signOut as firebaseSignOut } from "firebase/auth";
+import { auth } from "../lib/firebase";
 import {
   Product,
   Order,
@@ -25,9 +27,11 @@ import {
 } from "../types";
 import { mockProducts, mockOrders } from "../data/mockData";
 import { useLocalStorage } from "../hooks/useLocalStorage";
+import toast from "react-hot-toast";
 
 interface AppContextType {
   user: User | null;
+  isAuthLoading: boolean;
   products: Product[];
   categories: Category[];
   orders: Order[];
@@ -125,7 +129,8 @@ const defaultSettings: Settings = {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useLocalStorage<User | null>("app_user", null);
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [products, setProducts] = useLocalStorage<Product[]>(
     "app_products",
     mockProducts,
@@ -200,6 +205,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     "app_transactions",
     [],
   );
+
+  // Authentication Listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        // Map Firebase user to our User type
+        setUser({
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || "مستخدم",
+          role: "admin", // Defaulting to admin, in real app fetch from Firestore
+          email: firebaseUser.email || undefined,
+        });
+      } else {
+        setUser(null);
+      }
+      setIsAuthLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // Handle Theme
   useEffect(() => {
@@ -405,13 +430,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const login = (userData: User) => setUser(userData);
-  const logout = () => setUser(null);
+
+  const logout = async () => {
+    try {
+      await firebaseSignOut(auth);
+      setUser(null);
+      toast.success("تم تسجيل الخروج بنجاح");
+    } catch (error) {
+      toast.error("حدث خطأ أثناء تسجيل الخروج");
+    }
+  };
+
   const togglePrivacyMode = () => setIsPrivacyMode(!isPrivacyMode);
 
   const addToCart = (product: Product) => {
-    playSound("click");
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id);
+
+      // Check inventory
+      const currentQuantity = existing ? existing.quantity : 0;
+      if (product.trackInventory !== false && currentQuantity >= product.stock) {
+        playSound("error");
+        toast.error(`لا يمكنك تجاوز المخزون المتاح (${product.stock})`);
+        return prev;
+      }
+
+      playSound("click");
       if (existing) {
         return prev.map((item) =>
           item.id === product.id
@@ -433,6 +477,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       removeFromCart(productId);
       return;
     }
+
+    // Find the product to check stock
+    const product = products.find(p => p.id === productId);
+    if (product && product.trackInventory !== false && quantity > product.stock) {
+      playSound("error");
+      toast.error(`المخزون المتوفر هو ${product.stock} فقط`);
+      // Update quantity to max available instead of rejecting completely
+      setCart((prev) =>
+        prev.map((item) =>
+          item.id === productId ? { ...item, quantity: product.stock } : item,
+        ),
+      );
+      return;
+    }
+
     playSound("click");
     setCart((prev) =>
       prev.map((item) =>

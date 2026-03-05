@@ -32,7 +32,16 @@ import AccountSettings from "./pages/AccountSettings";
 import StaticPages from "./pages/StaticPages";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user } = useAppContext();
+  const { user, isAuthLoading } = useAppContext();
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-900">
+        <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -42,7 +51,15 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 import { Toaster } from "react-hot-toast";
 
 function AppContent() {
-  const { user } = useAppContext();
+  const { user, isAuthLoading } = useAppContext();
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-zinc-50 dark:bg-zinc-900">
+        <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <>
