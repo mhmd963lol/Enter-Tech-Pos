@@ -135,8 +135,8 @@ const SidebarItem: React.FC<{
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors ${isActive || isOpen
-              ? "bg-indigo-50/50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
-              : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+            ? "bg-indigo-50/50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
+            : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
             }`}
         >
           <div className="flex items-center gap-3">
@@ -245,8 +245,8 @@ export default function Layout() {
       {/* Sidebar */}
       <aside
         className={`fixed lg:static inset-y-0 right-0 z-50 w-72 bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 transform transition-transform duration-300 ease-in-out flex flex-col ${isMobileMenuOpen
-            ? "translate-x-0"
-            : "translate-x-full lg:translate-x-0"
+          ? "translate-x-0"
+          : "translate-x-full lg:translate-x-0"
           }`}
       >
         <div className="p-6 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800">
@@ -288,7 +288,7 @@ export default function Layout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
         {/* Top Header */}
         <header className="h-16 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 lg:px-8 shrink-0">
           <div className="flex items-center gap-4">
@@ -384,8 +384,8 @@ export default function Layout() {
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-auto p-4 lg:p-8">
-          <div className="max-w-7xl mx-auto h-full">
+        <div className="flex-1 overflow-auto p-4 lg:p-8 min-h-0">
+          <div className="mx-auto h-full">
             <ThemePageTransition>
               <Outlet />
             </ThemePageTransition>

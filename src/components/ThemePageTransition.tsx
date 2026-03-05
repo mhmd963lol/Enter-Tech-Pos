@@ -12,49 +12,49 @@ export default function ThemePageTransition({ children }: ThemePageTransitionPro
     const location = useLocation();
     const master = settings.masterTheme || 'default';
 
-    // Fast, visually impactful transitions per-theme
+    // Optimized transitions: GPU-friendly, no blur, no layout-thrashing transforms
     let variants = {};
     let transition = {};
 
     if (master === 'gaming') {
-        // Cyberpunk: instant warp-in from bottom + glitch-like offset
+        // Cyberpunk: fast opacity + translateY only (no scaleX/skewX for performance)
         variants = {
-            initial: { opacity: 0, y: 30, scaleX: 0.97, skewX: '0.5deg' },
-            animate: { opacity: 1, y: 0, scaleX: 1, skewX: '0deg' },
-            exit: { opacity: 0, y: -30, scaleX: 1.03, skewX: '-0.5deg' },
+            initial: { opacity: 0, y: 20 },
+            animate: { opacity: 1, y: 0 },
+            exit: { opacity: 0, y: -15 },
         };
-        transition = { type: 'spring', stiffness: 500, damping: 28, mass: 0.6 };
+        transition = { duration: 0.18, ease: [0.4, 0, 0.2, 1] };
 
     } else if (master === 'luxury') {
-        // Luxury: silky fade with subtle lift-and-blur
+        // Luxury: elegant fade with subtle lift (removed blur for performance)
         variants = {
-            initial: { opacity: 0, y: 16, filter: 'blur(4px)' },
-            animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
-            exit: { opacity: 0, y: -16, filter: 'blur(4px)' },
+            initial: { opacity: 0, y: 12 },
+            animate: { opacity: 1, y: 0 },
+            exit: { opacity: 0, y: -12 },
         };
-        transition = { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] };
+        transition = { duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] };
 
     } else if (master === 'carbon') {
-        // Carbon: fast mechanical slide from side, sharp
+        // Carbon: fast mechanical slide
         variants = {
-            initial: { opacity: 0, x: 40, scale: 0.98 },
-            animate: { opacity: 1, x: 0, scale: 1 },
-            exit: { opacity: 0, x: -40, scale: 0.98 },
+            initial: { opacity: 0, x: 30 },
+            animate: { opacity: 1, x: 0 },
+            exit: { opacity: 0, x: -30 },
         };
-        transition = { duration: 0.22, ease: [0.4, 0, 0.2, 1] };
+        transition = { duration: 0.18, ease: [0.4, 0, 0.2, 1] };
 
     } else {
         // Default: clean quick fade-up
         variants = {
-            initial: { opacity: 0, y: 8 },
+            initial: { opacity: 0, y: 6 },
             animate: { opacity: 1, y: 0 },
-            exit: { opacity: 0, y: -8 },
+            exit: { opacity: 0, y: -6 },
         };
-        transition = { duration: 0.15, ease: 'easeOut' };
+        transition = { duration: 0.12, ease: 'easeOut' };
     }
 
     return (
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout">
             <motion.div
                 key={location.pathname}
                 initial="initial"
@@ -62,6 +62,7 @@ export default function ThemePageTransition({ children }: ThemePageTransitionPro
                 exit="exit"
                 variants={variants}
                 transition={transition}
+                style={{ willChange: 'transform, opacity' }}
                 className="w-full h-full"
             >
                 {children}

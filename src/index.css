@@ -117,6 +117,28 @@ body.shape-rounded {
 
 body {
   font-family: var(--font-sans);
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Global text overflow prevention */
+td,
+th {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 0;
+}
+
+table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+/* Utility for forced text wrapping */
+.text-wrap-break {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 /* Hide native number input spinners */
@@ -229,8 +251,8 @@ body.theme-master-gaming tbody tr:hover {
   }
 }
 
-body.theme-master-gaming .rounded-2xl,
-body.theme-master-gaming .rounded-xl {
+/* Gaming pulse only on specific highlighted elements, not all rounded elements */
+body.theme-master-gaming .gaming-glow {
   animation: gaming-pulse 3s ease-in-out infinite;
 }
 

@@ -15,6 +15,8 @@ import {
   AlertTriangle,
   XCircle,
   UserPlus,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
@@ -53,6 +55,9 @@ export default function POS() {
 
   // Quick Add Customer State
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
+
+  // Maintenance panel collapse state
+  const [isMaintenanceExpanded, setIsMaintenanceExpanded] = useState(false);
 
   // PIN Modal State
   const [showPinModal, setShowPinModal] = useState(false);
@@ -147,8 +152,8 @@ export default function POS() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)]" dir="rtl">
-      <div className="flex flex-col lg:flex-row gap-6 flex-1 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-7rem)] min-h-0" dir="rtl">
+      <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0 overflow-hidden">
         {/* Products Section */}
         <div className="flex-1 flex flex-col bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden">
           <div className="p-4 border-b border-zinc-100 dark:border-zinc-800">
@@ -189,11 +194,10 @@ export default function POS() {
                         ? 0.98
                         : 1,
                   }}
-                  className={`relative flex flex-col items-center text-center p-4 rounded-2xl border transition-all ${
-                    product.trackInventory !== false && product.stock === 0
+                  className={`relative flex flex-col items-center text-center p-4 rounded-2xl border transition-all ${product.trackInventory !== false && product.stock === 0
                       ? "opacity-50 cursor-not-allowed border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50"
                       : "border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md bg-white dark:bg-zinc-950 cursor-pointer"
-                  }`}
+                    }`}
                   onClick={() => {
                     if (product.trackInventory === false || product.stock > 0)
                       addToCart(product);
@@ -251,7 +255,7 @@ export default function POS() {
         </div>
 
         {/* Cart Section */}
-        <div className="w-full lg:w-96 flex flex-col bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden shrink-0">
+        <div className="w-full lg:w-96 flex flex-col bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden shrink-0 min-h-0 max-h-full">
           <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex items-center gap-2">
             <ShoppingCart className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
             <h2 className="font-bold text-zinc-900 dark:text-white">
@@ -435,44 +439,40 @@ export default function POS() {
               <div className="grid grid-cols-4 gap-2">
                 <button
                   onClick={() => setPaymentMethod("cash")}
-                  className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${
-                    paymentMethod === "cash"
+                  className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${paymentMethod === "cash"
                       ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400"
                       : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                  }`}
+                    }`}
                 >
                   <Banknote className="w-4 h-4" />
                   كاش
                 </button>
                 <button
                   onClick={() => setPaymentMethod("card")}
-                  className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${
-                    paymentMethod === "card"
+                  className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${paymentMethod === "card"
                       ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400"
                       : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                  }`}
+                    }`}
                 >
                   <CreditCard className="w-4 h-4" />
                   شبكة
                 </button>
                 <button
                   onClick={() => setPaymentMethod("debt")}
-                  className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${
-                    paymentMethod === "debt"
+                  className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${paymentMethod === "debt"
                       ? "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400"
                       : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                  }`}
+                    }`}
                 >
                   <ShieldAlert className="w-4 h-4" />
                   آجل
                 </button>
                 <button
                   onClick={() => setPaymentMethod("split")}
-                  className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${
-                    paymentMethod === "split"
+                  className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${paymentMethod === "split"
                       ? "bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-400"
                       : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                  }`}
+                    }`}
                 >
                   <div className="flex -space-x-2">
                     <Banknote className="w-4 h-4 z-10" />
@@ -662,81 +662,99 @@ export default function POS() {
         )}
       </AnimatePresence>
 
-      {/* Maintenance Quick View */}
-      <div className="mt-6 bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-            <Wrench className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+      {/* Maintenance Quick View - Collapsible */}
+      <div className="mt-4 bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 shrink-0">
+        <button
+          onClick={() => setIsMaintenanceExpanded(!isMaintenanceExpanded)}
+          className="w-full flex items-center justify-between p-3 px-4 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors rounded-2xl"
+        >
+          <h3 className="font-bold text-zinc-900 dark:text-white flex items-center gap-2 text-sm">
+            <Wrench className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             استعلام الصيانة السريع
+            {maintenanceJobs.length > 0 && (
+              <span className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 py-0.5 px-2 rounded-full text-xs font-bold">
+                {maintenanceJobs.length}
+              </span>
+            )}
           </h3>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate("/maintenance")}
-              className="px-3 py-1.5 text-sm bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-lg font-medium transition-colors"
-            >
-              عرض الكل
-            </button>
-            <button
-              onClick={() => setIsMaintenanceModalOpen(true)}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              استلام جهاز
-            </button>
+            {isMaintenanceExpanded ? (
+              <ChevronUp className="w-4 h-4 text-zinc-400" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-zinc-400" />
+            )}
           </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-right text-sm">
-            <thead>
-              <tr className="text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800">
-                <th className="pb-2 font-medium">العميل</th>
-                <th className="pb-2 font-medium">الجهاز</th>
-                <th className="pb-2 font-medium">الحالة</th>
-                <th className="pb-2 font-medium">التكلفة</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-              {maintenanceJobs.slice(0, 3).map((job) => (
-                <tr key={job.id} className="text-zinc-700 dark:text-zinc-300">
-                  <td className="py-2">{job.customerName}</td>
-                  <td className="py-2">{job.device}</td>
-                  <td className="py-2">
-                    {job.status === "pending" && (
-                      <span className="text-amber-600 dark:text-amber-400">
-                        قيد الانتظار
-                      </span>
-                    )}
-                    {job.status === "in_progress" && (
-                      <span className="text-blue-600 dark:text-blue-400">
-                        جاري العمل
-                      </span>
-                    )}
-                    {job.status === "ready" && (
-                      <span className="text-emerald-600 dark:text-emerald-400">
-                        جاهز للتسليم
-                      </span>
-                    )}
-                    {job.status === "paid" && (
-                      <span className="text-purple-600 dark:text-purple-400">
-                        تم الدفع والتسليم
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-2 font-medium">
-                    {job.cost} {settings.currency}
-                  </td>
+        </button>
+
+        {isMaintenanceExpanded && (
+          <div className="px-4 pb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <button
+                onClick={() => navigate("/maintenance")}
+                className="px-3 py-1.5 text-sm bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-lg font-medium transition-colors"
+              >
+                عرض الكل
+              </button>
+              <button
+                onClick={() => setIsMaintenanceModalOpen(true)}
+                className="flex items-center gap-1 px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                استلام جهاز
+              </button>
+            </div>
+            <table className="w-full text-right text-sm">
+              <thead>
+                <tr className="text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800">
+                  <th className="pb-2 font-medium w-[28%]">العميل</th>
+                  <th className="pb-2 font-medium w-[32%]">الجهاز</th>
+                  <th className="pb-2 font-medium w-[22%]">الحالة</th>
+                  <th className="pb-2 font-medium w-[18%]">التكلفة</th>
                 </tr>
-              ))}
-              {maintenanceJobs.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="py-4 text-center text-zinc-500">
-                    لا توجد أجهزة في الصيانة حالياً
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                {maintenanceJobs.slice(0, 3).map((job) => (
+                  <tr key={job.id} className="text-zinc-700 dark:text-zinc-300">
+                    <td className="py-2 whitespace-normal">{job.customerName}</td>
+                    <td className="py-2 whitespace-normal">{job.device}</td>
+                    <td className="py-2">
+                      {job.status === "pending" && (
+                        <span className="text-amber-600 dark:text-amber-400">
+                          قيد الانتظار
+                        </span>
+                      )}
+                      {job.status === "in_progress" && (
+                        <span className="text-blue-600 dark:text-blue-400">
+                          جاري العمل
+                        </span>
+                      )}
+                      {job.status === "ready" && (
+                        <span className="text-emerald-600 dark:text-emerald-400">
+                          جاهز للتسليم
+                        </span>
+                      )}
+                      {job.status === "paid" && (
+                        <span className="text-purple-600 dark:text-purple-400">
+                          تم الدفع والتسليم
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-2 font-medium">
+                      {job.cost} {settings.currency}
+                    </td>
+                  </tr>
+                ))}
+                {maintenanceJobs.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="py-4 text-center text-zinc-500">
+                      لا توجد أجهزة في الصيانة حالياً
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       <AddMaintenanceJobModal
