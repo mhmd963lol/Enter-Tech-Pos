@@ -221,7 +221,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       "theme-rose",
       "theme-amber",
       "theme-cyan",
-      "theme-violet"
+      "theme-violet",
+      "theme-gaming"
     );
     if (settings.activeTheme && settings.activeTheme !== "indigo") {
       body.classList.add(`theme-${settings.activeTheme}`);
