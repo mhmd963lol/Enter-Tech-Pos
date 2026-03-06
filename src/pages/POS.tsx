@@ -46,6 +46,9 @@ export default function POS() {
     maintenanceJobs,
     customers,
     playSound,
+    exchangeRate,
+    isRateLive,
+    refreshExchangeRate,
   } = useAppContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<
@@ -56,8 +59,6 @@ export default function POS() {
   const [amountPaid, setAmountPaid] = useState("");
   const [splitCash, setSplitCash] = useState("");
   const [splitCard, setSplitCard] = useState("");
-  const [todaysSales, setTodaysSales] = useState(0);
-  const [exchangeRate] = useState(1); // Placeholder
   const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate();
 
@@ -227,8 +228,8 @@ export default function POS() {
                 <button
                   onClick={() => setGridSize("small")}
                   className={`p - 2 rounded - md transition - colors ${gridSize === "small"
-                      ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400"
-                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                    ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400"
+                    : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                     } `}
                   title="تصغير العناصر"
                 >
@@ -237,8 +238,8 @@ export default function POS() {
                 <button
                   onClick={() => setGridSize("large")}
                   className={`p - 2 rounded - md transition - colors ${gridSize === "large"
-                      ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400"
-                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                    ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400"
+                    : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                     } `}
                   title="تكبير العناصر"
                 >
@@ -292,8 +293,8 @@ export default function POS() {
             {(searchTerm || selectedCategoryId) && (
               <div
                 className={`grid gap - 4 ${gridSize === "large"
-                    ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
-                    : "grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+                  ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+                  : "grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
                   } `}
               >
                 {filteredProducts.map((product) => (
@@ -312,8 +313,8 @@ export default function POS() {
                           : 1,
                     }}
                     className={`relative flex flex - col items - center text - center p - 4 rounded - 2xl border transition - all ${product.trackInventory !== false && product.stock === 0
-                        ? "opacity-50 cursor-not-allowed border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50"
-                        : "border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md bg-white dark:bg-zinc-950 cursor-pointer"
+                      ? "opacity-50 cursor-not-allowed border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50"
+                      : "border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md bg-white dark:bg-zinc-950 cursor-pointer"
                       } `}
                     onClick={() => {
                       if (product.trackInventory === false || product.stock > 0)
@@ -536,9 +537,19 @@ transition - transform duration - 300 ease - [cubic - bezier(0.32, 0.72, 0, 1)]
                   </span>
                   <span>{currentTime.toLocaleDateString('ar-EG', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
                 </div>
-                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded text-[10px]" dir="ltr">
-                  <span>$</span> 1.00 = <span>₺</span> {exchangeRate.toFixed(3)}
-                </div>
+                <button
+                  onClick={() => !isRateLive && refreshExchangeRate()}
+                  title={isRateLive ? `سعر مباشر` : `⚠️ سعر غير محدث – انقر للتحديث`}
+                  className={`flex items-center gap-1 font-bold px-2 py-0.5 rounded text-[10px] transition-colors ${isRateLive
+                      ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
+                      : "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 cursor-pointer hover:bg-amber-100"
+                    }`}
+                  dir="ltr"
+                >
+                  {!isRateLive && <span title="سعر غير محدث">⚠️</span>}
+                  <span>$</span>1.00 = <span>₺</span>
+                  {exchangeRate > 0 ? exchangeRate.toFixed(2) : "–"}
+                </button>
               </div>
 
               <div className="flex justify-between text-lg font-bold text-zinc-900 dark:text-white pt-2 border-t border-zinc-200 dark:border-zinc-800">
@@ -602,8 +613,8 @@ transition - transform duration - 300 ease - [cubic - bezier(0.32, 0.72, 0, 1)]
                 <button
                   onClick={() => setPaymentMethod("cash")}
                   className={`flex flex - col items - center justify - center gap - 1 py - 2 rounded - xl border text - xs font - medium transition - colors ${paymentMethod === "cash"
-                      ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400"
-                      : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                    ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400"
+                    : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
                     } `}
                 >
                   <Banknote className="w-4 h-4" />
@@ -612,8 +623,8 @@ transition - transform duration - 300 ease - [cubic - bezier(0.32, 0.72, 0, 1)]
                 <button
                   onClick={() => setPaymentMethod("card")}
                   className={`flex flex - col items - center justify - center gap - 1 py - 2 rounded - xl border text - xs font - medium transition - colors ${paymentMethod === "card"
-                      ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400"
-                      : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                    ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400"
+                    : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
                     } `}
                 >
                   <CreditCard className="w-4 h-4" />
@@ -622,8 +633,8 @@ transition - transform duration - 300 ease - [cubic - bezier(0.32, 0.72, 0, 1)]
                 <button
                   onClick={() => setPaymentMethod("debt")}
                   className={`flex flex - col items - center justify - center gap - 1 py - 2 rounded - xl border text - xs font - medium transition - colors ${paymentMethod === "debt"
-                      ? "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400"
-                      : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                    ? "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400"
+                    : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
                     } `}
                 >
                   <ShieldAlert className="w-4 h-4" />
@@ -632,8 +643,8 @@ transition - transform duration - 300 ease - [cubic - bezier(0.32, 0.72, 0, 1)]
                 <button
                   onClick={() => setPaymentMethod("split")}
                   className={`flex flex - col items - center justify - center gap - 1 py - 2 rounded - xl border text - xs font - medium transition - colors ${paymentMethod === "split"
-                      ? "bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-400"
-                      : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                    ? "bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-400"
+                    : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
                     } `}
                 >
                   <div className="flex -space-x-2">

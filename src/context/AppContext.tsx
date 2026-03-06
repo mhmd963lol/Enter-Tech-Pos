@@ -28,6 +28,7 @@ import { useLocalStorage } from "../hooks/useLocalStorage";
 import { auth, db } from "../lib/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import { useExchangeRate } from "../hooks/useExchangeRate";
 
 
 interface AppContextType {
@@ -108,6 +109,12 @@ interface AppContextType {
   addTransaction: (transaction: Omit<Transaction, "id">) => void;
   deferredPrompt: any;
   setDeferredPrompt: (prompt: any) => void;
+  // Exchange Rate
+  exchangeRate: number;
+  isRateLive: boolean;
+  rateSource: string;
+  rateTimestamp: number;
+  refreshExchangeRate: () => Promise<void>;
 }
 
 const defaultSettings: Settings = {
@@ -160,6 +167,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isPrivacyMode, setIsPrivacyMode] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  // Exchange Rate (live)
+  const {
+    rate: exchangeRate,
+    isRateLive,
+    rateSource,
+    rateTimestamp,
+    refresh: refreshExchangeRate,
+  } = useExchangeRate();
 
   const [returns, setReturns] = useLocalStorage<ReturnItem[]>(
     "app_returns",
@@ -1242,6 +1258,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addTransaction,
         deferredPrompt,
         setDeferredPrompt,
+        exchangeRate,
+        isRateLive,
+        rateSource,
+        rateTimestamp,
+        refreshExchangeRate,
       }}
     >
       {children}
