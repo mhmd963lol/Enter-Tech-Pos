@@ -5,8 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 
 export default function StatusBar() {
-    const { settings, orders, isPrivacyMode, playSound, user, logout } = useAppContext();
+    const { settings, orders, isPrivacyMode, playSound, user, logout, exchangeRate } = useAppContext();
     const [time, setTime] = useState(new Date());
+    const [isRateReversed, setIsRateReversed] = useState(false);
     const navigate = useNavigate();
 
     // Update time every second
@@ -60,11 +61,21 @@ export default function StatusBar() {
             {/* Left side: Exchange Rate, Sales Summary, Cart Shortcut, and User Menu */}
             <div className="flex items-center gap-3 sm:gap-4">
 
-                {/* Exchange Rate */}
-                <div className="hidden lg:flex items-center gap-1.5 bg-indigo-950/50 px-2.5 py-0.5 rounded-md border border-indigo-700/50" title="سعر الصرف المباشر">
+                {/* Live Exchange Rate (USD/TRY) with Toggle */}
+                <div
+                    className="hidden lg:flex items-center gap-1.5 bg-indigo-950/50 px-2.5 py-0.5 rounded-md border border-indigo-700/50 cursor-pointer hover:bg-indigo-900/50 transition-colors group"
+                    title="سعر الصرف المباشر (USD/TRY) - انقر للعكس"
+                    onClick={() => {
+                        if (playSound) playSound("click");
+                        setIsRateReversed(!isRateReversed);
+                    }}
+                >
                     <DollarSign size={14} className="text-emerald-400" />
-                    <span className="text-emerald-300 font-bold whitespace-nowrap">
-                        1 USD = {settings.exchangeRate ? settings.exchangeRate.toFixed(2) : "1.00"} {settings.currency}
+                    <span className="text-emerald-300 font-bold whitespace-nowrap min-w-[110px]">
+                        {isRateReversed
+                            ? `1 TRY = ${(1 / (exchangeRate || 32)).toFixed(4)} USD`
+                            : `1 USD = ${(exchangeRate || 32).toFixed(2)} TRY`
+                        }
                     </span>
                     <span className="relative flex h-2 w-2 mr-1">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
