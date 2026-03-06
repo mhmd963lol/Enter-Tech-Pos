@@ -31,6 +31,7 @@ import {
 import { useAppContext } from "../context/AppContext";
 import NotificationPanel from "./NotificationPanel";
 import ThemePageTransition from "./ThemePageTransition";
+import StatusBar from "./StatusBar";
 
 interface NavItem {
   icon: React.ElementType;
@@ -335,6 +336,7 @@ export default function Layout() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+        <StatusBar />
         {/* Top Header */}
         <header className="h-16 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 lg:px-8 shrink-0">
           <div className="flex items-center gap-4">
@@ -362,28 +364,6 @@ export default function Layout() {
               </span>
             </div>
 
-            {/* Quick View */}
-            <div className="hidden sm:flex items-center gap-2 sm:gap-4 mr-2 sm:mr-6 border-r border-zinc-200 dark:border-zinc-800 pr-2 sm:pr-6">
-              <div
-                className="flex items-center gap-1 sm:gap-2 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg"
-                title="مبيعات اليوم"
-              >
-                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="text-xs sm:text-sm font-bold privacy-blur">
-                  {todaysSales.toFixed(0)}{" "}
-                  <span className="hidden sm:inline">{settings.currency}</span>
-                </span>
-              </div>
-              <div
-                className="flex items-center gap-1 sm:gap-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg"
-                title="طلبات اليوم"
-              >
-                <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="text-xs sm:text-sm font-medium privacy-blur">
-                  {todaysOrders.length}
-                </span>
-              </div>
-            </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">

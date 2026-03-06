@@ -833,3 +833,67 @@ body.theme-gaming:not(.dark) .bg-zinc-50 {
   border: 1px solid #c026d3;
   animation: gaming-rgb 4s linear infinite;
 }
+
+/* =========================================
+   ADVANCED THEME ENHANCEMENTS (via [data-theme])
+   ========================================= */
+
+/* Carbon Fiber Theme Advanced */
+[data-theme="carbon"] body {
+  background: repeating-linear-gradient(45deg,
+      #111 0px,
+      #1a1a1a 1px,
+      #111 1px,
+      #111 4px) !important;
+}
+
+[data-theme="carbon"] aside,
+[data-theme="carbon"] nav {
+  background: linear-gradient(180deg, #1c1c1c 0%, #111 100%) !important;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath d='M0 0h4v1H0zM4 4h4v1H4zM8 8h4v1H8zM12 12h4v1H12z' fill='rgba(255,255,255,0.03)'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #2a2a2a 0%, #111111 100%) !important;
+  border-color: #333 !important;
+}
+
+/* Gaming RGB Theme Advanced */
+[data-theme="gaming"] body {
+  background: radial-gradient(ellipse at 20% 20%, rgba(139, 0, 255, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 80%, rgba(0, 229, 255, 0.1) 0%, #050010 100%) !important;
+}
+
+[data-theme="gaming"] aside,
+[data-theme="gaming"] nav,
+[data-theme="gaming"] [role="dialog"],
+[data-theme="gaming"] .bg-zinc-900,
+[data-theme="gaming"] .bg-zinc-950,
+[data-theme="gaming"] .dark\:bg-zinc-900,
+[data-theme="gaming"] .dark\:bg-zinc-950 {
+  animation: gaming-rgb-advanced 3s linear infinite !important;
+  background: rgba(5, 0, 20, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+
+@keyframes gaming-rgb-advanced {
+  0% {
+    border-color: #ff0040;
+    box-shadow: 0 0 15px rgba(255, 0, 64, 0.4);
+  }
+
+  33% {
+    border-color: #00e5ff;
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+  }
+
+  66% {
+    border-color: #00ff88;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+  }
+
+  100% {
+    border-color: #ff0040;
+    box-shadow: 0 0 15px rgba(255, 0, 64, 0.4);
+  }
+}

@@ -59,13 +59,9 @@ export default function POS() {
   const [amountPaid, setAmountPaid] = useState("");
   const [splitCash, setSplitCash] = useState("");
   const [splitCard, setSplitCard] = useState("");
-  const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+
 
   // Maintenance Modal State
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
@@ -529,28 +525,7 @@ transition - transform duration - 300 ease - [cubic - bezier(0.32, 0.72, 0, 1)]
                 </div>
               )}
 
-              {/* Added mini Status Bar Info */}
-              <div className="flex justify-between items-center text-xs text-zinc-500 dark:text-zinc-400 border-t border-zinc-200 dark:border-zinc-800 pt-2 pb-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded text-[10px]" dir="ltr">
-                    {currentTime.toLocaleTimeString('ar-EG', { hour12: true, hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                  <span>{currentTime.toLocaleDateString('ar-EG', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
-                </div>
-                <button
-                  onClick={() => !isRateLive && refreshExchangeRate()}
-                  title={isRateLive ? `سعر مباشر` : `⚠️ سعر غير محدث – انقر للتحديث`}
-                  className={`flex items-center gap-1 font-bold px-2 py-0.5 rounded text-[10px] transition-colors ${isRateLive
-                      ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
-                      : "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 cursor-pointer hover:bg-amber-100"
-                    }`}
-                  dir="ltr"
-                >
-                  {!isRateLive && <span title="سعر غير محدث">⚠️</span>}
-                  <span>$</span>1.00 = <span>₺</span>
-                  {exchangeRate > 0 ? exchangeRate.toFixed(2) : "–"}
-                </button>
-              </div>
+
 
               <div className="flex justify-between text-lg font-bold text-zinc-900 dark:text-white pt-2 border-t border-zinc-200 dark:border-zinc-800">
                 <span>الإجمالي</span>

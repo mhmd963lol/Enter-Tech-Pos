@@ -30,6 +30,79 @@ import PaymentsCenter from "./pages/PaymentsCenter";
 import Inbox from "./pages/Inbox";
 import AccountSettings from "./pages/AccountSettings";
 import StaticPages from "./pages/StaticPages";
+import { Download } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+
+function PWAInstallPopup() {
+  const { deferredPrompt, user } = useAppContext();
+  const [show, setShow] = React.useState(false);
+
+  React.useEffect(() => {
+    const hasShown = localStorage.getItem("pwa_install_shown");
+    // Show after login, if prompt is available and not shown before
+    if (user && deferredPrompt && !hasShown) {
+      setShow(true);
+    }
+  }, [user, deferredPrompt]);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === "accepted") {
+      localStorage.setItem("pwa_install_shown", "true");
+      setShow(false);
+    }
+  };
+
+  const handleClose = () => {
+    localStorage.setItem("pwa_install_shown", "true");
+    setShow(false);
+  };
+
+  if (!show) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: 50, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 50, scale: 0.95 }}
+        className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:w-96 bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl z-[100] p-6 border border-zinc-200 dark:border-zinc-800 shadow-indigo-500/10"
+        dir="rtl"
+      >
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center shrink-0">
+            <Download className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-1">
+              تثبيت كاشير تك
+            </h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+              احصل على تجربة أسرع وأفضل عبر تثبيت التطبيق على جهازك مباشرة والعمل
+              كأنه برنامج حقيقي.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleInstall}
+                className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-md active:scale-95"
+              >
+                تثبيت الآن
+              </button>
+              <button
+                onClick={handleClose}
+                className="px-5 py-2.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-bold rounded-xl transition-all hover:bg-zinc-200 dark:hover:bg-zinc-700"
+              >
+                لاحقاً
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isAuthLoading } = useAppContext();
@@ -52,7 +125,16 @@ import { Toaster } from "react-hot-toast";
 import SetupWizardModal from "./components/SetupWizardModal";
 
 function AppContent() {
-  const { user, isAuthLoading } = useAppContext();
+  const { user, isAuthLoading, settings } = useAppContext();
+
+  React.useEffect(() => {
+    // Apply data-theme to HTML tag for CSS selectors
+    if (settings?.masterTheme) {
+      document.documentElement.setAttribute("data-theme", settings.masterTheme);
+    } else {
+      document.documentElement.setAttribute("data-theme", "default");
+    }
+  }, [settings?.masterTheme]);
 
   if (isAuthLoading) {
     return (
@@ -65,6 +147,7 @@ function AppContent() {
   return (
     <>
       <SetupWizardModal />
+      <PWAInstallPopup />
       <Toaster position="top-center" />
       <Routes>
         <Route
