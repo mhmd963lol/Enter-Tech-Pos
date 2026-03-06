@@ -28,6 +28,7 @@ import {
   EyeOff,
   Download,
 } from "lucide-react";
+import CashierTechLogo from "./CashierTechLogo";
 import { useAppContext } from "../context/AppContext";
 import NotificationPanel from "./NotificationPanel";
 import ThemePageTransition from "./ThemePageTransition";
@@ -288,9 +289,7 @@ export default function Layout() {
       >
         <div className="p-6 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200 dark:shadow-none">
-              <Store className="w-6 h-6 text-white" />
-            </div>
+            <CashierTechLogo showText={false} className="w-10 h-10" />
             <div>
               <h1 className="text-xl font-bold text-zinc-900 dark:text-white">
                 {settings.storeName}

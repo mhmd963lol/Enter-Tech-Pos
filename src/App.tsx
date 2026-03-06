@@ -31,6 +31,7 @@ import Inbox from "./pages/Inbox";
 import AccountSettings from "./pages/AccountSettings";
 import StaticPages from "./pages/StaticPages";
 import { Download } from "lucide-react";
+import CashierTechLogo from "./components/CashierTechLogo";
 import { motion, AnimatePresence } from "motion/react";
 
 function PWAInstallPopup() {
@@ -72,8 +73,8 @@ function PWAInstallPopup() {
         dir="rtl"
       >
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center shrink-0">
-            <Download className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+          <div className="w-12 h-12 bg-indigo-50 dark:bg-zinc-800 rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-zinc-100 dark:border-zinc-800">
+            <CashierTechLogo showText={false} className="w-10 h-10" />
           </div>
           <div className="flex-1">
             <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-1">
