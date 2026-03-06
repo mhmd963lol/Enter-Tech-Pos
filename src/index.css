@@ -816,7 +816,7 @@ body.theme-gaming::before {
 /* Apply RGB borders and dark glass feel to menus, cards, modals in gaming theme */
 body.theme-gaming .dark\:bg-zinc-900,
 body.theme-gaming .dark\:bg-zinc-950,
-body.theme-gaming .dark\:bg-\[#1a1b1e\],
+body.theme-gaming .dark\:bg-\[\#1a1b1e\],
 body.theme-gaming [role="dialog"],
 body.theme-gaming aside {
   background-color: rgba(10, 10, 20, 0.85) !important;
