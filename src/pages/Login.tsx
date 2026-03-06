@@ -1,14 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAppContext } from "../context/AppContext";
-import {
-  Eye,
-  EyeOff,
-  User,
-  Mail,
-  Lock,
-  Phone,
-  Check
-} from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Phone, Check, ArrowRight, RefreshCw, LogIn } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { auth, db } from "../lib/firebase";
 import {
@@ -16,397 +8,595 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
   GoogleAuthProvider,
-  FacebookAuthProvider,
-  OAuthProvider,
-  signInWithPopup
+  signInWithRedirect,
+  getRedirectResult,
+  sendPasswordResetEmail,
+  sendEmailVerification,
+  signInWithPhoneNumber,
+  RecaptchaVerifier,
+  reload,
 } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import toast from "react-hot-toast";
 
+// ─────────────────────────────────────────────
+// Logo SVG — Cashier Tech / كاشير تك
+// ─────────────────────────────────────────────
+const CashierTechLogo = ({ size = 40 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Background */}
+    <rect width="100" height="100" rx="22" fill="#1a2b3c" />
+    {/* Receipt body */}
+    <rect x="22" y="18" width="42" height="54" rx="5" fill="#48b09d" />
+    {/* Receipt lines (items) */}
+    <rect x="28" y="30" width="20" height="4" rx="2" fill="white" opacity="0.9" />
+    <rect x="28" y="39" width="28" height="4" rx="2" fill="white" opacity="0.7" />
+    <rect x="28" y="48" width="24" height="4" rx="2" fill="white" opacity="0.7" />
+    {/* Total line */}
+    <rect x="28" y="58" width="30" height="4" rx="2" fill="white" />
+    {/* Barcode at bottom */}
+    <rect x="28" y="65" width="3" height="5" rx="1" fill="white" opacity="0.85" />
+    <rect x="33" y="65" width="2" height="5" rx="1" fill="white" opacity="0.85" />
+    <rect x="37" y="65" width="4" height="5" rx="1" fill="white" opacity="0.85" />
+    <rect x="43" y="65" width="2" height="5" rx="1" fill="white" opacity="0.85" />
+    <rect x="47" y="65" width="3" height="5" rx="1" fill="white" opacity="0.85" />
+    {/* Green coin / currency accent */}
+    <circle cx="72" cy="68" r="16" fill="#48b09d" stroke="#1a2b3c" strokeWidth="2" />
+    <text x="72" y="74" textAnchor="middle" fontSize="18" fontWeight="bold" fill="white">＄</text>
+  </svg>
+);
+
+// ─────────────────────────────────────────────
+// Provider Icons
+// ─────────────────────────────────────────────
+const GoogleIcon = () => (
+  <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+  </svg>
+);
+
 export default function Login() {
   const { login, settings, updateSettings } = useAppContext();
   const [mode, setMode] = useState<"login" | "register">("login");
+  const [authMethod, setAuthMethod] = useState<"email" | "phone">("email");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [awaitingVerification, setAwaitingVerification] = useState(false);
+  const [verificationCheckLoading, setVerificationCheckLoading] = useState(false);
+  const [phoneStep, setPhoneStep] = useState<"number" | "otp">("number");
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const recaptchaRef = useRef<any>(null);
 
-  // Form states
-  const [loginData, setLoginData] = useState({ email: "", password: "", rememberMe: false });
-  const [registerData, setRegisterData] = useState({ name: "", email: "", phone: "", password: "", countryCode: "+90" });
+  const [loginData, setLoginData] = useState({ email: "", phone: "", password: "", rememberMe: false });
+  const [registerData, setRegisterData] = useState({ name: "", email: "", phone: "", password: "", countryCode: "+966" });
+  const [otpCode, setOtpCode] = useState("");
+  const [forgotEmail, setForgotEmail] = useState("");
 
-  const syncDefaultDataToFirestore = async (uid: string, name: string) => {
+  // Handle Google Redirect result on mount
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (result?.user) {
+          await handleAuthResult(result.user);
+          toast.success("تم تسجيل الدخول بـ Google بنجاح!");
+        }
+      })
+      .catch((err) => {
+        if (err.code && err.code !== "auth/no-current-user") {
+          toast.error("خطأ في تسجيل الدخول بـ Google");
+        }
+      });
+  }, []);
+
+  const clearForms = () => {
+    setLoginData({ email: "", phone: "", password: "", rememberMe: false });
+    setRegisterData({ name: "", email: "", phone: "", password: "", countryCode: "+966" });
+    setOtpCode("");
+    setPhoneStep("number");
+    setConfirmationResult(null);
+    setShowForgotPassword(false);
+    setForgotEmail("");
+    setShowPassword(false);
+    setAwaitingVerification(false);
+    if (recaptchaRef.current) {
+      try { recaptchaRef.current.clear(); } catch { }
+      recaptchaRef.current = null;
+    }
+  };
+
+  const switchMode = (newMode: "login" | "register") => {
+    clearForms();
+    setMode(newMode);
+    setAuthMethod("email");
+  };
+
+  // ── Helpers ────────────────────────────────
+  const syncNewUserToFirestore = async (uid: string, name: string, phone?: string) => {
     await setDoc(doc(db, "users", uid), {
       settings: settings,
-      profile: { name, role: "admin", pin: "0000" },
-      createdAt: new Date().toISOString()
+      profile: { name, role: "admin", pin: "0000", phone: phone || "" },
+      createdAt: new Date().toISOString(),
     });
   };
 
-  const handleAuthResult = async (user: any) => {
-    const userDocRef = doc(db, "users", user.uid);
+  const handleAuthResult = async (firebaseUser: any) => {
+    const userDocRef = doc(db, "users", firebaseUser.uid);
     const userDoc = await getDoc(userDocRef);
     let role = "admin";
     let pin = "0000";
 
     if (!userDoc.exists()) {
-      await syncDefaultDataToFirestore(user.uid, user.displayName || "مستخدم جديد");
+      await syncNewUserToFirestore(firebaseUser.uid, firebaseUser.displayName || "مستخدم");
     } else {
       const data = userDoc.data();
       if (data.settings) updateSettings(data.settings);
       if (data.profile) {
         role = data.profile.role || "admin";
-        pin = data.profile.pin || data.settings?.adminPin || "0000";
+        pin = data.profile.pin || "0000";
       }
     }
 
-    login({
-      id: user.uid,
-      name: user.displayName || "مستخدم",
-      role: role as "admin" | "cashier",
-      pin: pin,
-    });
+    login({ id: firebaseUser.uid, name: firebaseUser.displayName || "مستخدم", role: role as "admin" | "cashier", pin });
   };
 
-  const handleProviderLogin = async (providerName: "google" | "facebook" | "apple") => {
+  // ── Google ──────────────────────────────────
+  const handleGoogleLogin = async () => {
     setLoading(true);
-    let provider;
-    if (providerName === "google") provider = new GoogleAuthProvider();
-    else if (providerName === "facebook") provider = new FacebookAuthProvider();
-    else provider = new OAuthProvider('apple.com');
-
     try {
-      const result = await signInWithPopup(auth, provider);
-      await handleAuthResult(result.user);
-      toast.success("تم تسجيل الدخول بنجاح");
-    } catch (error: any) {
-      toast.error(error.message || "حدث خطأ أثناء تسجيل الدخول");
-    } finally {
+      const provider = new GoogleAuthProvider();
+      await signInWithRedirect(auth, provider);
+      // Result is handled in useEffect above after redirect
+    } catch (err: any) {
+      toast.error("حدث خطأ أثناء تسجيل الدخول بـ Google");
       setLoading(false);
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
+  // ── Email Login ─────────────────────────────
+  const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, registerData.email, registerData.password);
-      await updateProfile(userCredential.user, { displayName: registerData.name });
-      await syncDefaultDataToFirestore(userCredential.user.uid, registerData.name);
-      await handleAuthResult(userCredential.user);
-      toast.success("تم إنشاء الحساب بنجاح!");
-    } catch (error: any) {
-      toast.error(error.message || "حدث خطأ أثناء إنشاء الحساب");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, loginData.email, loginData.password);
-      await handleAuthResult(userCredential.user);
+      const cred = await signInWithEmailAndPassword(auth, loginData.email, loginData.password);
+      if (!cred.user.emailVerified) {
+        toast.error("يجب تأكيد بريدك الإلكتروني أولاً. تحقق من صندوق الوارد.");
+        await sendEmailVerification(cred.user);
+        setLoading(false);
+        return;
+      }
+      await handleAuthResult(cred.user);
       toast.success("تم تسجيل الدخول بنجاح");
-    } catch (error: any) {
+    } catch {
       toast.error("البريد الإلكتروني أو كلمة المرور غير صحيحة");
     } finally {
       setLoading(false);
     }
   };
 
-  const GoogleIcon = () => (
-    <svg className="w-5 h-5" viewBox="0 0 24 24">
-      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-    </svg>
-  );
+  // ── Email Register ──────────────────────────
+  const handleEmailRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, registerData.email, registerData.password);
+      await updateProfile(cred.user, { displayName: registerData.name });
+      await syncNewUserToFirestore(cred.user.uid, registerData.name);
+      await sendEmailVerification(cred.user);
+      setAwaitingVerification(true);
+      toast.success("تم إرسال رابط التحقق إلى بريدك الإلكتروني!");
+    } catch (err: any) {
+      if (err.code === "auth/email-already-in-use") {
+        toast.error("هذا البريد مسجل مسبقاً. يمكنك تسجيل الدخول.");
+      } else if (err.code === "auth/weak-password") {
+        toast.error("كلمة المرور ضعيفة جداً (6 أحرف على الأقل)");
+      } else {
+        toast.error(err.message || "حدث خطأ أثناء إنشاء الحساب");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const FacebookIcon = () => (
-    <svg className="w-5 h-5 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-    </svg>
-  );
+  const handleCheckVerification = async () => {
+    setVerificationCheckLoading(true);
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      await reload(currentUser);
+      if (currentUser.emailVerified) {
+        await handleAuthResult(currentUser);
+        toast.success("تم التحقق بنجاح! مرحباً بك.");
+      } else {
+        toast.error("لم يتم التحقق بعد. تحقق من بريدك وأعد المحاولة.");
+      }
+    } catch {
+      toast.error("حدث خطأ، أعد المحاولة.");
+    } finally {
+      setVerificationCheckLoading(false);
+    }
+  };
 
-  const AppleIcon = () => (
-    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.09 2.31-.86 3.59-.8 1.51.05 2.61.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.55 4.04zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-    </svg>
-  );
+  const handleResendVerification = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await sendEmailVerification(currentUser);
+        toast.success("تم إعادة إرسال رابط التحقق!");
+      }
+    } catch {
+      toast.error("حدث خطأ أثناء إعادة الإرسال");
+    }
+  };
 
-  return (
-    <div className="min-h-screen bg-[#f8f9fa] flex flex-col items-center justify-center p-4 font-sans" dir="rtl">
-      {/* Top Logo */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
-        <span className="text-[#3b9c8b] font-bold text-3xl">فاتورة</span>
-        <div className="bg-[#48b09d] text-white p-1 rounded-md">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
+  // ── Phone ───────────────────────────────────
+  const setupRecaptcha = () => {
+    if (!recaptchaRef.current) {
+      recaptchaRef.current = new RecaptchaVerifier(auth, "recaptcha-container", {
+        size: "invisible",
+        callback: () => { },
+      });
+    }
+    return recaptchaRef.current;
+  };
+
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const phoneNum = mode === "login" ? loginData.phone : `${registerData.countryCode}${registerData.phone}`;
+    try {
+      const appVerifier = setupRecaptcha();
+      const result = await signInWithPhoneNumber(auth, phoneNum, appVerifier);
+      setConfirmationResult(result);
+      setPhoneStep("otp");
+      toast.success("تم إرسال رمز التحقق عبر الرسائل القصيرة");
+    } catch (err: any) {
+      toast.error(err.message || "حدث خطأ في إرسال الرمز");
+      recaptchaRef.current = null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!confirmationResult) return;
+    setLoading(true);
+    try {
+      const cred = await confirmationResult.confirm(otpCode);
+      if (mode === "register") {
+        await updateProfile(cred.user, { displayName: registerData.name });
+        await syncNewUserToFirestore(cred.user.uid, registerData.name, `${registerData.countryCode}${registerData.phone}`);
+      }
+      await handleAuthResult(cred.user);
+      toast.success("تم التحقق وتسجيل الدخول بنجاح!");
+    } catch {
+      toast.error("رمز التحقق غير صحيح أو منتهي الصلاحية");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Forgot Password ─────────────────────────
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail) { toast.error("أدخل بريدك الإلكتروني أولاً"); return; }
+    setLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, forgotEmail);
+      toast.success("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك!");
+      setShowForgotPassword(false);
+      setForgotEmail("");
+    } catch {
+      toast.error("البريد الإلكتروني غير مسجل في النظام");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ─────────────────────────────────────────────
+  // RENDER: Awaiting Email Verification Screen
+  // ─────────────────────────────────────────────
+  if (awaitingVerification) {
+    return (
+      <div className="min-h-screen bg-[#f0faf8] flex items-center justify-center p-4" dir="rtl">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md bg-white rounded-2xl shadow-xl p-10 text-center">
+          <div className="w-20 h-20 bg-[#48b09d]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Mail className="w-10 h-10 text-[#48b09d]" />
+          </div>
+          <h1 className="text-2xl font-bold text-[#1a2b3c] mb-3">تحقق من بريدك الإلكتروني</h1>
+          <p className="text-gray-500 mb-2">أرسلنا رابط التحقق إلى:</p>
+          <p className="font-bold text-[#1a2b3c] mb-6 dir-ltr">{registerData.email}</p>
+          <p className="text-sm text-gray-400 mb-8">افتح الرابط من بريدك ثم اضغط الزر أدناه للمتابعة</p>
+
+          <motion.button whileTap={{ scale: 0.97 }} onClick={handleCheckVerification} disabled={verificationCheckLoading}
+            className="w-full bg-[#48b09d] hover:bg-[#3d9887] text-white py-3.5 rounded-full font-bold text-lg transition-colors flex items-center justify-center gap-2 mb-4 disabled:opacity-70">
+            {verificationCheckLoading ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><Check className="w-5 h-5" /> لقد تحققت، ادخل الآن</>}
+          </motion.button>
+
+          <button onClick={handleResendVerification} className="text-sm text-[#48b09d] hover:underline flex items-center gap-1 mx-auto">
+            <RefreshCw className="w-4 h-4" /> إعادة إرسال رابط التحقق
+          </button>
+          <button onClick={() => switchMode("login")} className="mt-4 text-sm text-gray-400 hover:text-gray-600">
+            العودة لتسجيل الدخول
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // RENDER: Forgot Password Screen
+  // ─────────────────────────────────────────────
+  const ForgotPasswordPanel = () => (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+      className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+      <div className="text-center mb-8">
+        <div className="w-16 h-16 bg-[#48b09d]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Lock className="w-8 h-8 text-[#48b09d]" />
         </div>
-        <div className="absolute -left-16 text-gray-500 font-bold border rounded-full px-2 text-sm">EN</div>
+        <h1 className="text-xl font-bold text-[#1a2b3c]">استعادة كلمة المرور</h1>
+        <p className="text-gray-500 text-sm mt-1">سنرسل لك رابط إعادة التعيين</p>
+      </div>
+      <form onSubmit={handleForgotPassword} className="space-y-5">
+        <div>
+          <label className="block text-sm font-bold text-[#1a2b3c] mb-2">البريد الإلكتروني</label>
+          <div className="relative">
+            <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input type="email" required placeholder="example@mail.com" value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              className="w-full pr-10 pl-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#48b09d] text-gray-700 text-left" dir="ltr" />
+          </div>
+        </div>
+        <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
+          className="w-full bg-[#48b09d] hover:bg-[#3d9887] text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70">
+          {loading ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" /> إرسال رابط الاستعادة</>}
+        </motion.button>
+        <button type="button" onClick={() => setShowForgotPassword(false)} className="w-full text-center text-sm text-gray-400 hover:text-gray-600 mt-2">
+          العودة لتسجيل الدخول
+        </button>
+      </form>
+    </motion.div>
+  );
+
+  // ─────────────────────────────────────────────
+  // RENDER: Main Page
+  // ─────────────────────────────────────────────
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#f0faf8] to-[#e8f5f2] flex flex-col items-center justify-center p-4" dir="rtl">
+      {/* Invisible recaptcha anchor */}
+      <div id="recaptcha-container"></div>
+
+      {/* Logo / Header */}
+      <div className="flex flex-col items-center mb-8">
+        <CashierTechLogo size={64} />
+        <div className="mt-3 text-center">
+          <h1 className="text-2xl font-extrabold text-[#1a2b3c] leading-tight">كاشير تك</h1>
+          <p className="text-[#48b09d] text-sm font-medium tracking-wide">Cashier Tech</p>
+        </div>
       </div>
 
       <AnimatePresence mode="wait">
-        {mode === "register" ? (
-          <motion.div
-            key="register"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="w-full max-w-lg bg-white rounded-xl shadow-lg border border-gray-100 p-8 mt-12"
-          >
-            <div className="text-center mb-8">
-              <h1 className="text-xl font-bold text-[#1a2b3c] mb-3">أدوات متكاملة تساعدك على البيع وتحصيل دفعاتك</h1>
-              <p className="text-gray-500 text-sm">حصل أموالك في أي وقت ومن أي مكان بسهولة وأمان مع فاتورة</p>
+        {/* ─── Forgot Password ─── */}
+        {showForgotPassword && <ForgotPasswordPanel key="forgot" />}
+
+        {/* ─── LOGIN ─── */}
+        {!showForgotPassword && mode === "login" && (
+          <motion.div key="login" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+            className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+
+            <h2 className="text-xl font-bold text-[#1a2b3c] text-center mb-6">تسجيل الدخول</h2>
+
+            {/* Google */}
+            <button type="button" onClick={handleGoogleLogin} disabled={loading}
+              className="w-full flex items-center justify-center gap-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 py-3 rounded-xl transition-colors font-medium text-gray-700 mb-4 disabled:opacity-60">
+              <GoogleIcon /> تسجيل الدخول بـ Google
+            </button>
+
+            {/* Divider */}
+            <div className="relative flex items-center my-5">
+              <div className="flex-grow border-t border-gray-200" />
+              <span className="mx-4 text-gray-400 text-sm bg-white px-2 rounded-full border border-gray-200">أو</span>
+              <div className="flex-grow border-t border-gray-200" />
             </div>
 
-            <div className="text-center mb-6">
-              <p className="text-[#1a2b3c] font-bold text-sm mb-4">سجل بسهولة من خلال حسابك في:</p>
-              <div className="grid grid-cols-3 gap-3">
-                <button type="button" onClick={() => handleProviderLogin("facebook")} className="flex items-center justify-center gap-2 bg-[#f4f6f8] hover:bg-gray-200 py-3 rounded-md transition-colors font-medium text-sm text-gray-700">
-                  <FacebookIcon /> Facebook
-                </button>
-                <button type="button" onClick={() => handleProviderLogin("apple")} className="flex items-center justify-center gap-2 bg-[#f4f6f8] hover:bg-gray-200 py-3 rounded-md transition-colors font-medium text-sm text-gray-700">
-                  <AppleIcon /> Apple
-                </button>
-                <button type="button" onClick={() => handleProviderLogin("google")} className="flex items-center justify-center gap-2 bg-[#f4f6f8] hover:bg-gray-200 py-3 rounded-md transition-colors font-medium text-sm text-gray-700">
-                  <GoogleIcon /> Google
-                </button>
-              </div>
-            </div>
-
-            <div className="relative flex items-center mb-6">
-              <div className="flex-grow border-t border-gray-200 text-transparent">.</div>
-              <span className="flex-shrink-0 mx-4 text-gray-400 text-sm bg-white px-2 border border-gray-200 rounded-full">أو</span>
-              <div className="flex-grow border-t border-gray-200 text-transparent">.</div>
-            </div>
-
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-[#1a2b3c] mb-2 text-right">الاسم</label>
-                <div className="relative">
-                  <User className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                  <input
-                    type="text"
-                    required
-                    value={registerData.name}
-                    onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
-                    className="w-full pr-10 pl-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#48b09d] text-gray-700 transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-[#1a2b3c] mb-2 text-right">البريد الإلكتروني</label>
-                <div className="relative">
-                  <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                  <input
-                    type="email"
-                    required
-                    placeholder="example@mail.com"
-                    value={registerData.email}
-                    onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                    className="w-full pr-10 pl-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#48b09d] text-gray-700 transition-colors text-left"
-                    dir="ltr"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-[#1a2b3c] mb-2 text-right">رقم الجوال</label>
-                <div className="flex border border-gray-300 rounded-md overflow-hidden focus-within:border-[#48b09d] transition-colors relative">
-                  <div className="flex items-center bg-transparent px-3 py-3 border-l border-gray-300 w-24 gap-1 dir-ltr text-left">
-                    <span>🇹🇷</span>
-                    <select
-                      className="bg-transparent text-gray-700 outline-none text-sm appearance-none flex-1 pr-1"
-                      value={registerData.countryCode}
-                      onChange={(e) => setRegisterData({ ...registerData, countryCode: e.target.value })}
-                      dir="ltr"
-                    >
-                      <option value="+90">+90</option>
-                      <option value="+966">+966</option>
-                      <option value="+20">+20</option>
-                      <option value="+971">+971</option>
-                    </select>
-                  </div>
-                  <input
-                    type="tel"
-                    required
-                    value={registerData.phone}
-                    onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
-                    className="w-full pl-4 pr-3 py-3 focus:outline-none text-gray-700 text-left"
-                    dir="ltr"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-[#1a2b3c] mb-2 text-right">كلمة المرور</label>
-                <div className="relative">
-                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={registerData.password}
-                    onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                    className="w-full pr-10 pl-10 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#48b09d] text-gray-700 transition-colors text-left"
-                    dir="ltr"
-                  />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="pt-4 flex justify-center">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  disabled={loading}
-                  className="bg-[#48b09d] hover:bg-[#3d9887] text-white px-12 py-3 rounded-full font-bold text-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md"
-                >
-                  {loading ? "جاري الإنشاء..." : (
-                    <>
-                      <Check className="w-5 h-5" /> إبدأ الان
-                    </>
-                  )}
-                </motion.button>
-              </div>
-
-              <div className="text-center mt-6">
-                <p className="text-xs text-gray-500 mb-4">بالضغط على زر " إبدأ الان " أنت توافق على <a href="#" className="text-[#48b09d] hover:underline">الأحكام والشروط</a></p>
-                <button
-                  type="button"
-                  onClick={() => setMode("login")}
-                  className="text-[#3b9c8b] font-bold text-sm hover:underline flex items-center justify-center gap-1 mx-auto"
-                >
-                  <Lock className="w-4 h-4" /> سجل الدخول
-                  <span className="text-gray-500 font-normal mr-1">لديك حساب بالفعل؟</span>
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="login"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="w-full max-w-md bg-white rounded-xl shadow-lg border border-gray-100 p-8 mt-12"
-          >
-            <div className="flex flex-col items-center mb-8 relative">
-              <div className="bg-gray-50/50 w-48 h-48 rounded-full absolute -top-8 -z-10"></div>
-              <div className="bg-[#48b09d] text-white p-3 rounded-xl mb-4 shadow-sm z-10 w-16 h-16 flex items-center justify-center mt-4">
-                <Lock className="w-8 h-8" />
-              </div>
-              {/* Background art mock */}
-              <div className="absolute left-10 top-16 z-0 hidden sm:block opacity-70">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d5a133" strokeWidth="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
-              </div>
-              <div className="absolute right-12 top-10 z-0 hidden sm:block">
-                <div className="bg-[#48b09d] w-24 h-3 rounded-full mb-2"></div>
-                <div className="bg-[#48b09d] w-32 h-3 rounded-full opacity-80 mb-2"></div>
-                <div className="bg-[#48b09d] w-28 h-3 rounded-full opacity-60"></div>
-              </div>
-
-              <h1 className="text-2xl font-bold text-[#1a2b3c] z-10 mt-6 pt-2">تسجيل الدخول</h1>
-              <p className="text-gray-500 text-sm mt-1 z-10">مرحبا بعودتك</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-6 relative z-10">
-              <button type="button" onClick={() => handleProviderLogin("facebook")} className="flex items-center justify-center gap-2 bg-[#f4f6f8] hover:bg-gray-200 py-3 rounded-md transition-colors font-medium text-sm text-gray-700">
-                <FacebookIcon /> Facebook
+            {/* Method Toggle */}
+            <div className="flex rounded-xl overflow-hidden border border-gray-200 mb-5">
+              <button type="button" onClick={() => setAuthMethod("email")}
+                className={`flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${authMethod === "email" ? "bg-[#48b09d] text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                <Mail className="w-4 h-4" /> البريد الإلكتروني
               </button>
-              <button type="button" onClick={() => handleProviderLogin("google")} className="flex items-center justify-center gap-2 bg-[#f4f6f8] hover:bg-gray-200 py-3 rounded-md transition-colors font-medium text-sm text-gray-700">
-                <GoogleIcon /> Google
+              <button type="button" onClick={() => { setAuthMethod("phone"); setPhoneStep("number"); }}
+                className={`flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${authMethod === "phone" ? "bg-[#48b09d] text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                <Phone className="w-4 h-4" /> رقم الهاتف
               </button>
             </div>
 
-            <div className="relative flex items-center mb-6">
-              <div className="flex-grow border-t border-gray-200 text-transparent">.</div>
-              <span className="flex-shrink-0 mx-4 text-gray-400 text-sm bg-white px-2 border border-gray-200 rounded-full">أو</span>
-              <div className="flex-grow border-t border-gray-200 text-transparent">.</div>
-            </div>
-
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-[#1a2b3c] mb-2 text-right">البريد الإلكتروني</label>
+            {/* Email Login Form */}
+            {authMethod === "email" && (
+              <form onSubmit={handleEmailLogin} className="space-y-4">
                 <div className="relative">
                   <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                  <input
-                    type="email"
-                    required
-                    placeholder="example@mail.com"
-                    value={loginData.email}
+                  <input type="email" required placeholder="example@mail.com" value={loginData.email}
                     onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                    className="w-full pr-10 pl-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#48b09d] text-gray-700 transition-colors text-left"
-                    dir="ltr"
-                  />
+                    className="w-full pr-10 pl-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#48b09d] text-gray-700 text-left" dir="ltr" />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-[#1a2b3c] mb-2 text-right">كلمه المرور</label>
                 <div className="relative">
                   <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    placeholder="* * * *"
-                    value={loginData.password}
+                  <input type={showPassword ? "text" : "password"} required placeholder="••••••••" value={loginData.password}
                     onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                    className="w-full pr-10 pl-10 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#48b09d] text-gray-700 transition-colors tracking-widest text-left"
-                    dir="ltr"
-                  />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                    className="w-full pr-10 pl-10 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#48b09d] text-gray-700 text-left" dir="ltr" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-2">
-                <a href="#" className="text-[#3b9c8b] text-sm font-bold hover:underline">هل نسيت كلمة المرور؟</a>
-                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700">
-                  <span>تذكرني</span>
-                  <input
-                    type="checkbox"
-                    checked={loginData.rememberMe}
-                    onChange={(e) => setLoginData({ ...loginData, rememberMe: e.target.checked })}
-                    className="w-4 h-4 text-[#48b09d] border-gray-300 rounded focus:ring-[#48b09d]"
-                  />
-                </label>
-              </div>
-
-              <div className="pt-2 flex justify-center">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  disabled={loading}
-                  className="bg-[#48b09d] hover:bg-[#3d9887] text-white px-10 py-3 rounded-full font-bold text-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md w-full sm:w-auto"
-                >
-                  {loading ? "جاري الدخول..." : (
-                    <>
-                      <Check className="w-5 h-5" /> تسجيل الدخول
-                    </>
-                  )}
+                <div className="flex items-center justify-between">
+                  <button type="button" onClick={() => setShowForgotPassword(true)} className="text-sm text-[#48b09d] hover:underline">نسيت كلمة المرور؟</button>
+                  <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600">
+                    <input type="checkbox" checked={loginData.rememberMe} onChange={(e) => setLoginData({ ...loginData, rememberMe: e.target.checked })} className="w-4 h-4 accent-[#48b09d]" />
+                    تذكرني
+                  </label>
+                </div>
+                <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
+                  className="w-full bg-[#48b09d] hover:bg-[#3d9887] text-white py-3.5 rounded-full font-bold text-base transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md mt-2">
+                  {loading ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><LogIn className="w-5 h-5" /> تسجيل الدخول</>}
                 </motion.button>
-              </div>
+              </form>
+            )}
 
-              <div className="text-center mt-6 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setMode("register")}
-                  className="text-[#3b9c8b] font-bold text-sm hover:underline"
-                >
-                  <span className="text-gray-500 font-normal ml-1">ليس لديك حساب؟</span>
-                  سجل الان
-                </button>
-              </div>
-            </form>
+            {/* Phone Login Form */}
+            {authMethod === "phone" && (
+              <>
+                {phoneStep === "number" ? (
+                  <form onSubmit={handleSendOtp} className="space-y-4">
+                    <div className="flex border border-gray-300 rounded-xl overflow-hidden focus-within:border-[#48b09d] transition-colors">
+                      <select value={registerData.countryCode} onChange={(e) => setRegisterData({ ...registerData, countryCode: e.target.value })}
+                        className="bg-gray-50 text-gray-700 px-3 py-3 text-sm outline-none border-l border-gray-300" dir="ltr">
+                        <option value="+966">🇸🇦 +966</option>
+                        <option value="+971">🇦🇪 +971</option>
+                        <option value="+20">🇪🇬 +20</option>
+                        <option value="+90">🇹🇷 +90</option>
+                        <option value="+1">🇺🇸 +1</option>
+                      </select>
+                      <input type="tel" required placeholder="5XXXXXXXX" value={loginData.phone}
+                        onChange={(e) => setLoginData({ ...loginData, phone: e.target.value })}
+                        className="flex-1 pl-4 pr-3 py-3 text-gray-700 outline-none text-left" dir="ltr" />
+                    </div>
+                    <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
+                      className="w-full bg-[#48b09d] hover:bg-[#3d9887] text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
+                      {loading ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" /> إرسال رمز التحقق</>}
+                    </motion.button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleVerifyOtp} className="space-y-4">
+                    <p className="text-sm text-gray-500 text-center">أدخل الرمز المكون من 6 أرقام المرسل إلى هاتفك</p>
+                    <input type="text" required placeholder="_ _ _ _ _ _" maxLength={6} value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#48b09d] text-gray-700 text-center text-2xl tracking-[0.5em] font-bold" dir="ltr" />
+                    <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
+                      className="w-full bg-[#48b09d] hover:bg-[#3d9887] text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
+                      {loading ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><Check className="w-5 h-5" /> تأكيد الرمز والدخول</>}
+                    </motion.button>
+                    <button type="button" onClick={() => setPhoneStep("number")} className="w-full text-center text-sm text-gray-400 hover:text-gray-600">تغيير رقم الهاتف</button>
+                  </form>
+                )}
+              </>
+            )}
+
+            <p className="text-center text-sm text-gray-500 mt-6">
+              ليس لديك حساب؟{" "}
+              <button onClick={() => switchMode("register")} className="text-[#48b09d] font-bold hover:underline">سجل الآن</button>
+            </p>
+          </motion.div>
+        )}
+
+        {/* ─── REGISTER ─── */}
+        {!showForgotPassword && mode === "register" && (
+          <motion.div key="register" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+            className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+
+            <h2 className="text-xl font-bold text-[#1a2b3c] text-center mb-2">إنشاء حساب جديد</h2>
+            <p className="text-gray-400 text-sm text-center mb-6">اختر طريقة التسجيل</p>
+
+            {/* Method Cards */}
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              <button type="button" onClick={handleGoogleLogin} disabled={loading}
+                className="flex flex-col items-center gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 py-4 rounded-xl transition-colors disabled:opacity-60">
+                <GoogleIcon />
+                <span className="text-xs text-gray-600 font-medium">Google</span>
+              </button>
+              <button type="button" onClick={() => setAuthMethod("email")}
+                className={`flex flex-col items-center gap-2 border py-4 rounded-xl transition-colors ${authMethod === "email" ? "bg-[#48b09d]/10 border-[#48b09d]" : "bg-gray-50 border-gray-200 hover:bg-gray-100"}`}>
+                <Mail className={`w-5 h-5 ${authMethod === "email" ? "text-[#48b09d]" : "text-gray-500"}`} />
+                <span className="text-xs font-medium text-gray-600">البريد</span>
+              </button>
+              <button type="button" onClick={() => { setAuthMethod("phone"); setPhoneStep("number"); }}
+                className={`flex flex-col items-center gap-2 border py-4 rounded-xl transition-colors ${authMethod === "phone" ? "bg-[#48b09d]/10 border-[#48b09d]" : "bg-gray-50 border-gray-200 hover:bg-gray-100"}`}>
+                <Phone className={`w-5 h-5 ${authMethod === "phone" ? "text-[#48b09d]" : "text-gray-500"}`} />
+                <span className="text-xs font-medium text-gray-600">الهاتف</span>
+              </button>
+            </div>
+
+            {/* Email Register */}
+            {authMethod === "email" && (
+              <form onSubmit={handleEmailRegister} className="space-y-4">
+                <input type="text" required placeholder="الاسم الكامل" value={registerData.name}
+                  onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#48b09d] text-gray-700" />
+                <div className="relative">
+                  <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input type="email" required placeholder="example@mail.com" value={registerData.email}
+                    onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                    className="w-full pr-10 pl-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#48b09d] text-gray-700 text-left" dir="ltr" />
+                </div>
+                <div className="relative">
+                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input type={showPassword ? "text" : "password"} required placeholder="كلمة المرور (6 أحرف على الأقل)" value={registerData.password}
+                    onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                    className="w-full pr-10 pl-10 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#48b09d] text-gray-700 text-left" dir="ltr" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
+                  className="w-full bg-[#48b09d] hover:bg-[#3d9887] text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
+                  {loading ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><Check className="w-5 h-5" /> إنشاء الحساب</>}
+                </motion.button>
+              </form>
+            )}
+
+            {/* Phone Register */}
+            {authMethod === "phone" && (
+              <>
+                {phoneStep === "number" ? (
+                  <form onSubmit={handleSendOtp} className="space-y-4">
+                    <input type="text" required placeholder="الاسم الكامل" value={registerData.name}
+                      onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#48b09d] text-gray-700" />
+                    <div className="flex border border-gray-300 rounded-xl overflow-hidden focus-within:border-[#48b09d] transition-colors">
+                      <select value={registerData.countryCode} onChange={(e) => setRegisterData({ ...registerData, countryCode: e.target.value })}
+                        className="bg-gray-50 text-gray-700 px-3 py-3 text-sm outline-none border-l border-gray-300" dir="ltr">
+                        <option value="+966">🇸🇦 +966</option>
+                        <option value="+971">🇦🇪 +971</option>
+                        <option value="+20">🇪🇬 +20</option>
+                        <option value="+90">🇹🇷 +90</option>
+                        <option value="+1">🇺🇸 +1</option>
+                      </select>
+                      <input type="tel" required placeholder="5XXXXXXXX" value={registerData.phone}
+                        onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
+                        className="flex-1 pl-4 pr-3 py-3 text-gray-700 outline-none text-left" dir="ltr" />
+                    </div>
+                    <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
+                      className="w-full bg-[#48b09d] hover:bg-[#3d9887] text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
+                      {loading ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" /> إرسال رمز التحقق</>}
+                    </motion.button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleVerifyOtp} className="space-y-4">
+                    <p className="text-sm text-gray-500 text-center">أدخل رمز التحقق المرسل إلى هاتفك</p>
+                    <input type="text" required placeholder="_ _ _ _ _ _" maxLength={6} value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#48b09d] text-center text-2xl tracking-[0.5em] font-bold" dir="ltr" />
+                    <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
+                      className="w-full bg-[#48b09d] hover:bg-[#3d9887] text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
+                      {loading ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><Check className="w-5 h-5" /> تأكيد الرمز وإنشاء الحساب</>}
+                    </motion.button>
+                    <button type="button" onClick={() => setPhoneStep("number")} className="w-full text-center text-sm text-gray-400 hover:text-gray-600">تغيير رقم الهاتف</button>
+                  </form>
+                )}
+              </>
+            )}
+
+            <p className="text-center text-sm text-gray-500 mt-6">
+              لديك حساب بالفعل؟{" "}
+              <button onClick={() => switchMode("login")} className="text-[#48b09d] font-bold hover:underline">سجل الدخول</button>
+            </p>
+            <p className="text-center text-xs text-gray-400 mt-3">
+              بالتسجيل أنت توافق على <a href="/terms" className="text-[#48b09d] hover:underline">الشروط والأحكام</a>
+            </p>
           </motion.div>
         )}
       </AnimatePresence>

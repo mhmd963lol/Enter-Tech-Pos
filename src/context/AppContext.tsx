@@ -108,7 +108,7 @@ interface AppContextType {
 }
 
 const defaultSettings: Settings = {
-  storeName: "متجري",
+  storeName: "كاشير تك",
   currency: "ر.س",
   language: "ar",
   taxRate: 15,
