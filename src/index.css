@@ -217,6 +217,7 @@ input[type=number] {
   background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
   color: #e0e0f0;
 }
+
 html:not(.dark) body.theme-master-gaming {
   background-color: #faf5ff;
   background-image: linear-gradient(rgba(139, 0, 255, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(139, 0, 255, 0.04) 1px, transparent 1px);
@@ -225,134 +226,477 @@ html:not(.dark) body.theme-master-gaming {
 }
 
 /* Sidebar & Header */
-.dark body.theme-master-gaming .bg-white, .dark body.theme-master-gaming aside, .dark body.theme-master-gaming header { background-color: rgba(8, 4, 20, 0.95) !important; border-color: rgba(200, 0, 255, 0.2) !important; }
-html:not(.dark) body.theme-master-gaming .bg-zinc-950, html:not(.dark) body.theme-master-gaming aside, html:not(.dark) body.theme-master-gaming header { background-color: rgba(255, 255, 255, 0.95) !important; border-color: rgba(200, 0, 255, 0.15) !important; }
+.dark body.theme-master-gaming .bg-white,
+.dark body.theme-master-gaming aside,
+.dark body.theme-master-gaming header {
+  background-color: rgba(8, 4, 20, 0.95) !important;
+  border-color: rgba(200, 0, 255, 0.2) !important;
+}
+
+html:not(.dark) body.theme-master-gaming .bg-zinc-950,
+html:not(.dark) body.theme-master-gaming aside,
+html:not(.dark) body.theme-master-gaming header {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(200, 0, 255, 0.15) !important;
+}
 
 /* Cards */
-.dark body.theme-master-gaming .bg-zinc-950, .dark body.theme-master-gaming .bg-zinc-900, .dark body.theme-master-gaming .dark\:bg-zinc-950, .dark body.theme-master-gaming .dark\:bg-zinc-900, .dark body.theme-master-gaming .bg-zinc-50, .dark body.theme-master-gaming .dark\:bg-zinc-900\/50 {
-  background-color: rgba(12, 6, 30, 0.92) !important; border-color: rgba(180, 0, 255, 0.15) !important; box-shadow: 0 0 20px rgba(180, 0, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+.dark body.theme-master-gaming .bg-zinc-950,
+.dark body.theme-master-gaming .bg-zinc-900,
+.dark body.theme-master-gaming .dark\:bg-zinc-950,
+.dark body.theme-master-gaming .dark\:bg-zinc-900,
+.dark body.theme-master-gaming .bg-zinc-50,
+.dark body.theme-master-gaming .dark\:bg-zinc-900\/50 {
+  background-color: rgba(12, 6, 30, 0.92) !important;
+  border-color: rgba(180, 0, 255, 0.15) !important;
+  box-shadow: 0 0 20px rgba(180, 0, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
 }
-html:not(.dark) body.theme-master-gaming .bg-zinc-950, html:not(.dark) body.theme-master-gaming .bg-zinc-900, html:not(.dark) body.theme-master-gaming .dark\:bg-zinc-950, html:not(.dark) body.theme-master-gaming .dark\:bg-zinc-900, html:not(.dark) body.theme-master-gaming .bg-zinc-50, html:not(.dark) body.theme-master-gaming .dark\:bg-zinc-900\/50 {
-  background-color: rgba(255, 255, 255, 0.8) !important; border-color: rgba(180, 0, 255, 0.1) !important; box-shadow: 0 4px 15px rgba(139, 0, 255, 0.05) !important;
+
+html:not(.dark) body.theme-master-gaming .bg-zinc-950,
+html:not(.dark) body.theme-master-gaming .bg-zinc-900,
+html:not(.dark) body.theme-master-gaming .dark\:bg-zinc-950,
+html:not(.dark) body.theme-master-gaming .dark\:bg-zinc-900,
+html:not(.dark) body.theme-master-gaming .bg-zinc-50,
+html:not(.dark) body.theme-master-gaming .dark\:bg-zinc-900\/50 {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(180, 0, 255, 0.1) !important;
+  box-shadow: 0 4px 15px rgba(139, 0, 255, 0.05) !important;
 }
 
 /* Text */
-.dark body.theme-master-gaming h1, .dark body.theme-master-gaming h2, .dark body.theme-master-gaming h3, .dark body.theme-master-gaming h4, .dark body.theme-master-gaming .text-zinc-900, .dark body.theme-master-gaming .dark\:text-white { color: #f0e6ff !important; }
-.dark body.theme-master-gaming .text-zinc-500, .dark body.theme-master-gaming .text-zinc-400, .dark body.theme-master-gaming .dark\:text-zinc-400 { color: #a090c0 !important; }
-.dark body.theme-master-gaming .text-zinc-600, .dark body.theme-master-gaming .dark\:text-zinc-300 { color: #c0b0e0 !important; }
+.dark body.theme-master-gaming h1,
+.dark body.theme-master-gaming h2,
+.dark body.theme-master-gaming h3,
+.dark body.theme-master-gaming h4,
+.dark body.theme-master-gaming .text-zinc-900,
+.dark body.theme-master-gaming .dark\:text-white {
+  color: #f0e6ff !important;
+}
 
-html:not(.dark) body.theme-master-gaming h1, html:not(.dark) body.theme-master-gaming h2, html:not(.dark) body.theme-master-gaming h3, html:not(.dark) body.theme-master-gaming h4, html:not(.dark) body.theme-master-gaming .text-white, html:not(.dark) body.theme-master-gaming .dark\:text-white, html:not(.dark) body.theme-master-gaming .text-zinc-900 { color: #2e1065 !important; }
+.dark body.theme-master-gaming .text-zinc-500,
+.dark body.theme-master-gaming .text-zinc-400,
+.dark body.theme-master-gaming .dark\:text-zinc-400 {
+  color: #a090c0 !important;
+}
+
+.dark body.theme-master-gaming .text-zinc-600,
+.dark body.theme-master-gaming .dark\:text-zinc-300 {
+  color: #c0b0e0 !important;
+}
+
+html:not(.dark) body.theme-master-gaming h1,
+html:not(.dark) body.theme-master-gaming h2,
+html:not(.dark) body.theme-master-gaming h3,
+html:not(.dark) body.theme-master-gaming h4,
+html:not(.dark) body.theme-master-gaming .text-white,
+html:not(.dark) body.theme-master-gaming .dark\:text-white,
+html:not(.dark) body.theme-master-gaming .text-zinc-900 {
+  color: #2e1065 !important;
+}
 
 /* Table rows */
-.dark body.theme-master-gaming .divide-zinc-100, .dark body.theme-master-gaming .dark\:divide-zinc-800, .dark body.theme-master-gaming .border-zinc-100, .dark body.theme-master-gaming .dark\:border-zinc-800 { border-color: rgba(160, 0, 220, 0.15) !important; }
-.dark body.theme-master-gaming tbody tr:hover { background-color: rgba(130, 0, 255, 0.07) !important; }
-html:not(.dark) body.theme-master-gaming tbody tr:hover { background-color: rgba(139, 0, 255, 0.03) !important; }
+.dark body.theme-master-gaming .divide-zinc-100,
+.dark body.theme-master-gaming .dark\:divide-zinc-800,
+.dark body.theme-master-gaming .border-zinc-100,
+.dark body.theme-master-gaming .dark\:border-zinc-800 {
+  border-color: rgba(160, 0, 220, 0.15) !important;
+}
 
-body.theme-master-gaming .gaming-glow { animation: gaming-pulse 3s ease-in-out infinite; }
+.dark body.theme-master-gaming tbody tr:hover {
+  background-color: rgba(130, 0, 255, 0.07) !important;
+}
+
+html:not(.dark) body.theme-master-gaming tbody tr:hover {
+  background-color: rgba(139, 0, 255, 0.03) !important;
+}
+
+body.theme-master-gaming .gaming-glow {
+  animation: gaming-pulse 3s ease-in-out infinite;
+}
 
 
 /* ========================
    2. CARBON THEME (Racing / Solid / Mechanical)
    ======================== */
-.dark body.theme-master-carbon { background-color: #1a1a1a; color: #e5e5e5; }
-html:not(.dark) body.theme-master-carbon { background-color: #f4f4f5; color: #18181b; }
-
-.dark body.theme-master-carbon .bg-white, .dark body.theme-master-carbon aside, .dark body.theme-master-carbon header { background-color: #111111 !important; border-color: #333333 !important; }
-html:not(.dark) body.theme-master-carbon .bg-zinc-950, html:not(.dark) body.theme-master-carbon aside, html:not(.dark) body.theme-master-carbon header { background-color: #ffffff !important; border-color: #e4e4e7 !important; }
-
-.dark body.theme-master-carbon .bg-zinc-950, .dark body.theme-master-carbon .bg-zinc-900, .dark body.theme-master-carbon .dark\:bg-zinc-950, .dark body.theme-master-carbon .dark\:bg-zinc-900, .dark body.theme-master-carbon .bg-zinc-50, .dark body.theme-master-carbon .dark\:bg-zinc-900\/50 {
-  background-color: #1f1f1f !important; border-color: #2e2e2e !important; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02) !important;
-}
-html:not(.dark) body.theme-master-carbon .bg-zinc-950, html:not(.dark) body.theme-master-carbon .bg-zinc-900, html:not(.dark) body.theme-master-carbon .dark\:bg-zinc-950, html:not(.dark) body.theme-master-carbon .dark\:bg-zinc-900, html:not(.dark) body.theme-master-carbon .bg-zinc-50, html:not(.dark) body.theme-master-carbon .dark\:bg-zinc-900\/50 {
-  background-color: #ffffff !important; border-color: #d4d4d8 !important; box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+.dark body.theme-master-carbon {
+  background-color: #1a1a1a;
+  color: #e5e5e5;
 }
 
-.dark body.theme-master-carbon h1, .dark body.theme-master-carbon h2, .dark body.theme-master-carbon h3, .dark body.theme-master-carbon h4, .dark body.theme-master-carbon .text-zinc-900, .dark body.theme-master-carbon .dark\:text-white { color: #f4f4f5 !important; }
-.dark body.theme-master-carbon .text-zinc-500, .dark body.theme-master-carbon .text-zinc-400, .dark body.theme-master-carbon .dark\:text-zinc-400 { color: #71717a !important; }
-.dark body.theme-master-carbon .text-zinc-600, .dark body.theme-master-carbon .dark\:text-zinc-300 { color: #a1a1aa !important; }
-html:not(.dark) body.theme-master-carbon h1, html:not(.dark) body.theme-master-carbon h2, html:not(.dark) body.theme-master-carbon h3, html:not(.dark) body.theme-master-carbon h4, html:not(.dark) body.theme-master-carbon .text-white, html:not(.dark) body.theme-master-carbon .dark\:text-white, html:not(.dark) body.theme-master-carbon .text-zinc-900 { color: #18181b !important; }
+html:not(.dark) body.theme-master-carbon {
+  background-color: #f4f4f5;
+  color: #18181b;
+}
 
-.dark body.theme-master-carbon .divide-zinc-100, .dark body.theme-master-carbon .dark\:divide-zinc-800, .dark body.theme-master-carbon .border-zinc-100, .dark body.theme-master-carbon .dark\:border-zinc-800 { border-color: #27272a !important; }
-.dark body.theme-master-carbon tbody tr:hover { background-color: #2e2e2e !important; }
-html:not(.dark) body.theme-master-carbon tbody tr:hover { background-color: #f4f4f5 !important; }
+.dark body.theme-master-carbon .bg-white,
+.dark body.theme-master-carbon aside,
+.dark body.theme-master-carbon header {
+  background-color: #111111 !important;
+  border-color: #333333 !important;
+}
 
-.dark body.theme-master-carbon .bg-indigo-600 { background-color: #ff1a1a !important; color:#fff !important; }
-html:not(.dark) body.theme-master-carbon .bg-indigo-600 { background-color: #e60000 !important; color:#fff !important; }
-.dark body.theme-master-carbon .text-indigo-600, .dark body.theme-master-carbon .dark\:text-indigo-400 { color: #ff3333 !important; }
-html:not(.dark) body.theme-master-carbon .text-indigo-600 { color: #cc0000 !important; }
-.dark body.theme-master-carbon .bg-indigo-50, .dark body.theme-master-carbon .dark\:bg-indigo-900\/20 { background-color: rgba(200, 0, 0, 0.1) !important; }
-html:not(.dark) body.theme-master-carbon .bg-indigo-50 { background-color: rgba(200, 0, 0, 0.05) !important; }
+html:not(.dark) body.theme-master-carbon .bg-zinc-950,
+html:not(.dark) body.theme-master-carbon aside,
+html:not(.dark) body.theme-master-carbon header {
+  background-color: #ffffff !important;
+  border-color: #e4e4e7 !important;
+}
+
+.dark body.theme-master-carbon .bg-zinc-950,
+.dark body.theme-master-carbon .bg-zinc-900,
+.dark body.theme-master-carbon .dark\:bg-zinc-950,
+.dark body.theme-master-carbon .dark\:bg-zinc-900,
+.dark body.theme-master-carbon .bg-zinc-50,
+.dark body.theme-master-carbon .dark\:bg-zinc-900\/50 {
+  background-color: #1f1f1f !important;
+  border-color: #2e2e2e !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02) !important;
+}
+
+html:not(.dark) body.theme-master-carbon .bg-zinc-950,
+html:not(.dark) body.theme-master-carbon .bg-zinc-900,
+html:not(.dark) body.theme-master-carbon .dark\:bg-zinc-950,
+html:not(.dark) body.theme-master-carbon .dark\:bg-zinc-900,
+html:not(.dark) body.theme-master-carbon .bg-zinc-50,
+html:not(.dark) body.theme-master-carbon .dark\:bg-zinc-900\/50 {
+  background-color: #ffffff !important;
+  border-color: #d4d4d8 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+.dark body.theme-master-carbon h1,
+.dark body.theme-master-carbon h2,
+.dark body.theme-master-carbon h3,
+.dark body.theme-master-carbon h4,
+.dark body.theme-master-carbon .text-zinc-900,
+.dark body.theme-master-carbon .dark\:text-white {
+  color: #f4f4f5 !important;
+}
+
+.dark body.theme-master-carbon .text-zinc-500,
+.dark body.theme-master-carbon .text-zinc-400,
+.dark body.theme-master-carbon .dark\:text-zinc-400 {
+  color: #71717a !important;
+}
+
+.dark body.theme-master-carbon .text-zinc-600,
+.dark body.theme-master-carbon .dark\:text-zinc-300 {
+  color: #a1a1aa !important;
+}
+
+html:not(.dark) body.theme-master-carbon h1,
+html:not(.dark) body.theme-master-carbon h2,
+html:not(.dark) body.theme-master-carbon h3,
+html:not(.dark) body.theme-master-carbon h4,
+html:not(.dark) body.theme-master-carbon .text-white,
+html:not(.dark) body.theme-master-carbon .dark\:text-white,
+html:not(.dark) body.theme-master-carbon .text-zinc-900 {
+  color: #18181b !important;
+}
+
+.dark body.theme-master-carbon .divide-zinc-100,
+.dark body.theme-master-carbon .dark\:divide-zinc-800,
+.dark body.theme-master-carbon .border-zinc-100,
+.dark body.theme-master-carbon .dark\:border-zinc-800 {
+  border-color: #27272a !important;
+}
+
+.dark body.theme-master-carbon tbody tr:hover {
+  background-color: #2e2e2e !important;
+}
+
+html:not(.dark) body.theme-master-carbon tbody tr:hover {
+  background-color: #f4f4f5 !important;
+}
+
+.dark body.theme-master-carbon .bg-indigo-600 {
+  background-color: #ff1a1a !important;
+  color: #fff !important;
+}
+
+html:not(.dark) body.theme-master-carbon .bg-indigo-600 {
+  background-color: #e60000 !important;
+  color: #fff !important;
+}
+
+.dark body.theme-master-carbon .text-indigo-600,
+.dark body.theme-master-carbon .dark\:text-indigo-400 {
+  color: #ff3333 !important;
+}
+
+html:not(.dark) body.theme-master-carbon .text-indigo-600 {
+  color: #cc0000 !important;
+}
+
+.dark body.theme-master-carbon .bg-indigo-50,
+.dark body.theme-master-carbon .dark\:bg-indigo-900\/20 {
+  background-color: rgba(200, 0, 0, 0.1) !important;
+}
+
+html:not(.dark) body.theme-master-carbon .bg-indigo-50 {
+  background-color: rgba(200, 0, 0, 0.05) !important;
+}
 
 
 /* ========================
    3. LUXURY THEME (VIP / Prestige)
    ======================== */
-.dark body.theme-master-luxury { background-color: #080c14; color: #e8e0d0; }
-html:not(.dark) body.theme-master-luxury { background-color: #fdfaf5; color: #2a251b; }
-
-.dark body.theme-master-luxury .bg-white, .dark body.theme-master-luxury aside, .dark body.theme-master-luxury header { background: linear-gradient(135deg, rgba(10, 14, 28, 0.98), rgba(6, 10, 22, 0.98)) !important; border-color: rgba(180, 150, 80, 0.15) !important; background-image: none !important; }
-html:not(.dark) body.theme-master-luxury .bg-zinc-950, html:not(.dark) body.theme-master-luxury aside, html:not(.dark) body.theme-master-luxury header { background: #ffffff !important; border-color: rgba(180, 150, 80, 0.2) !important; }
-
-.dark body.theme-master-luxury .bg-zinc-950, .dark body.theme-master-luxury .bg-zinc-900, .dark body.theme-master-luxury .dark\:bg-zinc-950, .dark body.theme-master-luxury .dark\:bg-zinc-900, .dark body.theme-master-luxury .bg-zinc-50, .dark body.theme-master-luxury .dark\:bg-zinc-900\/50 {
-  background: rgba(12, 16, 34, 0.8) !important; backdrop-filter: blur(16px); border-color: rgba(180, 150, 80, 0.12) !important; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(200, 170, 100, 0.08) !important;
-}
-html:not(.dark) body.theme-master-luxury .bg-zinc-950, html:not(.dark) body.theme-master-luxury .bg-zinc-900, html:not(.dark) body.theme-master-luxury .dark\:bg-zinc-950, html:not(.dark) body.theme-master-luxury .dark\:bg-zinc-900, html:not(.dark) body.theme-master-luxury .bg-zinc-50, html:not(.dark) body.theme-master-luxury .dark\:bg-zinc-900\/50 {
-  background: rgba(255, 255, 255, 0.9) !important; border-color: rgba(180, 150, 80, 0.15) !important; box-shadow: 0 4px 15px rgba(180, 150, 80, 0.05) !important;
+.dark body.theme-master-luxury {
+  background-color: #080c14;
+  color: #e8e0d0;
 }
 
-.dark body.theme-master-luxury h1, .dark body.theme-master-luxury h2, .dark body.theme-master-luxury h3, .dark body.theme-master-luxury h4, .dark body.theme-master-luxury .text-zinc-900, .dark body.theme-master-luxury .dark\:text-white { color: #f0e8d8 !important; }
-.dark body.theme-master-luxury .text-zinc-500, .dark body.theme-master-luxury .text-zinc-400, .dark body.theme-master-luxury .dark\:text-zinc-400 { color: rgba(200, 180, 140, 0.7) !important; }
-.dark body.theme-master-luxury .text-zinc-600, .dark body.theme-master-luxury .dark\:text-zinc-300 { color: rgba(220, 200, 160, 0.85) !important; }
-html:not(.dark) body.theme-master-luxury h1, html:not(.dark) body.theme-master-luxury h2, html:not(.dark) body.theme-master-luxury h3, html:not(.dark) body.theme-master-luxury h4, html:not(.dark) body.theme-master-luxury .text-white, html:not(.dark) body.theme-master-luxury .dark\:text-white, html:not(.dark) body.theme-master-luxury .text-zinc-900 { color: #2a251b !important; }
+html:not(.dark) body.theme-master-luxury {
+  background-color: #fdfaf5;
+  color: #2a251b;
+}
 
-.dark body.theme-master-luxury .divide-zinc-100, .dark body.theme-master-luxury .dark\:divide-zinc-800, .dark body.theme-master-luxury .border-zinc-100, .dark body.theme-master-luxury .dark\:border-zinc-800 { border-color: rgba(170, 140, 70, 0.12) !important; }
-.dark body.theme-master-luxury tbody tr:hover { background-color: rgba(180, 150, 80, 0.04) !important; }
-html:not(.dark) body.theme-master-luxury tbody tr:hover { background-color: rgba(180, 150, 80, 0.03) !important; }
+.dark body.theme-master-luxury .bg-white,
+.dark body.theme-master-luxury aside,
+.dark body.theme-master-luxury header {
+  background: linear-gradient(135deg, rgba(10, 14, 28, 0.98), rgba(6, 10, 22, 0.98)) !important;
+  border-color: rgba(180, 150, 80, 0.15) !important;
+  background-image: none !important;
+}
 
-.dark body.theme-master-luxury .bg-indigo-600 { background: linear-gradient(135deg, #b8962e, #d4af37) !important; color: #1a1200 !important; }
-html:not(.dark) body.theme-master-luxury .bg-indigo-600 { background: linear-gradient(135deg, #a68420, #c4a028) !important; color: #fff !important; }
-.dark body.theme-master-luxury .text-indigo-600, .dark body.theme-master-luxury .dark\:text-indigo-400 { color: #d4af37 !important; }
-.dark body.theme-master-luxury .bg-indigo-50, .dark body.theme-master-luxury .dark\:bg-indigo-900\/20 { background-color: rgba(180, 150, 40, 0.1) !important; }
+html:not(.dark) body.theme-master-luxury .bg-zinc-950,
+html:not(.dark) body.theme-master-luxury aside,
+html:not(.dark) body.theme-master-luxury header {
+  background: #ffffff !important;
+  border-color: rgba(180, 150, 80, 0.2) !important;
+}
+
+.dark body.theme-master-luxury .bg-zinc-950,
+.dark body.theme-master-luxury .bg-zinc-900,
+.dark body.theme-master-luxury .dark\:bg-zinc-950,
+.dark body.theme-master-luxury .dark\:bg-zinc-900,
+.dark body.theme-master-luxury .bg-zinc-50,
+.dark body.theme-master-luxury .dark\:bg-zinc-900\/50 {
+  background: rgba(12, 16, 34, 0.8) !important;
+  backdrop-filter: blur(16px);
+  border-color: rgba(180, 150, 80, 0.12) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(200, 170, 100, 0.08) !important;
+}
+
+html:not(.dark) body.theme-master-luxury .bg-zinc-950,
+html:not(.dark) body.theme-master-luxury .bg-zinc-900,
+html:not(.dark) body.theme-master-luxury .dark\:bg-zinc-950,
+html:not(.dark) body.theme-master-luxury .dark\:bg-zinc-900,
+html:not(.dark) body.theme-master-luxury .bg-zinc-50,
+html:not(.dark) body.theme-master-luxury .dark\:bg-zinc-900\/50 {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(180, 150, 80, 0.15) !important;
+  box-shadow: 0 4px 15px rgba(180, 150, 80, 0.05) !important;
+}
+
+.dark body.theme-master-luxury h1,
+.dark body.theme-master-luxury h2,
+.dark body.theme-master-luxury h3,
+.dark body.theme-master-luxury h4,
+.dark body.theme-master-luxury .text-zinc-900,
+.dark body.theme-master-luxury .dark\:text-white {
+  color: #f0e8d8 !important;
+}
+
+.dark body.theme-master-luxury .text-zinc-500,
+.dark body.theme-master-luxury .text-zinc-400,
+.dark body.theme-master-luxury .dark\:text-zinc-400 {
+  color: rgba(200, 180, 140, 0.7) !important;
+}
+
+.dark body.theme-master-luxury .text-zinc-600,
+.dark body.theme-master-luxury .dark\:text-zinc-300 {
+  color: rgba(220, 200, 160, 0.85) !important;
+}
+
+html:not(.dark) body.theme-master-luxury h1,
+html:not(.dark) body.theme-master-luxury h2,
+html:not(.dark) body.theme-master-luxury h3,
+html:not(.dark) body.theme-master-luxury h4,
+html:not(.dark) body.theme-master-luxury .text-white,
+html:not(.dark) body.theme-master-luxury .dark\:text-white,
+html:not(.dark) body.theme-master-luxury .text-zinc-900 {
+  color: #2a251b !important;
+}
+
+.dark body.theme-master-luxury .divide-zinc-100,
+.dark body.theme-master-luxury .dark\:divide-zinc-800,
+.dark body.theme-master-luxury .border-zinc-100,
+.dark body.theme-master-luxury .dark\:border-zinc-800 {
+  border-color: rgba(170, 140, 70, 0.12) !important;
+}
+
+.dark body.theme-master-luxury tbody tr:hover {
+  background-color: rgba(180, 150, 80, 0.04) !important;
+}
+
+html:not(.dark) body.theme-master-luxury tbody tr:hover {
+  background-color: rgba(180, 150, 80, 0.03) !important;
+}
+
+.dark body.theme-master-luxury .bg-indigo-600 {
+  background: linear-gradient(135deg, #b8962e, #d4af37) !important;
+  color: #1a1200 !important;
+}
+
+html:not(.dark) body.theme-master-luxury .bg-indigo-600 {
+  background: linear-gradient(135deg, #a68420, #c4a028) !important;
+  color: #fff !important;
+}
+
+.dark body.theme-master-luxury .text-indigo-600,
+.dark body.theme-master-luxury .dark\:text-indigo-400 {
+  color: #d4af37 !important;
+}
+
+.dark body.theme-master-luxury .bg-indigo-50,
+.dark body.theme-master-luxury .dark\:bg-indigo-900\/20 {
+  background-color: rgba(180, 150, 40, 0.1) !important;
+}
 
 
 /* ========================
    4. CASHIER TECH THEME (Smart POS / Fintech)
    ======================== */
-.dark body.theme-master-cashier-tech { background-color: #0d1117; color: #e0f0e8; }
-html:not(.dark) body.theme-master-cashier-tech { background-color: #f0fdf4; color: #064e3b; }
-
-.dark body.theme-master-cashier-tech .bg-white, .dark body.theme-master-cashier-tech aside, .dark body.theme-master-cashier-tech header { background-color: #111820 !important; border-color: rgba(0, 230, 118, 0.12) !important; background-image: none !important; }
-html:not(.dark) body.theme-master-cashier-tech .bg-zinc-950, html:not(.dark) body.theme-master-cashier-tech aside, html:not(.dark) body.theme-master-cashier-tech header { background-color: #ffffff !important; border-color: rgba(0, 230, 118, 0.2) !important; background-image: none !important; }
-
-.dark body.theme-master-cashier-tech .bg-zinc-950, .dark body.theme-master-cashier-tech .bg-zinc-900, .dark body.theme-master-cashier-tech .dark\:bg-zinc-950, .dark body.theme-master-cashier-tech .dark\:bg-zinc-900, .dark body.theme-master-cashier-tech .bg-zinc-50, .dark body.theme-master-cashier-tech .dark\:bg-zinc-900\/50 {
-  background-color: rgba(16, 24, 32, 0.94) !important; border-color: rgba(0, 230, 118, 0.1) !important; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 230, 118, 0.05) !important;
-}
-html:not(.dark) body.theme-master-cashier-tech .bg-zinc-950, html:not(.dark) body.theme-master-cashier-tech .bg-zinc-900, html:not(.dark) body.theme-master-cashier-tech .dark\:bg-zinc-950, html:not(.dark) body.theme-master-cashier-tech .dark\:bg-zinc-900, html:not(.dark) body.theme-master-cashier-tech .bg-zinc-50, html:not(.dark) body.theme-master-cashier-tech .dark\:bg-zinc-900\/50 {
-  background-color: #ffffff !important; border-color: rgba(0, 230, 118, 0.15) !important; box-shadow: 0 4px 15px rgba(0, 230, 118, 0.05) !important;
+.dark body.theme-master-cashier-tech {
+  background-color: #0d1117;
+  color: #e0f0e8;
 }
 
-.dark body.theme-master-cashier-tech h1, .dark body.theme-master-cashier-tech h2, .dark body.theme-master-cashier-tech h3, .dark body.theme-master-cashier-tech h4, .dark body.theme-master-cashier-tech .text-zinc-900, .dark body.theme-master-cashier-tech .dark\:text-white { color: #e8f5ee !important; }
-.dark body.theme-master-cashier-tech .text-zinc-500, .dark body.theme-master-cashier-tech .text-zinc-400, .dark body.theme-master-cashier-tech .dark\:text-zinc-400 { color: rgba(160, 200, 180, 0.7) !important; }
-.dark body.theme-master-cashier-tech .text-zinc-600, .dark body.theme-master-cashier-tech .dark\:text-zinc-300 { color: rgba(180, 220, 200, 0.85) !important; }
-html:not(.dark) body.theme-master-cashier-tech h1, html:not(.dark) body.theme-master-cashier-tech h2, html:not(.dark) body.theme-master-cashier-tech h3, html:not(.dark) body.theme-master-cashier-tech h4, html:not(.dark) body.theme-master-cashier-tech .text-white, html:not(.dark) body.theme-master-cashier-tech .dark\:text-white, html:not(.dark) body.theme-master-cashier-tech .text-zinc-900 { color: #064e3b !important; }
+html:not(.dark) body.theme-master-cashier-tech {
+  background-color: #f0fdf4;
+  color: #064e3b;
+}
 
-.dark body.theme-master-cashier-tech .divide-zinc-100, .dark body.theme-master-cashier-tech .dark\:divide-zinc-800, .dark body.theme-master-cashier-tech .border-zinc-100, .dark body.theme-master-cashier-tech .dark\:border-zinc-800 { border-color: rgba(0, 230, 118, 0.1) !important; }
-.dark body.theme-master-cashier-tech tbody tr:hover { background-color: rgba(0, 230, 118, 0.05) !important; }
-html:not(.dark) body.theme-master-cashier-tech tbody tr:hover { background-color: rgba(0, 230, 118, 0.04) !important; }
+.dark body.theme-master-cashier-tech .bg-white,
+.dark body.theme-master-cashier-tech aside,
+.dark body.theme-master-cashier-tech header {
+  background-color: #111820 !important;
+  border-color: rgba(0, 230, 118, 0.12) !important;
+  background-image: none !important;
+}
 
-.dark body.theme-master-cashier-tech .bg-indigo-600 { background-color: #00C853 !important; box-shadow: 0 0 16px rgba(0, 200, 80, 0.3) !important; color:#0e1111 !important; }
-html:not(.dark) body.theme-master-cashier-tech .bg-indigo-600 { background-color: #00E676 !important; box-shadow: 0 4px 12px rgba(0, 200, 80, 0.2) !important; color:#064e3b !important; }
+html:not(.dark) body.theme-master-cashier-tech .bg-zinc-950,
+html:not(.dark) body.theme-master-cashier-tech aside,
+html:not(.dark) body.theme-master-cashier-tech header {
+  background-color: #ffffff !important;
+  border-color: rgba(0, 230, 118, 0.2) !important;
+  background-image: none !important;
+}
 
-.dark body.theme-master-cashier-tech .text-indigo-600, .dark body.theme-master-cashier-tech .dark\:text-indigo-400 { color: #00E676 !important; }
-html:not(.dark) body.theme-master-cashier-tech .text-indigo-600 { color: #00C853 !important; }
-.dark body.theme-master-cashier-tech .bg-indigo-50, .dark body.theme-master-cashier-tech .dark\:bg-indigo-900\/20 { background-color: rgba(0, 230, 118, 0.08) !important; }
-.dark body.theme-master-cashier-tech .border-indigo-500, .dark body.theme-master-cashier-tech .ring-indigo-500 { border-color: rgba(0, 230, 118, 0.5) !important; }
+.dark body.theme-master-cashier-tech .bg-zinc-950,
+.dark body.theme-master-cashier-tech .bg-zinc-900,
+.dark body.theme-master-cashier-tech .dark\:bg-zinc-950,
+.dark body.theme-master-cashier-tech .dark\:bg-zinc-900,
+.dark body.theme-master-cashier-tech .bg-zinc-50,
+.dark body.theme-master-cashier-tech .dark\:bg-zinc-900\/50 {
+  background-color: rgba(16, 24, 32, 0.94) !important;
+  border-color: rgba(0, 230, 118, 0.1) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 230, 118, 0.05) !important;
+}
+
+html:not(.dark) body.theme-master-cashier-tech .bg-zinc-950,
+html:not(.dark) body.theme-master-cashier-tech .bg-zinc-900,
+html:not(.dark) body.theme-master-cashier-tech .dark\:bg-zinc-950,
+html:not(.dark) body.theme-master-cashier-tech .dark\:bg-zinc-900,
+html:not(.dark) body.theme-master-cashier-tech .bg-zinc-50,
+html:not(.dark) body.theme-master-cashier-tech .dark\:bg-zinc-900\/50 {
+  background-color: #ffffff !important;
+  border-color: rgba(0, 230, 118, 0.15) !important;
+  box-shadow: 0 4px 15px rgba(0, 230, 118, 0.05) !important;
+}
+
+.dark body.theme-master-cashier-tech h1,
+.dark body.theme-master-cashier-tech h2,
+.dark body.theme-master-cashier-tech h3,
+.dark body.theme-master-cashier-tech h4,
+.dark body.theme-master-cashier-tech .text-zinc-900,
+.dark body.theme-master-cashier-tech .dark\:text-white {
+  color: #e8f5ee !important;
+}
+
+.dark body.theme-master-cashier-tech .text-zinc-500,
+.dark body.theme-master-cashier-tech .text-zinc-400,
+.dark body.theme-master-cashier-tech .dark\:text-zinc-400 {
+  color: rgba(160, 200, 180, 0.7) !important;
+}
+
+.dark body.theme-master-cashier-tech .text-zinc-600,
+.dark body.theme-master-cashier-tech .dark\:text-zinc-300 {
+  color: rgba(180, 220, 200, 0.85) !important;
+}
+
+html:not(.dark) body.theme-master-cashier-tech h1,
+html:not(.dark) body.theme-master-cashier-tech h2,
+html:not(.dark) body.theme-master-cashier-tech h3,
+html:not(.dark) body.theme-master-cashier-tech h4,
+html:not(.dark) body.theme-master-cashier-tech .text-white,
+html:not(.dark) body.theme-master-cashier-tech .dark\:text-white,
+html:not(.dark) body.theme-master-cashier-tech .text-zinc-900 {
+  color: #064e3b !important;
+}
+
+.dark body.theme-master-cashier-tech .divide-zinc-100,
+.dark body.theme-master-cashier-tech .dark\:divide-zinc-800,
+.dark body.theme-master-cashier-tech .border-zinc-100,
+.dark body.theme-master-cashier-tech .dark\:border-zinc-800 {
+  border-color: rgba(0, 230, 118, 0.1) !important;
+}
+
+.dark body.theme-master-cashier-tech tbody tr:hover {
+  background-color: rgba(0, 230, 118, 0.05) !important;
+}
+
+html:not(.dark) body.theme-master-cashier-tech tbody tr:hover {
+  background-color: rgba(0, 230, 118, 0.04) !important;
+}
+
+.dark body.theme-master-cashier-tech .bg-indigo-600 {
+  background-color: #00C853 !important;
+  box-shadow: 0 0 16px rgba(0, 200, 80, 0.3) !important;
+  color: #0e1111 !important;
+}
+
+html:not(.dark) body.theme-master-cashier-tech .bg-indigo-600 {
+  background-color: #00E676 !important;
+  box-shadow: 0 4px 12px rgba(0, 200, 80, 0.2) !important;
+  color: #064e3b !important;
+}
+
+.dark body.theme-master-cashier-tech .text-indigo-600,
+.dark body.theme-master-cashier-tech .dark\:text-indigo-400 {
+  color: #00E676 !important;
+}
+
+html:not(.dark) body.theme-master-cashier-tech .text-indigo-600 {
+  color: #00C853 !important;
+}
+
+.dark body.theme-master-cashier-tech .bg-indigo-50,
+.dark body.theme-master-cashier-tech .dark\:bg-indigo-900\/20 {
+  background-color: rgba(0, 230, 118, 0.08) !important;
+}
+
+.dark body.theme-master-cashier-tech .border-indigo-500,
+.dark body.theme-master-cashier-tech .ring-indigo-500 {
+  border-color: rgba(0, 230, 118, 0.5) !important;
+}
 
 @keyframes cashier-tech-glow {
-  0%, 100% { box-shadow: 0 0 0 1px rgba(0, 230, 118, 0.06), 0 4px 20px rgba(0, 0, 0, 0.3); }
-  50% { box-shadow: 0 0 0 1px rgba(0, 230, 118, 0.14), 0 4px 25px rgba(0, 0, 0, 0.4); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgba(0, 230, 118, 0.06), 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 0 1px rgba(0, 230, 118, 0.14), 0 4px 25px rgba(0, 0, 0, 0.4);
+  }
 }
-.dark body.theme-master-cashier-tech .rounded-2xl { animation: cashier-tech-glow 4s ease-in-out infinite; }
+
+.dark body.theme-master-cashier-tech .rounded-2xl {
+  animation: cashier-tech-glow 4s ease-in-out infinite;
+}
 
 
 /* =========================================
@@ -387,4 +731,105 @@ button:not([disabled]):active {
 /* Login page: fix hardcoded dark text on dark backgrounds */
 .dark label {
   color: #e0e7ef;
+}
+
+/* =========================================
+   CARBON FIBER THEME
+   ========================================= */
+body.theme-carbon {
+  background-color: #111111;
+  background-image:
+    repeating-linear-gradient(135deg,
+      transparent,
+      transparent 3px,
+      rgba(255, 255, 255, 0.02) 3px,
+      rgba(255, 255, 255, 0.02) 4px),
+    repeating-linear-gradient(45deg,
+      transparent,
+      transparent 3px,
+      rgba(255, 255, 255, 0.02) 3px,
+      rgba(255, 255, 255, 0.02) 4px);
+  background-size: 8px 8px;
+}
+
+/* Apply "leather" feel to sidebar and menus in carbon theme */
+body.theme-carbon nav,
+body.theme-carbon aside {
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath d='M0 0h4v1H0zM4 4h4v1H4zM8 8h4v1H8zM12 12h4v1H12z' fill='rgba(255,255,255,0.03)'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, rgba(40, 30, 20, 0.9) 0%, rgba(20, 15, 10, 0.95) 100%);
+  background-size: 16px 16px, 100% 100%;
+}
+
+/* =========================================
+   GAMING THEME
+   ========================================= */
+body.theme-gaming {
+  background-color: #0a0a12;
+  background-image:
+    radial-gradient(ellipse at 20% 20%, rgba(192, 38, 211, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(56, 189, 248, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 60%);
+}
+
+/* Subtle PlayStation-icon like pattern overlay */
+body.theme-gaming::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle 4px at 20px 20px, rgba(255, 255, 255, 0.04) 100%, transparent 100%),
+    radial-gradient(circle 2px at 40px 10px, rgba(255, 255, 255, 0.04) 100%, transparent 100%);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* RGB border animation */
+@keyframes gaming-rgb {
+  0% {
+    border-color: #ff004c;
+    box-shadow: 0 0 8px #ff004c44, inset 0 0 8px #ff004c11;
+  }
+
+  25% {
+    border-color: #00e5ff;
+    box-shadow: 0 0 8px #00e5ff44, inset 0 0 8px #00e5ff11;
+  }
+
+  50% {
+    border-color: #76ff03;
+    box-shadow: 0 0 8px #76ff0344, inset 0 0 8px #76ff0311;
+  }
+
+  75% {
+    border-color: #d500f9;
+    box-shadow: 0 0 8px #d500f944, inset 0 0 8px #d500f911;
+  }
+
+  100% {
+    border-color: #ff004c;
+    box-shadow: 0 0 8px #ff004c44, inset 0 0 8px #ff004c11;
+  }
+}
+
+/* Apply RGB borders and dark glass feel to menus, cards, modals in gaming theme */
+body.theme-gaming .dark\:bg-zinc-900,
+body.theme-gaming .dark\:bg-zinc-950,
+body.theme-gaming .dark\:bg-\[#1a1b1e\],
+body.theme-gaming [role="dialog"],
+body.theme-gaming aside {
+  background-color: rgba(10, 10, 20, 0.85) !important;
+  backdrop-filter: blur(16px);
+  border: 1px solid #ff004c;
+  animation: gaming-rgb 4s linear infinite;
+}
+
+/* Light mode gaming panels */
+body.theme-gaming:not(.dark) .bg-white,
+body.theme-gaming:not(.dark) .bg-zinc-50 {
+  background-color: rgba(255, 255, 255, 0.88) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid #c026d3;
+  animation: gaming-rgb 4s linear infinite;
 }

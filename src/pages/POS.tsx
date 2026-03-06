@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useAppContext } from "../context/AppContext";
 import {
   Search,
@@ -56,7 +56,15 @@ export default function POS() {
   const [amountPaid, setAmountPaid] = useState("");
   const [splitCash, setSplitCash] = useState("");
   const [splitCard, setSplitCard] = useState("");
+  const [todaysSales, setTodaysSales] = useState(0);
+  const [exchangeRate] = useState(1); // Placeholder
+  const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Maintenance Modal State
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
@@ -218,20 +226,20 @@ export default function POS() {
               <div className="flex bg-zinc-100 dark:bg-zinc-900 rounded-lg p-1 shrink-0">
                 <button
                   onClick={() => setGridSize("small")}
-                  className={`p-2 rounded-md transition-colors ${gridSize === "small"
-                    ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400"
-                    : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-                    }`}
+                  className={`p - 2 rounded - md transition - colors ${gridSize === "small"
+                      ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400"
+                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                    } `}
                   title="تصغير العناصر"
                 >
                   <Grid3X3 className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => setGridSize("large")}
-                  className={`p-2 rounded-md transition-colors ${gridSize === "large"
-                    ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400"
-                    : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-                    }`}
+                  className={`p - 2 rounded - md transition - colors ${gridSize === "large"
+                      ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400"
+                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                    } `}
                   title="تكبير العناصر"
                 >
                   <LayoutGrid className="w-5 h-5" />
@@ -283,10 +291,10 @@ export default function POS() {
             {/* Render Products Grid */}
             {(searchTerm || selectedCategoryId) && (
               <div
-                className={`grid gap-4 ${gridSize === "large"
-                  ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
-                  : "grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
-                  }`}
+                className={`grid gap - 4 ${gridSize === "large"
+                    ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+                    : "grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+                  } `}
               >
                 {filteredProducts.map((product) => (
                   <motion.div
@@ -303,10 +311,10 @@ export default function POS() {
                           ? 0.98
                           : 1,
                     }}
-                    className={`relative flex flex-col items-center text-center p-4 rounded-2xl border transition-all ${product.trackInventory !== false && product.stock === 0
-                      ? "opacity-50 cursor-not-allowed border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50"
-                      : "border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md bg-white dark:bg-zinc-950 cursor-pointer"
-                      }`}
+                    className={`relative flex flex - col items - center text - center p - 4 rounded - 2xl border transition - all ${product.trackInventory !== false && product.stock === 0
+                        ? "opacity-50 cursor-not-allowed border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50"
+                        : "border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md bg-white dark:bg-zinc-950 cursor-pointer"
+                      } `}
                     onClick={() => {
                       if (product.trackInventory === false || product.stock > 0)
                         addToCart(product);
@@ -380,12 +388,12 @@ export default function POS() {
         {/* Cart Section */}
         <div
           className={`
-            w-full lg:w-96 flex flex-col bg-white dark:bg-zinc-950 shadow-sm border border-zinc-100 dark:border-zinc-800 shrink-0
-            fixed lg:relative lg:flex lg:rounded-2xl min-h-0 lg:max-h-full
-            bottom-0 left-0 right-0 z-50 lg:z-auto rounded-t-3xl lg:rounded-b-2xl
-            transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
+w - full lg: w - 96 flex flex - col bg - white dark: bg - zinc - 950 shadow - sm border border - zinc - 100 dark: border - zinc - 800 shrink - 0
+            fixed lg:relative lg:flex lg: rounded - 2xl min - h - 0 lg: max - h - full
+bottom - 0 left - 0 right - 0 z - 50 lg: z - auto rounded - t - 3xl lg: rounded - b - 2xl
+transition - transform duration - 300 ease - [cubic - bezier(0.32, 0.72, 0, 1)]
             ${isMobileCartOpen ? 'translate-y-0 h-[85vh]' : 'translate-y-full lg:translate-y-0'}
-          `}
+`}
         >
           <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -398,7 +406,7 @@ export default function POS() {
               </span>
               <button
                 onClick={() => setIsKeypadOpen(!isKeypadOpen)}
-                className={`p-1.5 rounded-lg transition-colors ${isKeypadOpen ? "bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400" : "text-zinc-400 hover:text-indigo-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
+                className={`p - 1.5 rounded - lg transition - colors ${isKeypadOpen ? "bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400" : "text-zinc-400 hover:text-indigo-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"} `}
                 title="لوحة الأرقام السريعة"
               >
                 <Calculator className="w-5 h-5" />
@@ -519,6 +527,20 @@ export default function POS() {
                   </span>
                 </div>
               )}
+
+              {/* Added mini Status Bar Info */}
+              <div className="flex justify-between items-center text-xs text-zinc-500 dark:text-zinc-400 border-t border-zinc-200 dark:border-zinc-800 pt-2 pb-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded text-[10px]" dir="ltr">
+                    {currentTime.toLocaleTimeString('ar-EG', { hour12: true, hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <span>{currentTime.toLocaleDateString('ar-EG', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                </div>
+                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded text-[10px]" dir="ltr">
+                  <span>$</span> 1.00 = <span>₺</span> {exchangeRate.toFixed(3)}
+                </div>
+              </div>
+
               <div className="flex justify-between text-lg font-bold text-zinc-900 dark:text-white pt-2 border-t border-zinc-200 dark:border-zinc-800">
                 <span>الإجمالي</span>
                 <span className="text-indigo-600 dark:text-indigo-400 privacy-blur">
@@ -579,40 +601,40 @@ export default function POS() {
               <div className="grid grid-cols-4 gap-2">
                 <button
                   onClick={() => setPaymentMethod("cash")}
-                  className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${paymentMethod === "cash"
-                    ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400"
-                    : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                    }`}
+                  className={`flex flex - col items - center justify - center gap - 1 py - 2 rounded - xl border text - xs font - medium transition - colors ${paymentMethod === "cash"
+                      ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400"
+                      : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                    } `}
                 >
                   <Banknote className="w-4 h-4" />
                   كاش
                 </button>
                 <button
                   onClick={() => setPaymentMethod("card")}
-                  className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${paymentMethod === "card"
-                    ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400"
-                    : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                    }`}
+                  className={`flex flex - col items - center justify - center gap - 1 py - 2 rounded - xl border text - xs font - medium transition - colors ${paymentMethod === "card"
+                      ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400"
+                      : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                    } `}
                 >
                   <CreditCard className="w-4 h-4" />
                   شبكة
                 </button>
                 <button
                   onClick={() => setPaymentMethod("debt")}
-                  className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${paymentMethod === "debt"
-                    ? "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400"
-                    : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                    }`}
+                  className={`flex flex - col items - center justify - center gap - 1 py - 2 rounded - xl border text - xs font - medium transition - colors ${paymentMethod === "debt"
+                      ? "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400"
+                      : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                    } `}
                 >
                   <ShieldAlert className="w-4 h-4" />
                   آجل
                 </button>
                 <button
                   onClick={() => setPaymentMethod("split")}
-                  className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${paymentMethod === "split"
-                    ? "bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-400"
-                    : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                    }`}
+                  className={`flex flex - col items - center justify - center gap - 1 py - 2 rounded - xl border text - xs font - medium transition - colors ${paymentMethod === "split"
+                      ? "bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-400"
+                      : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                    } `}
                 >
                   <div className="flex -space-x-2">
                     <Banknote className="w-4 h-4 z-10" />
@@ -629,7 +651,7 @@ export default function POS() {
                       value={amountPaid}
                       onChange={(val) => setAmountPaid(val)}
                       onFocus={() => setActiveKeypadInput("amountPaid")}
-                      className={`w-full px-4 py-2 bg-white dark:bg-zinc-950 border rounded-xl text-sm focus:outline-none transition-colors ${activeKeypadInput === "amountPaid" && isKeypadOpen ? "border-indigo-500 ring-2 ring-indigo-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-indigo-500"} dark:text-white`}
+                      className={`w - full px - 4 py - 2 bg - white dark: bg - zinc - 950 border rounded - xl text - sm focus: outline - none transition - colors ${activeKeypadInput === "amountPaid" && isKeypadOpen ? "border-indigo-500 ring-2 ring-indigo-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-indigo-500"} dark: text - white`}
                       placeholder={
                         paymentMethod === "debt"
                           ? "المبلغ المدفوع مقدماً (اختياري)"
@@ -669,7 +691,7 @@ export default function POS() {
                       value={splitCash}
                       onChange={(val) => setSplitCash(val)}
                       onFocus={() => setActiveKeypadInput("splitCash")}
-                      className={`w-full px-4 py-2 bg-white dark:bg-zinc-950 border rounded-xl text-sm focus:outline-none transition-colors ${activeKeypadInput === "splitCash" && isKeypadOpen ? "border-purple-500 ring-2 ring-purple-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-purple-500"} dark:text-white`}
+                      className={`w - full px - 4 py - 2 bg - white dark: bg - zinc - 950 border rounded - xl text - sm focus: outline - none transition - colors ${activeKeypadInput === "splitCash" && isKeypadOpen ? "border-purple-500 ring-2 ring-purple-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-purple-500"} dark: text - white`}
                       placeholder="مبلغ الكاش"
                       min="0"
                       step="0.01"
@@ -679,7 +701,7 @@ export default function POS() {
                       value={splitCard}
                       onChange={(val) => setSplitCard(val)}
                       onFocus={() => setActiveKeypadInput("splitCard")}
-                      className={`w-full px-4 py-2 bg-white dark:bg-zinc-950 border rounded-xl text-sm focus:outline-none transition-colors ${activeKeypadInput === "splitCard" && isKeypadOpen ? "border-purple-500 ring-2 ring-purple-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-purple-500"} dark:text-white`}
+                      className={`w - full px - 4 py - 2 bg - white dark: bg - zinc - 950 border rounded - xl text - sm focus: outline - none transition - colors ${activeKeypadInput === "splitCard" && isKeypadOpen ? "border-purple-500 ring-2 ring-purple-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-purple-500"} dark: text - white`}
                       placeholder="مبلغ الشبكة"
                       min="0"
                       step="0.01"

@@ -5,15 +5,15 @@ import { Store, DollarSign, Package, CheckCircle, Database } from "lucide-react"
 import toast from "react-hot-toast";
 
 export default function SetupWizardModal() {
-    const { settings, updateSettings, resetApp, isAuthLoading } = useAppContext();
+    const { settings, updateSettings, resetApp, isAuthLoading, user } = useAppContext();
     const [step, setStep] = useState(1);
     const [storeName, setStoreName] = useState(settings.storeName || "كاشير تك");
     const [currency, setCurrency] = useState(settings.currency || "ر.س");
     const [importDemo, setImportDemo] = useState(false);
     const [isFinishing, setIsFinishing] = useState(false);
 
-    // If already setup, don't show
-    if (settings.setupCompleted || isAuthLoading) return null;
+    // If already setup, don't show, or if not logged in
+    if (settings.setupCompleted || isAuthLoading || !user) return null;
 
     const handleFinish = async () => {
         setIsFinishing(true);

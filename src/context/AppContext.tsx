@@ -106,6 +106,8 @@ interface AppContextType {
   updateEmployee: (id: string, employee: Partial<Employee>) => void;
   deleteEmployee: (id: string) => void;
   addTransaction: (transaction: Omit<Transaction, "id">) => void;
+  deferredPrompt: any;
+  setDeferredPrompt: (prompt: any) => void;
 }
 
 const defaultSettings: Settings = {
@@ -157,6 +159,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isPro, setIsPro] = useLocalStorage<boolean>("app_isPro", true);
   const [isPrivacyMode, setIsPrivacyMode] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   const [returns, setReturns] = useLocalStorage<ReturnItem[]>(
     "app_returns",
@@ -208,6 +211,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     "app_transactions",
     [],
   );
+
+  // Capture PWA Install Prompt
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
 
   // Handle Authentication and restore data from Firestore
   useEffect(() => {
@@ -1227,6 +1240,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         updateEmployee,
         deleteEmployee,
         addTransaction,
+        deferredPrompt,
+        setDeferredPrompt,
       }}
     >
       {children}

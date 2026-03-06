@@ -88,7 +88,7 @@ function ForgotPasswordPanel({
 }
 
 export default function Login() {
-  const { login, settings, updateSettings, playSound } = useAppContext();
+  const { login, settings, updateSettings, playSound, deferredPrompt, setDeferredPrompt } = useAppContext();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [authMethod, setAuthMethod] = useState<"email" | "phone">("email");
   const [loading, setLoading] = useState(false);
@@ -279,6 +279,15 @@ export default function Login() {
     return recaptchaRef.current;
   };
 
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
+
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -378,17 +387,28 @@ export default function Login() {
   // ─────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#E9ECEF] dark:from-zinc-950 dark:to-zinc-900 flex flex-col items-center justify-center p-4 transition-colors duration-300" dir="rtl">
-      {/* Theme Toggle Button */}
-      <button
-        onClick={() => {
-          const newTheme = settings.theme === "dark" ? "light" : "dark";
-          updateSettings({ ...settings, theme: newTheme });
-        }}
-        className="absolute top-4 left-4 md:top-6 md:left-6 p-3 rounded-full bg-white dark:bg-zinc-800 shadow-md text-zinc-600 dark:text-zinc-300 hover:text-[#00E676] dark:hover:text-[#00E676] border border-gray-100 dark:border-zinc-700 transition-colors z-50"
-      >
-        {settings.theme === "dark" ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-      </button>
-
+      <header className="absolute top-4 left-4 md:top-6 md:left-6 z-50">
+        {/* Controls: Theme & Install App */}
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          {deferredPrompt && (
+            <button
+              onClick={handleInstallApp}
+              className="flex items-center gap-2 px-4 py-2 bg-[#00E676]/10 text-[#00C853] hover:bg-[#00E676]/20 transition-colors rounded-full font-bold shadow-sm"
+              title="تثبيت التطبيق على جهازك"
+            >
+              <ArrowRight className="w-4 h-4" />
+              تثبيت التطبيق
+            </button>
+          )}
+          <button
+            onClick={() => updateSettings({ theme: settings.theme === "dark" ? "light" : "dark" })}
+            className="p-3 bg-white/50 dark:bg-zinc-800/50 hover:bg-white dark:hover:bg-zinc-800 backdrop-blur-sm transition-all rounded-full text-indigo-900 dark:text-white shadow-sm"
+            title={settings.theme === "dark" ? "الوضع الفاتح" : "الوضع الداكن"}
+          >
+            {settings.theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
+        </div>
+      </header>
       {/* Invisible recaptcha anchor */}
       <div id="recaptcha-container"></div>
 

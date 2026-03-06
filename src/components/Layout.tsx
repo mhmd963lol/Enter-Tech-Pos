@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -25,11 +26,11 @@ import {
   TrendingUp,
   Eye,
   EyeOff,
+  Download,
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import NotificationPanel from "./NotificationPanel";
 import ThemePageTransition from "./ThemePageTransition";
-import StatusBar from "./StatusBar";
 
 interface NavItem {
   icon: React.ElementType;
@@ -194,8 +195,13 @@ const SidebarItem: React.FC<{
 };
 
 export default function Layout() {
+  const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState(false);
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
   const {
     settings,
     updateSettings,
@@ -206,9 +212,9 @@ export default function Layout() {
     isPrivacyMode,
     togglePrivacyMode,
     playSound,
+    deferredPrompt,
+    setDeferredPrompt,
   } = useAppContext();
-
-  const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState(false);
 
   const unreadNotificationsCount = notifications.filter((n) => !n.read).length;
 
@@ -223,6 +229,32 @@ export default function Layout() {
       });
     } else {
       document.exitFullscreen();
+    }
+  };
+
+  // Click outside listener for user menu
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [userMenuRef]);
+
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        console.log("User accepted the install prompt");
+      } else {
+        console.log("User dismissed the install prompt");
+      }
+      setDeferredPrompt(null);
     }
   };
 
@@ -285,6 +317,16 @@ export default function Layout() {
         </nav>
 
         <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 text-center">
+          {deferredPrompt && (
+            <button
+              onClick={handleInstallApp}
+              className={`w-full flex items-center gap-3 p-3 mb-4 rounded-xl transition-all font-bold group shadow-sm bg-gradient-to-r from-[#00E676] to-[#00C853] text-indigo-950 hover:shadow-[#00E676]/20 bg-[length:200%_auto] hover:bg-right ${isDesktopSidebarCollapsed ? "justify-center px-0" : ""
+                }`}
+            >
+              <Download className="w-5 h-5 shrink-0" />
+              {!isDesktopSidebarCollapsed && <span>تثبيت النظام</span>}
+            </button>
+          )}
           <p className="text-xs text-zinc-400 font-medium">
             برمجة محمد عرجون © {new Date().getFullYear()}
           </p>
@@ -293,7 +335,6 @@ export default function Layout() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
-        <StatusBar />
         {/* Top Header */}
         <header className="h-16 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 lg:px-8 shrink-0">
           <div className="flex items-center gap-4">
@@ -311,7 +352,8 @@ export default function Layout() {
               <Menu className="w-6 h-6" />
             </button>
 
-            <div className="hidden sm:flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+            {/* Hidden original username text */}
+            <div className="hidden items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
               <span className="font-medium text-zinc-900 dark:text-white">
                 {user?.name}
               </span>
@@ -385,13 +427,81 @@ export default function Layout() {
 
             <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-800 mx-2"></div>
 
-            <button
-              onClick={logout}
-              className="flex items-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">تسجيل الخروج</span>
-            </button>
+            {/* User Dropdown Profile */}
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center gap-2 sm:gap-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 p-1.5 sm:px-3 sm:py-2 rounded-xl transition-colors"
+              >
+                <div className="hidden sm:flex flex-col items-end text-sm">
+                  <span className="font-bold text-zinc-900 dark:text-white leading-tight">
+                    {user?.name}
+                  </span>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                    {user?.role === "admin" ? "مدير" : "كاشير"}
+                  </span>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                  <Users className="w-5 h-5" />
+                </div>
+                <Menu className="w-4 h-4 text-zinc-400 hidden sm:block" />
+              </button>
+
+              <AnimatePresence>
+                {isUserMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute left-0 top-full mt-2 w-56 bg-white dark:bg-[#1a1b1e] border border-zinc-200 dark:border-zinc-800/50 rounded-2xl shadow-xl overflow-hidden z-50 flex flex-col"
+                  >
+                    <div className="p-4 border-b border-zinc-100 dark:border-zinc-800/50 flex flex-col items-center">
+                      <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-2">
+                        <Users className="w-7 h-7" />
+                      </div>
+                      <span className="font-bold text-zinc-900 dark:text-white uppercase tracking-wider text-sm">
+                        {user?.name}
+                      </span>
+                      <span className="text-xs text-zinc-500 font-medium">
+                        CASHIER TECH
+                      </span>
+                    </div>
+
+                    <div className="p-2 flex flex-col">
+                      <NavLink
+                        to="/help"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-xl transition-colors text-zinc-700 dark:text-zinc-300 font-bold text-sm mb-1"
+                      >
+                        <HelpCircle className="w-4 h-4 text-zinc-400" />
+                        المساعدة والإقتراحات
+                      </NavLink>
+
+                      <NavLink
+                        to="/settings"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-xl transition-colors text-zinc-700 dark:text-zinc-300 font-bold text-sm mb-1 border-b border-zinc-100 dark:border-zinc-800/50 pb-3"
+                      >
+                        <Settings className="w-4 h-4 text-zinc-400" />
+                        الإعدادات
+                      </NavLink>
+
+                      <button
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          logout();
+                        }}
+                        className="flex items-center gap-3 px-3 py-2.5 mt-1 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors text-red-600 dark:text-red-400 font-bold text-sm"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        تسجيل الخروج
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </header>
 
