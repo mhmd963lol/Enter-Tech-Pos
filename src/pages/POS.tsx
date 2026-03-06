@@ -46,9 +46,6 @@ export default function POS() {
     maintenanceJobs,
     customers,
     playSound,
-    exchangeRate,
-    isRateLive,
-    refreshExchangeRate,
   } = useAppContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<
@@ -61,11 +58,8 @@ export default function POS() {
   const [splitCard, setSplitCard] = useState("");
   const navigate = useNavigate();
 
-
-
   // Maintenance Modal State
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
-
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
 
   // Maintenance panel collapse state
@@ -75,6 +69,7 @@ export default function POS() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [gridSize, setGridSize] = useState<"large" | "small">("large");
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
+  const [isCartExpanded, setIsCartExpanded] = useState(true);
 
   // Keypad State
   const [isKeypadOpen, setIsKeypadOpen] = useState(false);
@@ -105,7 +100,7 @@ export default function POS() {
       return category?.id === selectedCategoryId || p.categoryId === selectedCategoryId;
     }
 
-    return false; // Show nothing if no search and no category is selected (we will render categories instead)
+    return false;
   });
 
   const cartTotal = cart.reduce(
@@ -127,7 +122,7 @@ export default function POS() {
     } else if (paymentMethod === "cash") {
       finalAmountPaid = amountPaid ? Number(amountPaid) : grandTotal;
     } else if (paymentMethod === "card") {
-      finalAmountPaid = grandTotal; // Usually exact amount for card
+      finalAmountPaid = grandTotal;
     } else if (paymentMethod === "split") {
       finalAmountPaid = Number(splitCash) + Number(splitCard);
       splitDetails = { cash: Number(splitCash), card: Number(splitCard) };
@@ -223,20 +218,20 @@ export default function POS() {
               <div className="flex bg-zinc-100 dark:bg-zinc-900 rounded-lg p-1 shrink-0">
                 <button
                   onClick={() => setGridSize("small")}
-                  className={`p - 2 rounded - md transition - colors ${gridSize === "small"
+                  className={`p-2 rounded-md transition-colors ${gridSize === "small"
                     ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400"
                     : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-                    } `}
+                    }`}
                   title="تصغير العناصر"
                 >
                   <Grid3X3 className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => setGridSize("large")}
-                  className={`p - 2 rounded - md transition - colors ${gridSize === "large"
+                  className={`p-2 rounded-md transition-colors ${gridSize === "large"
                     ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400"
                     : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-                    } `}
+                    }`}
                   title="تكبير العناصر"
                 >
                   <LayoutGrid className="w-5 h-5" />
@@ -246,7 +241,6 @@ export default function POS() {
           </div>
 
           <div className="flex-1 overflow-auto p-4 custom-scrollbar">
-            {/* If NO search term, and NO category selected -> show Categories as Folders */}
             {!searchTerm && !selectedCategoryId && (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {categories.filter(c => c.isActive).map((category) => (
@@ -269,7 +263,6 @@ export default function POS() {
               </div>
             )}
 
-            {/* If NO search term, but category IS selected -> show Back button + Products */}
             {!searchTerm && selectedCategoryId && (
               <div className="mb-4 flex items-center gap-2">
                 <button
@@ -285,13 +278,12 @@ export default function POS() {
               </div>
             )}
 
-            {/* Render Products Grid */}
             {(searchTerm || selectedCategoryId) && (
               <div
-                className={`grid gap - 4 ${gridSize === "large"
+                className={`grid gap-4 ${gridSize === "large"
                   ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
                   : "grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
-                  } `}
+                  }`}
               >
                 {filteredProducts.map((product) => (
                   <motion.div
@@ -308,10 +300,10 @@ export default function POS() {
                           ? 0.98
                           : 1,
                     }}
-                    className={`relative flex flex - col items - center text - center p - 4 rounded - 2xl border transition - all ${product.trackInventory !== false && product.stock === 0
+                    className={`relative flex flex-col items-center text-center p-4 rounded-2xl border transition-all ${product.trackInventory !== false && product.stock === 0
                       ? "opacity-50 cursor-not-allowed border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50"
                       : "border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md bg-white dark:bg-zinc-950 cursor-pointer"
-                      } `}
+                      }`}
                     onClick={() => {
                       if (product.trackInventory === false || product.stock > 0)
                         addToCart(product);
@@ -384,18 +376,17 @@ export default function POS() {
 
         {/* Cart Section */}
         <div
-          className={`
-w - full lg: w - 96 flex flex - col bg - white dark: bg - zinc - 950 shadow - sm border border - zinc - 100 dark: border - zinc - 800 shrink - 0
-            fixed lg:relative lg:flex lg: rounded - 2xl min - h - 0 lg: max - h - full
-bottom - 0 left - 0 right - 0 z - 50 lg: z - auto rounded - t - 3xl lg: rounded - b - 2xl
-transition - transform duration - 300 ease - [cubic - bezier(0.32, 0.72, 0, 1)]
+          className={`w-full lg:w-96 flex flex-col bg-white dark:bg-zinc-950 shadow-sm border border-zinc-100 dark:border-zinc-800 shrink-0
+            fixed lg:relative lg:flex lg:rounded-2xl min-h-0 lg:max-h-full
+            bottom-0 left-0 right-0 z-50 lg:z-auto rounded-t-3xl lg:rounded-b-2xl
+            transition-all duration-300 ease-[cubic-bezier(0.32, 0.72, 0, 1)]
             ${isMobileCartOpen ? 'translate-y-0 h-[85vh]' : 'translate-y-full lg:translate-y-0'}
-`}
+            ${!isCartExpanded ? 'lg:h-auto' : 'lg:h-full'}`}
         >
           <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <ShoppingCart className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-              <h2 className="font-bold text-zinc-900 dark:text-white">
+              <h2 className="font-bold text-zinc-900 dark:text-white text-sm lg:text-base">
                 سلة المشتريات
               </h2>
               <span className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 py-0.5 px-2 rounded-full text-xs font-bold mr-auto">
@@ -403,348 +394,359 @@ transition - transform duration - 300 ease - [cubic - bezier(0.32, 0.72, 0, 1)]
               </span>
               <button
                 onClick={() => setIsKeypadOpen(!isKeypadOpen)}
-                className={`p - 1.5 rounded - lg transition - colors ${isKeypadOpen ? "bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400" : "text-zinc-400 hover:text-indigo-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"} `}
+                className={`p-1.5 rounded-lg transition-colors ${isKeypadOpen ? "bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400" : "text-zinc-400 hover:text-indigo-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
                 title="لوحة الأرقام السريعة"
               >
                 <Calculator className="w-5 h-5" />
               </button>
             </div>
-            <button
-              onClick={() => setIsMobileCartOpen(false)}
-              className="lg:hidden p-2 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-            >
-              <X className="w-6 h-6" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setIsCartExpanded(!isCartExpanded)}
+                className="hidden lg:flex p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                title={isCartExpanded ? "تصغير السلة" : "توسيع السلة"}
+              >
+                {isCartExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+              <button
+                onClick={() => setIsMobileCartOpen(false)}
+                className="lg:hidden p-2 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
           </div>
 
-          <div className="flex-1 overflow-auto p-4 space-y-3">
-            {cart.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-600 space-y-2">
-                <ShoppingCart className="w-12 h-12 opacity-20" />
-                <p>السلة فارغة</p>
-              </div>
-            ) : (
-              <AnimatePresence mode="popLayout">
-                {cart.map((item) => (
-                  <motion.div
-                    layout
-                    initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{
-                      opacity: 0,
-                      scale: 0.8,
-                      x: -20,
-                      backgroundColor: "#fee2e2",
-                    }}
-                    transition={{ duration: 0.2 }}
-                    key={item.id}
-                    className="flex flex-col gap-3 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm text-zinc-900 dark:text-white truncate">
-                          {item.name}
-                        </h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <NumberInput
-                            value={item.customPrice ?? item.price}
-                            onChange={(val) =>
-                              handlePriceChange(item.id, Number(val))
-                            }
-                            className="w-24 px-2 py-1 text-sm bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:text-white text-left font-mono"
-                            min="0"
-                            step="0.01"
-                            allowDecimal
-                            hideControls
-                          />
-                          <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                            {settings.currency}
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => removeFromCart(item.id)}
-                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+          {isCartExpanded && (
+            <>
+              <div className="flex-1 overflow-auto p-4 space-y-3 custom-scrollbar">
+                {cart.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-600 space-y-2">
+                    <ShoppingCart className="w-12 h-12 opacity-20" />
+                    <p>السلة فارغة</p>
+                  </div>
+                ) : (
+                  <AnimatePresence mode="popLayout">
+                    {cart.map((item) => (
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{
+                          opacity: 0,
+                          scale: 0.8,
+                          x: -20,
+                          backgroundColor: "#fee2e2",
+                        }}
+                        transition={{ duration: 0.2 }}
+                        key={item.id}
+                        className="flex flex-col gap-3 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-sm text-zinc-900 dark:text-white truncate">
+                              {item.name}
+                            </h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <NumberInput
+                                value={item.customPrice ?? item.price}
+                                onChange={(val) =>
+                                  handlePriceChange(item.id, Number(val))
+                                }
+                                className="w-24 px-2 py-1 text-sm bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:text-white text-left font-mono"
+                                min="0"
+                                step="0.01"
+                                allowDecimal
+                                hideControls
+                              />
+                              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                                {settings.currency}
+                              </span>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => removeFromCart(item.id)}
+                            className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <p className="text-indigo-600 dark:text-indigo-400 font-bold text-sm">
+                            {(
+                              (item.customPrice ?? item.price) * item.quantity
+                            ).toFixed(2)}{" "}
+                            {settings.currency}
+                          </p>
+                          <div className="flex items-center gap-1.5 bg-zinc-100/80 dark:bg-zinc-800/80 rounded-full p-1 border border-zinc-200/50 dark:border-zinc-700/50">
+                            <button
+                              onClick={() => updateCartQuantity(item.id, item.quantity - 1)}
+                              className="w-8 h-8 flex items-center justify-center bg-white dark:bg-zinc-700 hover:bg-rose-100 dark:hover:bg-rose-900/30 hover:text-rose-600 dark:hover:text-rose-400 rounded-full shadow-sm transition-all text-zinc-500 dark:text-zinc-300"
+                            >
+                              <Minus className="w-4 h-4" />
+                            </button>
+                            <div className="w-10">
+                              <NumberInput
+                                value={item.quantity}
+                                onChange={(val) => updateCartQuantity(item.id, parseInt(val) || 1)}
+                                className="w-full text-center bg-transparent border-none focus:ring-0 dark:text-white font-bold p-0 text-sm"
+                                min="1"
+                                hideControls
+                              />
+                            </div>
+                            <button
+                              onClick={() => updateCartQuantity(item.id, item.quantity + 1)}
+                              className="w-8 h-8 flex items-center justify-center bg-white dark:bg-zinc-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-full shadow-sm transition-all text-zinc-500 dark:text-zinc-300"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                )}
+              </div>
+
+              {/* Checkout Panel */}
+              <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 space-y-4">
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
+                    <span>المجموع الفرعي</span>
+                    <span>
+                      {cartTotal.toFixed(2)} {settings.currency}
+                    </span>
+                  </div>
+                  {settings.enableTax && (
+                    <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
+                      <span>الضريبة ({settings.taxRate}%)</span>
+                      <span>
+                        {tax.toFixed(2)} {settings.currency}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between text-lg font-bold text-zinc-900 dark:text-white pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                    <span>الإجمالي</span>
+                    <span className="text-indigo-600 dark:text-indigo-400 privacy-blur">
+                      {grandTotal.toFixed(2)} {settings.currency}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <select
+                        className="flex-1 px-4 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-colors"
+                        value={selectedCustomerId}
+                        onChange={(e) => {
+                          const id = e.target.value;
+                          setSelectedCustomerId(id);
+                          const customer = customers.find((c) => c.id === id);
+                          if (customer) setCustomerName(customer.name);
+                        }}
+                      >
+                        <option value="">اختر عميل مسجل...</option>
+                        {customers.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name} ({c.balance} {settings.currency})
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => setIsAddCustomerModalOpen(true)}
+                        className="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-xl transition-colors shrink-0 border border-indigo-100 dark:border-indigo-800"
+                        title="إضافة عميل جديد"
+                      >
+                        <UserPlus className="w-5 h-5" />
                       </button>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <p className="text-indigo-600 dark:text-indigo-400 font-bold text-sm">
-                        {(
-                          (item.customPrice ?? item.price) * item.quantity
-                        ).toFixed(2)}{" "}
-                        {settings.currency}
-                      </p>
-                      <div className="flex items-center gap-1.5 bg-zinc-100/80 dark:bg-zinc-800/80 rounded-full p-1 border border-zinc-200/50 dark:border-zinc-700/50">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="أو ادخل اسم عميل جديد..."
+                        className="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-colors"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        disabled={!!selectedCustomerId}
+                      />
+                      {customerName && !selectedCustomerId && (
                         <button
-                          onClick={() => updateCartQuantity(item.id, item.quantity - 1)}
-                          className="w-8 h-8 flex items-center justify-center bg-white dark:bg-zinc-700 hover:bg-rose-100 dark:hover:bg-rose-900/30 hover:text-rose-600 dark:hover:text-rose-400 rounded-full shadow-sm transition-all text-zinc-500 dark:text-zinc-300"
+                          onClick={() => setCustomerName("")}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-500 dark:text-zinc-400 transition-colors"
                         >
-                          <Minus className="w-4 h-4" />
+                          <X className="w-4 h-4" />
                         </button>
-                        <div className="w-10">
-                          <NumberInput
-                            value={item.quantity}
-                            onChange={(val) => updateCartQuantity(item.id, parseInt(val) || 1)}
-                            className="w-full text-center bg-transparent border-none focus:ring-0 dark:text-white font-bold p-0 text-sm"
-                            min="1"
-                            hideControls
-                          />
-                        </div>
-                        <button
-                          onClick={() => updateCartQuantity(item.id, item.quantity + 1)}
-                          className="w-8 h-8 flex items-center justify-center bg-white dark:bg-zinc-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-full shadow-sm transition-all text-zinc-500 dark:text-zinc-300"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      </div>
+                      )}
                     </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            )}
-          </div>
+                  </div>
 
-          {/* Checkout Panel */}
-          <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 space-y-4">
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
-                <span>المجموع الفرعي</span>
-                <span>
-                  {cartTotal.toFixed(2)} {settings.currency}
-                </span>
-              </div>
-              {settings.enableTax && (
-                <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
-                  <span>الضريبة ({settings.taxRate}%)</span>
-                  <span>
-                    {tax.toFixed(2)} {settings.currency}
-                  </span>
-                </div>
-              )}
-
-
-
-              <div className="flex justify-between text-lg font-bold text-zinc-900 dark:text-white pt-2 border-t border-zinc-200 dark:border-zinc-800">
-                <span>الإجمالي</span>
-                <span className="text-indigo-600 dark:text-indigo-400 privacy-blur">
-                  {grandTotal.toFixed(2)} {settings.currency}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-3 pt-2">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <select
-                    className="flex-1 px-4 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-colors"
-                    value={selectedCustomerId}
-                    onChange={(e) => {
-                      const id = e.target.value;
-                      setSelectedCustomerId(id);
-                      const customer = customers.find((c) => c.id === id);
-                      if (customer) setCustomerName(customer.name);
-                    }}
-                  >
-                    <option value="">اختر عميل مسجل...</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} ({c.balance} {settings.currency})
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={() => setIsAddCustomerModalOpen(true)}
-                    className="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-xl transition-colors shrink-0 border border-indigo-100 dark:border-indigo-800"
-                    title="إضافة عميل جديد"
-                  >
-                    <UserPlus className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="أو ادخل اسم عميل جديد..."
-                    className="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-colors"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    disabled={!!selectedCustomerId}
-                  />
-                  {customerName && !selectedCustomerId && (
+                  <div className="grid grid-cols-4 gap-2">
                     <button
-                      onClick={() => setCustomerName("")}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-500 dark:text-zinc-400 transition-colors"
+                      onClick={() => setPaymentMethod("cash")}
+                      className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${paymentMethod === "cash"
+                        ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400"
+                        : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                        }`}
                     >
-                      <X className="w-4 h-4" />
+                      <Banknote className="w-4 h-4" />
+                      كاش
                     </button>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-4 gap-2">
-                <button
-                  onClick={() => setPaymentMethod("cash")}
-                  className={`flex flex - col items - center justify - center gap - 1 py - 2 rounded - xl border text - xs font - medium transition - colors ${paymentMethod === "cash"
-                    ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400"
-                    : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                    } `}
-                >
-                  <Banknote className="w-4 h-4" />
-                  كاش
-                </button>
-                <button
-                  onClick={() => setPaymentMethod("card")}
-                  className={`flex flex - col items - center justify - center gap - 1 py - 2 rounded - xl border text - xs font - medium transition - colors ${paymentMethod === "card"
-                    ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400"
-                    : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                    } `}
-                >
-                  <CreditCard className="w-4 h-4" />
-                  شبكة
-                </button>
-                <button
-                  onClick={() => setPaymentMethod("debt")}
-                  className={`flex flex - col items - center justify - center gap - 1 py - 2 rounded - xl border text - xs font - medium transition - colors ${paymentMethod === "debt"
-                    ? "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400"
-                    : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                    } `}
-                >
-                  <ShieldAlert className="w-4 h-4" />
-                  آجل
-                </button>
-                <button
-                  onClick={() => setPaymentMethod("split")}
-                  className={`flex flex - col items - center justify - center gap - 1 py - 2 rounded - xl border text - xs font - medium transition - colors ${paymentMethod === "split"
-                    ? "bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-400"
-                    : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
-                    } `}
-                >
-                  <div className="flex -space-x-2">
-                    <Banknote className="w-4 h-4 z-10" />
-                    <CreditCard className="w-4 h-4" />
-                  </div>
-                  مقسم
-                </button>
-              </div>
-
-              {(paymentMethod === "cash" || paymentMethod === "debt") && (
-                <div className="space-y-2">
-                  <div className="relative">
-                    <NumberInput
-                      value={amountPaid}
-                      onChange={(val) => setAmountPaid(val)}
-                      onFocus={() => setActiveKeypadInput("amountPaid")}
-                      className={`w - full px - 4 py - 2 bg - white dark: bg - zinc - 950 border rounded - xl text - sm focus: outline - none transition - colors ${activeKeypadInput === "amountPaid" && isKeypadOpen ? "border-indigo-500 ring-2 ring-indigo-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-indigo-500"} dark: text - white`}
-                      placeholder={
-                        paymentMethod === "debt"
-                          ? "المبلغ المدفوع مقدماً (اختياري)"
-                          : "المبلغ المستلم"
-                      }
-                      min="0"
-                      step="0.01"
-                      allowDecimal
-                    />
-                  </div>
-                  {paymentMethod === "cash" &&
-                    amountPaid &&
-                    Number(amountPaid) >= grandTotal && (
-                      <div className="flex justify-between text-sm p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-lg">
-                        <span>الباقي للعميل:</span>
-                        <span className="font-bold">
-                          {change.toFixed(2)} {settings.currency}
-                        </span>
+                    <button
+                      onClick={() => setPaymentMethod("card")}
+                      className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${paymentMethod === "card"
+                        ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400"
+                        : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                        }`}
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      شبكة
+                    </button>
+                    <button
+                      onClick={() => setPaymentMethod("debt")}
+                      className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${paymentMethod === "debt"
+                        ? "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400"
+                        : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                        }`}
+                    >
+                      <ShieldAlert className="w-4 h-4" />
+                      آجل
+                    </button>
+                    <button
+                      onClick={() => setPaymentMethod("split")}
+                      className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-xs font-medium transition-colors ${paymentMethod === "split"
+                        ? "bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-400"
+                        : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                        }`}
+                    >
+                      <div className="flex -space-x-2">
+                        <Banknote className="w-4 h-4 z-10" />
+                        <CreditCard className="w-4 h-4" />
                       </div>
-                    )}
-                  {paymentMethod === "debt" && (
-                    <div className="flex justify-between text-sm p-2 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-lg">
-                      <span>المبلغ المتبقي كدين:</span>
-                      <span className="font-bold">
-                        {(grandTotal - (Number(amountPaid) || 0)).toFixed(2)}{" "}
-                        {settings.currency}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {paymentMethod === "split" && (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    <NumberInput
-                      value={splitCash}
-                      onChange={(val) => setSplitCash(val)}
-                      onFocus={() => setActiveKeypadInput("splitCash")}
-                      className={`w - full px - 4 py - 2 bg - white dark: bg - zinc - 950 border rounded - xl text - sm focus: outline - none transition - colors ${activeKeypadInput === "splitCash" && isKeypadOpen ? "border-purple-500 ring-2 ring-purple-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-purple-500"} dark: text - white`}
-                      placeholder="مبلغ الكاش"
-                      min="0"
-                      step="0.01"
-                      allowDecimal
-                    />
-                    <NumberInput
-                      value={splitCard}
-                      onChange={(val) => setSplitCard(val)}
-                      onFocus={() => setActiveKeypadInput("splitCard")}
-                      className={`w - full px - 4 py - 2 bg - white dark: bg - zinc - 950 border rounded - xl text - sm focus: outline - none transition - colors ${activeKeypadInput === "splitCard" && isKeypadOpen ? "border-purple-500 ring-2 ring-purple-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-purple-500"} dark: text - white`}
-                      placeholder="مبلغ الشبكة"
-                      min="0"
-                      step="0.01"
-                      allowDecimal
-                    />
+                      مقسم
+                    </button>
                   </div>
-                  {Number(splitCash) + Number(splitCard) < grandTotal && (
-                    <p className="text-xs text-red-500">
-                      مجموع المبلغ أقل من الإجمالي (
-                      {(
-                        grandTotal -
-                        (Number(splitCash) + Number(splitCard))
-                      ).toFixed(2)}{" "}
-                      متبقي)
-                    </p>
-                  )}
-                  {Number(splitCash) + Number(splitCard) >= grandTotal && (
-                    <div className="flex justify-between text-sm p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-lg">
-                      <span>الباقي للعميل (كاش):</span>
-                      <span className="font-bold">
-                        {(
-                          Number(splitCash) +
-                          Number(splitCard) -
-                          grandTotal
-                        ).toFixed(2)}{" "}
-                        {settings.currency}
-                      </span>
+
+                  {(paymentMethod === "cash" || paymentMethod === "debt") && (
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <NumberInput
+                          value={amountPaid}
+                          onChange={(val) => setAmountPaid(val)}
+                          onFocus={() => setActiveKeypadInput("amountPaid")}
+                          className={`w-full px-4 py-2 bg-white dark:bg-zinc-950 border rounded-xl text-sm focus:outline-none transition-colors ${activeKeypadInput === "amountPaid" && isKeypadOpen ? "border-indigo-500 ring-2 ring-indigo-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-indigo-500"} dark:text-white`}
+                          placeholder={
+                            paymentMethod === "debt"
+                              ? "المبلغ المدفوع مقدماً (اختياري)"
+                              : "المبلغ المستلم"
+                          }
+                          min="0"
+                          step="0.01"
+                          allowDecimal
+                        />
+                      </div>
+                      {paymentMethod === "cash" &&
+                        amountPaid &&
+                        Number(amountPaid) >= grandTotal && (
+                          <div className="flex justify-between text-sm p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-lg">
+                            <span>الباقي للعميل:</span>
+                            <span className="font-bold">
+                              {change.toFixed(2)} {settings.currency}
+                            </span>
+                          </div>
+                        )}
+                      {paymentMethod === "debt" && (
+                        <div className="flex justify-between text-sm p-2 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-lg">
+                          <span>المبلغ المتبقي كدين:</span>
+                          <span className="font-bold">
+                            {(grandTotal - (Number(amountPaid) || 0)).toFixed(2)}{" "}
+                            {settings.currency}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
-              )}
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleCheckout}
-                disabled={
-                  cart.length === 0 ||
-                  (paymentMethod === "cash" &&
-                    amountPaid !== "" &&
-                    Number(amountPaid) < grandTotal) ||
-                  (paymentMethod === "debt" &&
-                    !selectedCustomerId &&
-                    !customerName) ||
-                  (paymentMethod === "split" &&
-                    Number(splitCash) + Number(splitCard) < grandTotal)
-                }
-                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-800 disabled:text-zinc-500 dark:disabled:text-zinc-600 disabled:cursor-not-allowed text-white rounded-xl font-bold text-lg transition-colors shadow-sm"
-              >
-                {paymentMethod === "debt"
-                  ? "إتمام البيع الآجل"
-                  : paymentMethod === "split"
-                    ? "دفع مقسم وإصدار"
-                    : "دفع وإصدار الفاتورة"}
-              </motion.button>
-            </div>
-          </div>
+                  {paymentMethod === "split" && (
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <NumberInput
+                          value={splitCash}
+                          onChange={(val) => setSplitCash(val)}
+                          onFocus={() => setActiveKeypadInput("splitCash")}
+                          className={`w-full px-4 py-2 bg-white dark:bg-zinc-950 border rounded-xl text-sm focus:outline-none transition-colors ${activeKeypadInput === "splitCash" && isKeypadOpen ? "border-purple-500 ring-2 ring-purple-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-purple-500"} dark:text-white`}
+                          placeholder="مبلغ الكاش"
+                          min="0"
+                          step="0.01"
+                          allowDecimal
+                        />
+                        <NumberInput
+                          value={splitCard}
+                          onChange={(val) => setSplitCard(val)}
+                          onFocus={() => setActiveKeypadInput("splitCard")}
+                          className={`w-full px-4 py-2 bg-white dark:bg-zinc-950 border rounded-xl text-sm focus:outline-none transition-colors ${activeKeypadInput === "splitCard" && isKeypadOpen ? "border-purple-500 ring-2 ring-purple-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-purple-500"} dark:text-white`}
+                          placeholder="مبلغ الشبكة"
+                          min="0"
+                          step="0.01"
+                          allowDecimal
+                        />
+                      </div>
+                      {Number(splitCash) + Number(splitCard) < grandTotal && (
+                        <p className="text-xs text-red-500">
+                          مجموع المبلغ أقل من الإجمالي (
+                          {(
+                            grandTotal -
+                            (Number(splitCash) + Number(splitCard))
+                          ).toFixed(2)}{" "}
+                          متبقي)
+                        </p>
+                      )}
+                      {Number(splitCash) + Number(splitCard) >= grandTotal && (
+                        <div className="flex justify-between text-sm p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-lg">
+                          <span>الباقي للعميل (كاش):</span>
+                          <span className="font-bold">
+                            {(
+                              Number(splitCash) +
+                              Number(splitCard) -
+                              grandTotal
+                            ).toFixed(2)}{" "}
+                            {settings.currency}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleCheckout}
+                    disabled={
+                      cart.length === 0 ||
+                      (paymentMethod === "cash" &&
+                        amountPaid !== "" &&
+                        Number(amountPaid) < grandTotal) ||
+                      (paymentMethod === "debt" &&
+                        !selectedCustomerId &&
+                        !customerName) ||
+                      (paymentMethod === "split" &&
+                        Number(splitCash) + Number(splitCard) < grandTotal)
+                    }
+                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-800 disabled:text-zinc-500 dark:disabled:text-zinc-600 disabled:cursor-not-allowed text-white rounded-xl font-bold text-lg transition-colors shadow-sm"
+                  >
+                    {paymentMethod === "debt"
+                      ? "إتمام البيع الآجل"
+                      : paymentMethod === "split"
+                        ? "دفع مقسم وإصدار"
+                        : "دفع وإصدار الفاتورة"}
+                  </motion.button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -947,8 +949,6 @@ transition - transform duration - 300 ease - [cubic - bezier(0.32, 0.72, 0, 1)]
         onClose={() => setIsAddCustomerModalOpen(false)}
         onSuccess={(id, name) => {
           setCustomerName(name);
-          // If we had the actual object we could set selectedCustomerId(id)
-          // but just setting the name for the invoice is enough for a quick sale.
         }}
       />
 
