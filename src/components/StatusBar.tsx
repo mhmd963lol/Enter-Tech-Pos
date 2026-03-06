@@ -1,14 +1,30 @@
 import React, { useState, useEffect } from "react";
-import { Clock, Calendar, DollarSign, TrendingUp, ShoppingCart, LogOut } from "lucide-react";
+import { Clock, Calendar, DollarSign, TrendingUp, ShoppingCart, LogOut, Users, Settings } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
-import { useNavigate } from "react-router-dom";
-import { motion } from "motion/react";
+import { useNavigate, NavLink } from "react-router-dom";
+import { motion, AnimatePresence } from "motion/react";
+import { useRef } from "react";
 
 export default function StatusBar() {
     const { settings, orders, isPrivacyMode, playSound, user, logout, exchangeRate } = useAppContext();
     const [time, setTime] = useState(new Date());
     const [isRateReversed, setIsRateReversed] = useState(false);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const userMenuRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
+
+    // Click outside listener for user menu
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+                setIsUserMenuOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [userMenuRef]);
 
     // Update time every second
     useEffect(() => {
@@ -44,7 +60,7 @@ export default function StatusBar() {
     };
 
     return (
-        <div className="bg-gradient-to-l from-indigo-900 via-indigo-800 to-indigo-950 text-indigo-50 text-xs sm:text-sm py-1.5 px-4 flex flex-wrap items-center justify-between shrink-0 shadow-inner z-10 w-full relative">
+        <div className="bg-gradient-to-l from-indigo-900 via-indigo-800 to-indigo-950 text-indigo-50 text-xs sm:text-sm py-1.5 px-4 flex flex-wrap items-center justify-between shrink-0 shadow-inner z-[100] w-full relative">
 
             {/* Right side: Time and Date */}
             <div className="flex items-center gap-4 sm:gap-6">
@@ -112,22 +128,82 @@ export default function StatusBar() {
 
                 <div className="w-px h-4 bg-indigo-700/50 mx-1 hidden sm:block"></div>
 
-                {/* User Info and Logout */}
-                <div className="flex items-center gap-3">
-                    <div className="flex flex-col items-end text-[10px] leading-tight text-indigo-200">
-                        <span className="font-bold text-white uppercase">{user?.name}</span>
-                        <span>{user?.role === "admin" ? "مدير" : "كاشير"}</span>
-                    </div>
+                {/* User Info and Dropdown Menu */}
+                <div className="relative" ref={userMenuRef}>
                     <button
                         onClick={() => {
                             if (playSound) playSound("click");
-                            logout();
+                            setIsUserMenuOpen(!isUserMenuOpen);
                         }}
-                        className="p-1.5 bg-red-500/20 hover:bg-red-500/40 text-red-200 rounded-md border border-red-500/30 transition-colors"
-                        title="تسجيل الخروج"
+                        className="flex items-center gap-3 hover:bg-white/10 px-2 py-1 rounded-md transition-colors"
                     >
-                        <LogOut size={14} />
+                        <div className="flex flex-col items-end text-[10px] leading-tight text-indigo-200">
+                            <span className="font-bold text-white uppercase">{user?.name}</span>
+                            <span>{user?.role === "admin" ? "مدير" : "كاشير"}</span>
+                        </div>
+                        <div className="w-7 h-7 rounded-full bg-indigo-500/30 flex items-center justify-center text-indigo-100 border border-indigo-400/30">
+                            <Users size={14} />
+                        </div>
                     </button>
+
+                    <AnimatePresence>
+                        {isUserMenuOpen && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                                transition={{ duration: 0.15 }}
+                                className="absolute left-0 top-full mt-2 w-56 bg-white dark:bg-[#1a1b1e] border border-zinc-200 dark:border-zinc-800/50 rounded-xl shadow-2xl overflow-hidden z-[200] flex flex-col"
+                            >
+                                <div className="p-4 border-b border-zinc-100 dark:border-zinc-800/50 flex flex-col items-center">
+                                    <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-2">
+                                        <Users size={20} />
+                                    </div>
+                                    <span className="font-bold text-zinc-900 dark:text-white uppercase tracking-wider text-sm text-center">
+                                        {user?.name}
+                                    </span>
+                                    <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold">
+                                        {user?.role === "admin" ? "مدير النظام" : "كاشير"}
+                                    </span>
+                                </div>
+
+                                <div className="p-2 flex flex-col">
+                                    {user?.role === "admin" && (
+                                        <NavLink
+                                            to="/employees"
+                                            onClick={() => setIsUserMenuOpen(false)}
+                                            className="flex items-center gap-3 px-3 py-2.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors text-zinc-700 dark:text-zinc-300 font-bold text-sm mb-1"
+                                        >
+                                            <Users size={16} className="text-indigo-500" />
+                                            حسابات الموظفين
+                                        </NavLink>
+                                    )}
+
+                                    <NavLink
+                                        to="/settings"
+                                        onClick={() => setIsUserMenuOpen(false)}
+                                        className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-lg transition-colors text-zinc-700 dark:text-zinc-300 font-bold text-sm mb-1"
+                                    >
+                                        <Settings size={16} className="text-zinc-400" />
+                                        الإعدادات
+                                    </NavLink>
+
+                                    <div className="h-px bg-zinc-100 dark:border-zinc-800/50 my-1"></div>
+
+                                    <button
+                                        onClick={() => {
+                                            setIsUserMenuOpen(false);
+                                            logout();
+                                        }}
+                                        className="flex items-center gap-3 px-3 py-2.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors text-red-600 dark:text-red-400 font-bold text-sm"
+                                    >
+                                        <LogOut size={16} />
+                                        تسجيل الخروج
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
 
             </div>
