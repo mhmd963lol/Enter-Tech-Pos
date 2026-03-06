@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Clock, Calendar, DollarSign, TrendingUp } from "lucide-react";
+import { Clock, Calendar, DollarSign, TrendingUp, ShoppingCart, LogOut } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 
 export default function StatusBar() {
-    const { settings, orders, isPrivacyMode, playSound } = useAppContext();
+    const { settings, orders, isPrivacyMode, playSound, user, logout } = useAppContext();
     const [time, setTime] = useState(new Date());
     const navigate = useNavigate();
 
@@ -57,11 +57,11 @@ export default function StatusBar() {
                 </div>
             </div>
 
-            {/* Left side: Ticker / Exchange Rate & Sales Summary */}
-            <div className="flex items-center gap-3 sm:gap-6">
+            {/* Left side: Exchange Rate, Sales Summary, Cart Shortcut, and User Menu */}
+            <div className="flex items-center gap-3 sm:gap-4">
 
-                {/* Exchange Rate Placeholder (Mocking real-market connect) */}
-                <div className="flex items-center gap-1.5 bg-indigo-950/50 px-2.5 py-0.5 rounded-md border border-indigo-700/50" title="سعر الصرف المباشر (يمكن ضبطه من الإعدادات)">
+                {/* Exchange Rate */}
+                <div className="hidden lg:flex items-center gap-1.5 bg-indigo-950/50 px-2.5 py-0.5 rounded-md border border-indigo-700/50" title="سعر الصرف المباشر">
                     <DollarSign size={14} className="text-emerald-400" />
                     <span className="text-emerald-300 font-bold whitespace-nowrap">
                         1 USD = {settings.exchangeRate ? settings.exchangeRate.toFixed(2) : "1.00"} {settings.currency}
@@ -86,6 +86,38 @@ export default function StatusBar() {
                         {todaysSales.toFixed(2)} {settings.currency}
                     </span>
                 </motion.button>
+
+                {/* Cart Shortcut Button */}
+                <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => navigate("/pos")}
+                    className="flex items-center gap-1.5 bg-indigo-500/20 hover:bg-indigo-500/40 px-2.5 py-0.5 rounded-md border border-indigo-500/30 transition-colors cursor-pointer"
+                    title="الذهاب لشاشة البيع"
+                >
+                    <ShoppingCart size={14} className="text-indigo-200" />
+                    <span className="font-bold text-white">السلة</span>
+                </motion.button>
+
+                <div className="w-px h-4 bg-indigo-700/50 mx-1 hidden sm:block"></div>
+
+                {/* User Info and Logout */}
+                <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-end text-[10px] leading-tight text-indigo-200">
+                        <span className="font-bold text-white uppercase">{user?.name}</span>
+                        <span>{user?.role === "admin" ? "مدير" : "كاشير"}</span>
+                    </div>
+                    <button
+                        onClick={() => {
+                            if (playSound) playSound("click");
+                            logout();
+                        }}
+                        className="p-1.5 bg-red-500/20 hover:bg-red-500/40 text-red-200 rounded-md border border-red-500/30 transition-colors"
+                        title="تسجيل الخروج"
+                    >
+                        <LogOut size={14} />
+                    </button>
+                </div>
 
             </div>
         </div>
