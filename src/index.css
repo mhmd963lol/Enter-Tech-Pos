@@ -211,426 +211,149 @@ input[type=number] {
 /* ========================
    1. GAMING THEME (Cyberpunk Neon)
    ======================== */
-
-body.theme-master-gaming {
+.dark body.theme-master-gaming {
   background-color: #040406;
-  background-image:
-    linear-gradient(rgba(139, 0, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(139, 0, 255, 0.08) 1px, transparent 1px),
-    radial-gradient(ellipse at 10% 10%, rgba(255, 0, 200, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 90% 90%, rgba(0, 200, 255, 0.06) 0%, transparent 50%);
+  background-image: linear-gradient(rgba(139, 0, 255, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(139, 0, 255, 0.08) 1px, transparent 1px), radial-gradient(ellipse at 10% 10%, rgba(255, 0, 200, 0.06) 0%, transparent 50%), radial-gradient(ellipse at 90% 90%, rgba(0, 200, 255, 0.06) 0%, transparent 50%);
   background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
   color: #e0e0f0;
 }
-
-/* Sidebar & Header in Gaming */
-body.theme-master-gaming .bg-white,
-body.theme-master-gaming aside,
-body.theme-master-gaming header {
-  background-color: rgba(8, 4, 20, 0.95) !important;
-  border-color: rgba(200, 0, 255, 0.2) !important;
+html:not(.dark) body.theme-master-gaming {
+  background-color: #faf5ff;
+  background-image: linear-gradient(rgba(139, 0, 255, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(139, 0, 255, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px, 40px 40px;
+  color: #4c1d95;
 }
 
-/* Cards, Tables, Panels */
-body.theme-master-gaming .bg-zinc-950,
-body.theme-master-gaming .bg-zinc-900,
-body.theme-master-gaming .dark\:bg-zinc-950,
-body.theme-master-gaming .dark\:bg-zinc-900,
-body.theme-master-gaming .bg-zinc-50,
-body.theme-master-gaming .dark\:bg-zinc-900\/50 {
-  background-color: rgba(12, 6, 30, 0.92) !important;
-  border-color: rgba(180, 0, 255, 0.15) !important;
-  box-shadow: 0 0 20px rgba(180, 0, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+/* Sidebar & Header */
+.dark body.theme-master-gaming .bg-white, .dark body.theme-master-gaming aside, .dark body.theme-master-gaming header { background-color: rgba(8, 4, 20, 0.95) !important; border-color: rgba(200, 0, 255, 0.2) !important; }
+html:not(.dark) body.theme-master-gaming .bg-zinc-950, html:not(.dark) body.theme-master-gaming aside, html:not(.dark) body.theme-master-gaming header { background-color: rgba(255, 255, 255, 0.95) !important; border-color: rgba(200, 0, 255, 0.15) !important; }
+
+/* Cards */
+.dark body.theme-master-gaming .bg-zinc-950, .dark body.theme-master-gaming .bg-zinc-900, .dark body.theme-master-gaming .dark\:bg-zinc-950, .dark body.theme-master-gaming .dark\:bg-zinc-900, .dark body.theme-master-gaming .bg-zinc-50, .dark body.theme-master-gaming .dark\:bg-zinc-900\/50 {
+  background-color: rgba(12, 6, 30, 0.92) !important; border-color: rgba(180, 0, 255, 0.15) !important; box-shadow: 0 0 20px rgba(180, 0, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+html:not(.dark) body.theme-master-gaming .bg-zinc-950, html:not(.dark) body.theme-master-gaming .bg-zinc-900, html:not(.dark) body.theme-master-gaming .dark\:bg-zinc-950, html:not(.dark) body.theme-master-gaming .dark\:bg-zinc-900, html:not(.dark) body.theme-master-gaming .bg-zinc-50, html:not(.dark) body.theme-master-gaming .dark\:bg-zinc-900\/50 {
+  background-color: rgba(255, 255, 255, 0.8) !important; border-color: rgba(180, 0, 255, 0.1) !important; box-shadow: 0 4px 15px rgba(139, 0, 255, 0.05) !important;
 }
 
-/* Gaming: Fix text visibility */
-body.theme-master-gaming h1,
-body.theme-master-gaming h2,
-body.theme-master-gaming h3,
-body.theme-master-gaming h4,
-body.theme-master-gaming .text-zinc-900,
-body.theme-master-gaming .dark\:text-white {
-  color: #f0e6ff !important;
-}
+/* Text */
+.dark body.theme-master-gaming h1, .dark body.theme-master-gaming h2, .dark body.theme-master-gaming h3, .dark body.theme-master-gaming h4, .dark body.theme-master-gaming .text-zinc-900, .dark body.theme-master-gaming .dark\:text-white { color: #f0e6ff !important; }
+.dark body.theme-master-gaming .text-zinc-500, .dark body.theme-master-gaming .text-zinc-400, .dark body.theme-master-gaming .dark\:text-zinc-400 { color: #a090c0 !important; }
+.dark body.theme-master-gaming .text-zinc-600, .dark body.theme-master-gaming .dark\:text-zinc-300 { color: #c0b0e0 !important; }
 
-body.theme-master-gaming .text-zinc-500,
-body.theme-master-gaming .text-zinc-400,
-body.theme-master-gaming .dark\:text-zinc-400 {
-  color: #a090c0 !important;
-}
-
-body.theme-master-gaming .text-zinc-600,
-body.theme-master-gaming .dark\:text-zinc-300 {
-  color: #c0b0e0 !important;
-}
+html:not(.dark) body.theme-master-gaming h1, html:not(.dark) body.theme-master-gaming h2, html:not(.dark) body.theme-master-gaming h3, html:not(.dark) body.theme-master-gaming h4, html:not(.dark) body.theme-master-gaming .text-white, html:not(.dark) body.theme-master-gaming .dark\:text-white, html:not(.dark) body.theme-master-gaming .text-zinc-900 { color: #2e1065 !important; }
 
 /* Table rows */
-body.theme-master-gaming .divide-zinc-100,
-body.theme-master-gaming .dark\:divide-zinc-800,
-body.theme-master-gaming .border-zinc-100,
-body.theme-master-gaming .dark\:border-zinc-800 {
-  border-color: rgba(160, 0, 220, 0.15) !important;
-}
+.dark body.theme-master-gaming .divide-zinc-100, .dark body.theme-master-gaming .dark\:divide-zinc-800, .dark body.theme-master-gaming .border-zinc-100, .dark body.theme-master-gaming .dark\:border-zinc-800 { border-color: rgba(160, 0, 220, 0.15) !important; }
+.dark body.theme-master-gaming tbody tr:hover { background-color: rgba(130, 0, 255, 0.07) !important; }
+html:not(.dark) body.theme-master-gaming tbody tr:hover { background-color: rgba(139, 0, 255, 0.03) !important; }
 
-body.theme-master-gaming tbody tr:hover {
-  background-color: rgba(130, 0, 255, 0.07) !important;
-}
+body.theme-master-gaming .gaming-glow { animation: gaming-pulse 3s ease-in-out infinite; }
 
-/* Gaming Glow pulse animation on glowing elements */
-@keyframes gaming-pulse {
-
-  0%,
-  100% {
-    box-shadow: 0 0 15px rgba(200, 0, 255, 0.1), 0 0 30px rgba(0, 100, 255, 0.05);
-  }
-
-  50% {
-    box-shadow: 0 0 25px rgba(200, 0, 255, 0.2), 0 0 50px rgba(0, 100, 255, 0.1);
-  }
-}
-
-/* Gaming pulse only on specific highlighted elements, not all rounded elements */
-body.theme-master-gaming .gaming-glow {
-  animation: gaming-pulse 3s ease-in-out infinite;
-}
 
 /* ========================
-   2. CARBON FIBER THEME (Sport / Mechanical)
+   2. CARBON THEME (Racing / Solid / Mechanical)
    ======================== */
+.dark body.theme-master-carbon { background-color: #1a1a1a; color: #e5e5e5; }
+html:not(.dark) body.theme-master-carbon { background-color: #f4f4f5; color: #18181b; }
 
-body.theme-master-carbon {
-  background-color: #111;
-  /* Carbon fiber weave pattern */
-  background-image:
-    repeating-linear-gradient(45deg,
-      rgba(255, 255, 255, 0.015) 0px,
-      rgba(255, 255, 255, 0.015) 1px,
-      transparent 1px,
-      transparent 50%),
-    repeating-linear-gradient(-45deg,
-      rgba(255, 255, 255, 0.015) 0px,
-      rgba(255, 255, 255, 0.015) 1px,
-      transparent 1px,
-      transparent 50%),
-    repeating-linear-gradient(0deg,
-      rgba(0, 0, 0, 0.3) 0px,
-      rgba(0, 0, 0, 0.3) 2px,
-      transparent 2px,
-      transparent 10px);
-  background-size: 10px 10px, 10px 10px, 10px 10px;
-  color: #d0d0d0;
+.dark body.theme-master-carbon .bg-white, .dark body.theme-master-carbon aside, .dark body.theme-master-carbon header { background-color: #111111 !important; border-color: #333333 !important; }
+html:not(.dark) body.theme-master-carbon .bg-zinc-950, html:not(.dark) body.theme-master-carbon aside, html:not(.dark) body.theme-master-carbon header { background-color: #ffffff !important; border-color: #e4e4e7 !important; }
+
+.dark body.theme-master-carbon .bg-zinc-950, .dark body.theme-master-carbon .bg-zinc-900, .dark body.theme-master-carbon .dark\:bg-zinc-950, .dark body.theme-master-carbon .dark\:bg-zinc-900, .dark body.theme-master-carbon .bg-zinc-50, .dark body.theme-master-carbon .dark\:bg-zinc-900\/50 {
+  background-color: #1f1f1f !important; border-color: #2e2e2e !important; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02) !important;
+}
+html:not(.dark) body.theme-master-carbon .bg-zinc-950, html:not(.dark) body.theme-master-carbon .bg-zinc-900, html:not(.dark) body.theme-master-carbon .dark\:bg-zinc-950, html:not(.dark) body.theme-master-carbon .dark\:bg-zinc-900, html:not(.dark) body.theme-master-carbon .bg-zinc-50, html:not(.dark) body.theme-master-carbon .dark\:bg-zinc-900\/50 {
+  background-color: #ffffff !important; border-color: #d4d4d8 !important; box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
 }
 
-/* Carbon Sidebar & Header */
-body.theme-master-carbon .bg-white,
-body.theme-master-carbon aside,
-body.theme-master-carbon header {
-  background-color: #0d0d0d !important;
-  border-color: rgba(80, 80, 80, 0.4) !important;
-  background-image: none !important;
-}
+.dark body.theme-master-carbon h1, .dark body.theme-master-carbon h2, .dark body.theme-master-carbon h3, .dark body.theme-master-carbon h4, .dark body.theme-master-carbon .text-zinc-900, .dark body.theme-master-carbon .dark\:text-white { color: #f4f4f5 !important; }
+.dark body.theme-master-carbon .text-zinc-500, .dark body.theme-master-carbon .text-zinc-400, .dark body.theme-master-carbon .dark\:text-zinc-400 { color: #71717a !important; }
+.dark body.theme-master-carbon .text-zinc-600, .dark body.theme-master-carbon .dark\:text-zinc-300 { color: #a1a1aa !important; }
+html:not(.dark) body.theme-master-carbon h1, html:not(.dark) body.theme-master-carbon h2, html:not(.dark) body.theme-master-carbon h3, html:not(.dark) body.theme-master-carbon h4, html:not(.dark) body.theme-master-carbon .text-white, html:not(.dark) body.theme-master-carbon .dark\:text-white, html:not(.dark) body.theme-master-carbon .text-zinc-900 { color: #18181b !important; }
 
-/* Carbon Cards */
-body.theme-master-carbon .bg-zinc-950,
-body.theme-master-carbon .bg-zinc-900,
-body.theme-master-carbon .dark\:bg-zinc-950,
-body.theme-master-carbon .dark\:bg-zinc-900,
-body.theme-master-carbon .bg-zinc-50,
-body.theme-master-carbon .dark\:bg-zinc-900\/50 {
-  background-color: #181818 !important;
-  background-image: none !important;
-  border-color: rgba(60, 60, 60, 0.5) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 12px rgba(0, 0, 0, 0.5) !important;
-}
+.dark body.theme-master-carbon .divide-zinc-100, .dark body.theme-master-carbon .dark\:divide-zinc-800, .dark body.theme-master-carbon .border-zinc-100, .dark body.theme-master-carbon .dark\:border-zinc-800 { border-color: #27272a !important; }
+.dark body.theme-master-carbon tbody tr:hover { background-color: #2e2e2e !important; }
+html:not(.dark) body.theme-master-carbon tbody tr:hover { background-color: #f4f4f5 !important; }
 
-/* Carbon: text */
-body.theme-master-carbon h1,
-body.theme-master-carbon h2,
-body.theme-master-carbon h3,
-body.theme-master-carbon h4,
-body.theme-master-carbon .text-zinc-900,
-body.theme-master-carbon .dark\:text-white {
-  color: #e8e8e8 !important;
-}
+.dark body.theme-master-carbon .bg-indigo-600 { background-color: #ff1a1a !important; color:#fff !important; }
+html:not(.dark) body.theme-master-carbon .bg-indigo-600 { background-color: #e60000 !important; color:#fff !important; }
+.dark body.theme-master-carbon .text-indigo-600, .dark body.theme-master-carbon .dark\:text-indigo-400 { color: #ff3333 !important; }
+html:not(.dark) body.theme-master-carbon .text-indigo-600 { color: #cc0000 !important; }
+.dark body.theme-master-carbon .bg-indigo-50, .dark body.theme-master-carbon .dark\:bg-indigo-900\/20 { background-color: rgba(200, 0, 0, 0.1) !important; }
+html:not(.dark) body.theme-master-carbon .bg-indigo-50 { background-color: rgba(200, 0, 0, 0.05) !important; }
 
-body.theme-master-carbon .text-zinc-500,
-body.theme-master-carbon .text-zinc-400,
-body.theme-master-carbon .dark\:text-zinc-400 {
-  color: #888 !important;
-}
-
-body.theme-master-carbon .text-zinc-600,
-body.theme-master-carbon .dark\:text-zinc-300 {
-  color: #aaa !important;
-}
-
-body.theme-master-carbon .divide-zinc-100,
-body.theme-master-carbon .dark\:divide-zinc-800,
-body.theme-master-carbon .border-zinc-100,
-body.theme-master-carbon .dark\:border-zinc-800 {
-  border-color: rgba(55, 55, 55, 0.8) !important;
-}
-
-body.theme-master-carbon tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.03) !important;
-}
-
-/* Carbon: Red accent highlight on active elements */
-body.theme-master-carbon .bg-indigo-600 {
-  background-color: #cc0000 !important;
-}
-
-body.theme-master-carbon .text-indigo-600,
-body.theme-master-carbon .dark\:text-indigo-400 {
-  color: #ff3333 !important;
-}
-
-body.theme-master-carbon .bg-indigo-50,
-body.theme-master-carbon .dark\:bg-indigo-900\/20 {
-  background-color: rgba(200, 0, 0, 0.1) !important;
-}
 
 /* ========================
    3. LUXURY THEME (VIP / Prestige)
    ======================== */
+.dark body.theme-master-luxury { background-color: #080c14; color: #e8e0d0; }
+html:not(.dark) body.theme-master-luxury { background-color: #fdfaf5; color: #2a251b; }
 
-body.theme-master-luxury {
-  background-color: #080c14;
-  background-image:
-    radial-gradient(ellipse at 0% 0%, rgba(180, 140, 60, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 100% 100%, rgba(100, 60, 180, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(10, 30, 80, 0.8) 0%, transparent 70%);
-  background-attachment: fixed;
-  color: #e8e0d0;
+.dark body.theme-master-luxury .bg-white, .dark body.theme-master-luxury aside, .dark body.theme-master-luxury header { background: linear-gradient(135deg, rgba(10, 14, 28, 0.98), rgba(6, 10, 22, 0.98)) !important; border-color: rgba(180, 150, 80, 0.15) !important; background-image: none !important; }
+html:not(.dark) body.theme-master-luxury .bg-zinc-950, html:not(.dark) body.theme-master-luxury aside, html:not(.dark) body.theme-master-luxury header { background: #ffffff !important; border-color: rgba(180, 150, 80, 0.2) !important; }
+
+.dark body.theme-master-luxury .bg-zinc-950, .dark body.theme-master-luxury .bg-zinc-900, .dark body.theme-master-luxury .dark\:bg-zinc-950, .dark body.theme-master-luxury .dark\:bg-zinc-900, .dark body.theme-master-luxury .bg-zinc-50, .dark body.theme-master-luxury .dark\:bg-zinc-900\/50 {
+  background: rgba(12, 16, 34, 0.8) !important; backdrop-filter: blur(16px); border-color: rgba(180, 150, 80, 0.12) !important; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(200, 170, 100, 0.08) !important;
+}
+html:not(.dark) body.theme-master-luxury .bg-zinc-950, html:not(.dark) body.theme-master-luxury .bg-zinc-900, html:not(.dark) body.theme-master-luxury .dark\:bg-zinc-950, html:not(.dark) body.theme-master-luxury .dark\:bg-zinc-900, html:not(.dark) body.theme-master-luxury .bg-zinc-50, html:not(.dark) body.theme-master-luxury .dark\:bg-zinc-900\/50 {
+  background: rgba(255, 255, 255, 0.9) !important; border-color: rgba(180, 150, 80, 0.15) !important; box-shadow: 0 4px 15px rgba(180, 150, 80, 0.05) !important;
 }
 
-/* Luxury Sidebar & Header */
-body.theme-master-luxury .bg-white,
-body.theme-master-luxury aside,
-body.theme-master-luxury header {
-  background: linear-gradient(135deg, rgba(10, 14, 28, 0.98), rgba(6, 10, 22, 0.98)) !important;
-  border-color: rgba(180, 150, 80, 0.15) !important;
-  background-image: none !important;
-}
+.dark body.theme-master-luxury h1, .dark body.theme-master-luxury h2, .dark body.theme-master-luxury h3, .dark body.theme-master-luxury h4, .dark body.theme-master-luxury .text-zinc-900, .dark body.theme-master-luxury .dark\:text-white { color: #f0e8d8 !important; }
+.dark body.theme-master-luxury .text-zinc-500, .dark body.theme-master-luxury .text-zinc-400, .dark body.theme-master-luxury .dark\:text-zinc-400 { color: rgba(200, 180, 140, 0.7) !important; }
+.dark body.theme-master-luxury .text-zinc-600, .dark body.theme-master-luxury .dark\:text-zinc-300 { color: rgba(220, 200, 160, 0.85) !important; }
+html:not(.dark) body.theme-master-luxury h1, html:not(.dark) body.theme-master-luxury h2, html:not(.dark) body.theme-master-luxury h3, html:not(.dark) body.theme-master-luxury h4, html:not(.dark) body.theme-master-luxury .text-white, html:not(.dark) body.theme-master-luxury .dark\:text-white, html:not(.dark) body.theme-master-luxury .text-zinc-900 { color: #2a251b !important; }
 
-/* Luxury Cards */
-body.theme-master-luxury .bg-zinc-950,
-body.theme-master-luxury .bg-zinc-900,
-body.theme-master-luxury .dark\:bg-zinc-950,
-body.theme-master-luxury .dark\:bg-zinc-900,
-body.theme-master-luxury .bg-zinc-50,
-body.theme-master-luxury .dark\:bg-zinc-900\/50 {
-  background: rgba(12, 16, 34, 0.8) !important;
-  background-image: none !important;
-  backdrop-filter: blur(16px);
-  border-color: rgba(180, 150, 80, 0.12) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(200, 170, 100, 0.08) !important;
-}
+.dark body.theme-master-luxury .divide-zinc-100, .dark body.theme-master-luxury .dark\:divide-zinc-800, .dark body.theme-master-luxury .border-zinc-100, .dark body.theme-master-luxury .dark\:border-zinc-800 { border-color: rgba(170, 140, 70, 0.12) !important; }
+.dark body.theme-master-luxury tbody tr:hover { background-color: rgba(180, 150, 80, 0.04) !important; }
+html:not(.dark) body.theme-master-luxury tbody tr:hover { background-color: rgba(180, 150, 80, 0.03) !important; }
 
-/* Luxury: text */
-body.theme-master-luxury h1,
-body.theme-master-luxury h2,
-body.theme-master-luxury h3,
-body.theme-master-luxury h4,
-body.theme-master-luxury .text-zinc-900,
-body.theme-master-luxury .dark\:text-white {
-  color: #f0e8d8 !important;
-}
+.dark body.theme-master-luxury .bg-indigo-600 { background: linear-gradient(135deg, #b8962e, #d4af37) !important; color: #1a1200 !important; }
+html:not(.dark) body.theme-master-luxury .bg-indigo-600 { background: linear-gradient(135deg, #a68420, #c4a028) !important; color: #fff !important; }
+.dark body.theme-master-luxury .text-indigo-600, .dark body.theme-master-luxury .dark\:text-indigo-400 { color: #d4af37 !important; }
+.dark body.theme-master-luxury .bg-indigo-50, .dark body.theme-master-luxury .dark\:bg-indigo-900\/20 { background-color: rgba(180, 150, 40, 0.1) !important; }
 
-body.theme-master-luxury .text-zinc-500,
-body.theme-master-luxury .text-zinc-400,
-body.theme-master-luxury .dark\:text-zinc-400 {
-  color: rgba(200, 180, 140, 0.7) !important;
-}
-
-body.theme-master-luxury .text-zinc-600,
-body.theme-master-luxury .dark\:text-zinc-300 {
-  color: rgba(220, 200, 160, 0.85) !important;
-}
-
-body.theme-master-luxury .divide-zinc-100,
-body.theme-master-luxury .dark\:divide-zinc-800,
-body.theme-master-luxury .border-zinc-100,
-body.theme-master-luxury .dark\:border-zinc-800 {
-  border-color: rgba(170, 140, 70, 0.12) !important;
-}
-
-body.theme-master-luxury tbody tr:hover {
-  background-color: rgba(180, 150, 80, 0.04) !important;
-}
-
-/* Luxury: Gold accent */
-body.theme-master-luxury .bg-indigo-600 {
-  background: linear-gradient(135deg, #b8962e, #d4af37) !important;
-  color: #1a1200 !important;
-}
-
-body.theme-master-luxury .text-indigo-600,
-body.theme-master-luxury .dark\:text-indigo-400 {
-  color: #d4af37 !important;
-}
-
-body.theme-master-luxury .bg-indigo-50,
-body.theme-master-luxury .dark\:bg-indigo-900\/20 {
-  background-color: rgba(180, 150, 40, 0.1) !important;
-}
-
-/* Luxury: Gold shimmer on borders */
-@keyframes luxury-shimmer {
-
-  0%,
-  100% {
-    border-color: rgba(180, 150, 80, 0.12);
-  }
-
-  50% {
-    border-color: rgba(212, 175, 55, 0.2);
-  }
-}
-
-body.theme-master-luxury .rounded-2xl {
-  animation: luxury-shimmer 4s ease-in-out infinite;
-}
 
 /* ========================
    4. CASHIER TECH THEME (Smart POS / Fintech)
    ======================== */
+.dark body.theme-master-cashier-tech { background-color: #0d1117; color: #e0f0e8; }
+html:not(.dark) body.theme-master-cashier-tech { background-color: #f0fdf4; color: #064e3b; }
 
-body.theme-master-cashier-tech {
-  background-color: #0d1117;
-  background-image:
-    radial-gradient(ellipse at 20% 20%, rgba(0, 230, 118, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(44, 58, 71, 0.4) 0%, transparent 50%),
-    linear-gradient(rgba(0, 230, 118, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 230, 118, 0.03) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
-  background-attachment: fixed;
-  color: #e0f0e8;
+.dark body.theme-master-cashier-tech .bg-white, .dark body.theme-master-cashier-tech aside, .dark body.theme-master-cashier-tech header { background-color: #111820 !important; border-color: rgba(0, 230, 118, 0.12) !important; background-image: none !important; }
+html:not(.dark) body.theme-master-cashier-tech .bg-zinc-950, html:not(.dark) body.theme-master-cashier-tech aside, html:not(.dark) body.theme-master-cashier-tech header { background-color: #ffffff !important; border-color: rgba(0, 230, 118, 0.2) !important; background-image: none !important; }
+
+.dark body.theme-master-cashier-tech .bg-zinc-950, .dark body.theme-master-cashier-tech .bg-zinc-900, .dark body.theme-master-cashier-tech .dark\:bg-zinc-950, .dark body.theme-master-cashier-tech .dark\:bg-zinc-900, .dark body.theme-master-cashier-tech .bg-zinc-50, .dark body.theme-master-cashier-tech .dark\:bg-zinc-900\/50 {
+  background-color: rgba(16, 24, 32, 0.94) !important; border-color: rgba(0, 230, 118, 0.1) !important; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 230, 118, 0.05) !important;
+}
+html:not(.dark) body.theme-master-cashier-tech .bg-zinc-950, html:not(.dark) body.theme-master-cashier-tech .bg-zinc-900, html:not(.dark) body.theme-master-cashier-tech .dark\:bg-zinc-950, html:not(.dark) body.theme-master-cashier-tech .dark\:bg-zinc-900, html:not(.dark) body.theme-master-cashier-tech .bg-zinc-50, html:not(.dark) body.theme-master-cashier-tech .dark\:bg-zinc-900\/50 {
+  background-color: #ffffff !important; border-color: rgba(0, 230, 118, 0.15) !important; box-shadow: 0 4px 15px rgba(0, 230, 118, 0.05) !important;
 }
 
-/* Sidebar & Header */
-body.theme-master-cashier-tech .bg-white,
-body.theme-master-cashier-tech aside,
-body.theme-master-cashier-tech header {
-  background-color: #111820 !important;
-  border-color: rgba(0, 230, 118, 0.12) !important;
-  background-image: none !important;
-}
+.dark body.theme-master-cashier-tech h1, .dark body.theme-master-cashier-tech h2, .dark body.theme-master-cashier-tech h3, .dark body.theme-master-cashier-tech h4, .dark body.theme-master-cashier-tech .text-zinc-900, .dark body.theme-master-cashier-tech .dark\:text-white { color: #e8f5ee !important; }
+.dark body.theme-master-cashier-tech .text-zinc-500, .dark body.theme-master-cashier-tech .text-zinc-400, .dark body.theme-master-cashier-tech .dark\:text-zinc-400 { color: rgba(160, 200, 180, 0.7) !important; }
+.dark body.theme-master-cashier-tech .text-zinc-600, .dark body.theme-master-cashier-tech .dark\:text-zinc-300 { color: rgba(180, 220, 200, 0.85) !important; }
+html:not(.dark) body.theme-master-cashier-tech h1, html:not(.dark) body.theme-master-cashier-tech h2, html:not(.dark) body.theme-master-cashier-tech h3, html:not(.dark) body.theme-master-cashier-tech h4, html:not(.dark) body.theme-master-cashier-tech .text-white, html:not(.dark) body.theme-master-cashier-tech .dark\:text-white, html:not(.dark) body.theme-master-cashier-tech .text-zinc-900 { color: #064e3b !important; }
 
-/* Cards, Tables, Panels */
-body.theme-master-cashier-tech .bg-zinc-950,
-body.theme-master-cashier-tech .bg-zinc-900,
-body.theme-master-cashier-tech .dark\:bg-zinc-950,
-body.theme-master-cashier-tech .dark\:bg-zinc-900,
-body.theme-master-cashier-tech .bg-zinc-50,
-body.theme-master-cashier-tech .dark\:bg-zinc-900\/50 {
-  background-color: rgba(16, 24, 32, 0.94) !important;
-  border-color: rgba(0, 230, 118, 0.1) !important;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 230, 118, 0.05) !important;
-  background-image: none !important;
-}
+.dark body.theme-master-cashier-tech .divide-zinc-100, .dark body.theme-master-cashier-tech .dark\:divide-zinc-800, .dark body.theme-master-cashier-tech .border-zinc-100, .dark body.theme-master-cashier-tech .dark\:border-zinc-800 { border-color: rgba(0, 230, 118, 0.1) !important; }
+.dark body.theme-master-cashier-tech tbody tr:hover { background-color: rgba(0, 230, 118, 0.05) !important; }
+html:not(.dark) body.theme-master-cashier-tech tbody tr:hover { background-color: rgba(0, 230, 118, 0.04) !important; }
 
-/* Text visibility */
-body.theme-master-cashier-tech h1,
-body.theme-master-cashier-tech h2,
-body.theme-master-cashier-tech h3,
-body.theme-master-cashier-tech h4,
-body.theme-master-cashier-tech .text-zinc-900,
-body.theme-master-cashier-tech .dark\:text-white {
-  color: #e8f5ee !important;
-}
+.dark body.theme-master-cashier-tech .bg-indigo-600 { background-color: #00C853 !important; box-shadow: 0 0 16px rgba(0, 200, 80, 0.3) !important; color:#0e1111 !important; }
+html:not(.dark) body.theme-master-cashier-tech .bg-indigo-600 { background-color: #00E676 !important; box-shadow: 0 4px 12px rgba(0, 200, 80, 0.2) !important; color:#064e3b !important; }
 
-body.theme-master-cashier-tech .text-zinc-500,
-body.theme-master-cashier-tech .text-zinc-400,
-body.theme-master-cashier-tech .dark\:text-zinc-400 {
-  color: rgba(160, 200, 180, 0.7) !important;
-}
+.dark body.theme-master-cashier-tech .text-indigo-600, .dark body.theme-master-cashier-tech .dark\:text-indigo-400 { color: #00E676 !important; }
+html:not(.dark) body.theme-master-cashier-tech .text-indigo-600 { color: #00C853 !important; }
+.dark body.theme-master-cashier-tech .bg-indigo-50, .dark body.theme-master-cashier-tech .dark\:bg-indigo-900\/20 { background-color: rgba(0, 230, 118, 0.08) !important; }
+.dark body.theme-master-cashier-tech .border-indigo-500, .dark body.theme-master-cashier-tech .ring-indigo-500 { border-color: rgba(0, 230, 118, 0.5) !important; }
 
-body.theme-master-cashier-tech .text-zinc-600,
-body.theme-master-cashier-tech .dark\:text-zinc-300 {
-  color: rgba(180, 220, 200, 0.85) !important;
-}
-
-body.theme-master-cashier-tech .divide-zinc-100,
-body.theme-master-cashier-tech .dark\:divide-zinc-800,
-body.theme-master-cashier-tech .border-zinc-100,
-body.theme-master-cashier-tech .dark\:border-zinc-800 {
-  border-color: rgba(0, 230, 118, 0.1) !important;
-}
-
-body.theme-master-cashier-tech tbody tr:hover {
-  background-color: rgba(0, 230, 118, 0.05) !important;
-}
-
-/* Green accent on active/primary elements */
-body.theme-master-cashier-tech .bg-indigo-600 {
-  background-color: #00C853 !important;
-  box-shadow: 0 0 16px rgba(0, 200, 80, 0.3) !important;
-}
-
-body.theme-master-cashier-tech .text-indigo-600,
-body.theme-master-cashier-tech .dark\:text-indigo-400 {
-  color: #00E676 !important;
-}
-
-body.theme-master-cashier-tech .bg-indigo-50,
-body.theme-master-cashier-tech .dark\:bg-indigo-900\/20 {
-  background-color: rgba(0, 230, 118, 0.08) !important;
-}
-
-body.theme-master-cashier-tech .border-indigo-500,
-body.theme-master-cashier-tech .ring-indigo-500 {
-  border-color: rgba(0, 230, 118, 0.5) !important;
-}
-
-/* Smooth border glow pulse on important cards */
 @keyframes cashier-tech-glow {
-
-  0%,
-  100% {
-    box-shadow: 0 0 0 1px rgba(0, 230, 118, 0.06), 0 4px 20px rgba(0, 0, 0, 0.3);
-  }
-
-  50% {
-    box-shadow: 0 0 0 1px rgba(0, 230, 118, 0.14), 0 4px 25px rgba(0, 0, 0, 0.4);
-  }
+  0%, 100% { box-shadow: 0 0 0 1px rgba(0, 230, 118, 0.06), 0 4px 20px rgba(0, 0, 0, 0.3); }
+  50% { box-shadow: 0 0 0 1px rgba(0, 230, 118, 0.14), 0 4px 25px rgba(0, 0, 0, 0.4); }
 }
+.dark body.theme-master-cashier-tech .rounded-2xl { animation: cashier-tech-glow 4s ease-in-out infinite; }
 
-body.theme-master-cashier-tech .rounded-2xl {
-  animation: cashier-tech-glow 4s ease-in-out infinite;
-}
-
-/* Interactive hover/click micro-animations — lightweight CSS only */
-body.theme-master-cashier-tech button:not([disabled]),
-body.theme-master-cashier-tech a[href] {
-  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease !important;
-}
-
-body.theme-master-cashier-tech button:not([disabled]):hover {
-  transform: translateY(-1px);
-  filter: brightness(1.08);
-}
-
-body.theme-master-cashier-tech button:not([disabled]):active {
-  transform: scale(0.96) translateY(0px);
-  filter: brightness(0.95);
-}
-
-/* Nav links sheen effect */
-body.theme-master-cashier-tech nav a:hover,
-body.theme-master-cashier-tech nav button:hover {
-  border-right: 3px solid #00E676 !important;
-  padding-right: calc(1rem - 3px) !important;
-}
-
-/* Input focus ring in cashier green */
-body.theme-master-cashier-tech input:focus,
-body.theme-master-cashier-tech select:focus,
-body.theme-master-cashier-tech textarea:focus {
-  outline: none !important;
-  box-shadow: 0 0 0 2px rgba(0, 230, 118, 0.35) !important;
-  border-color: rgba(0, 230, 118, 0.5) !important;
-}
 
 /* =========================================
    GLOBAL INTERACTIVE MICRO-ANIMATIONS

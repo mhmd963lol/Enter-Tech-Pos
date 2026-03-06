@@ -330,8 +330,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
     if (settings.masterTheme && settings.masterTheme !== "default") {
       body.classList.add(`theme-master-${settings.masterTheme}`);
-      // Master themes force dark mode for best look
-      root.classList.add("dark");
+      // Master themes will now adapt to light/dark mode via CSS adjustments
     }
 
     // Apply Font Family
