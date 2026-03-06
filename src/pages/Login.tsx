@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAppContext } from "../context/AppContext";
-import { Eye, EyeOff, Mail, Lock, Phone, Check, ArrowRight, RefreshCw, LogIn } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Phone, Check, ArrowRight, RefreshCw, LogIn, Moon, Sun } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import CashierTechLogo from "../components/CashierTechLogo";
 import { auth, db } from "../lib/firebase";
 import {
   signInWithEmailAndPassword,
@@ -276,15 +277,15 @@ export default function Login() {
   // ─────────────────────────────────────────────
   if (awaitingVerification) {
     return (
-      <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center p-4" dir="rtl">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md bg-white rounded-2xl shadow-xl p-10 text-center">
+      <div className="min-h-screen bg-[#F8F9FA] dark:bg-zinc-950 flex items-center justify-center p-4 transition-colors duration-300" dir="rtl">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 p-10 text-center">
           <div className="w-20 h-20 bg-[#00E676]/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <Mail className="w-10 h-10 text-[#00E676]" />
           </div>
-          <h1 className="text-2xl font-bold text-[#1a2b3c] mb-3">تحقق من بريدك الإلكتروني</h1>
-          <p className="text-gray-500 mb-2">أرسلنا رابط التحقق إلى:</p>
-          <p className="font-bold text-[#1a2b3c] mb-6 dir-ltr">{registerData.email}</p>
-          <p className="text-sm text-gray-400 mb-8">افتح الرابط من بريدك ثم اضغط الزر أدناه للمتابعة</p>
+          <h1 className="text-2xl font-bold text-[#1a2b3c] dark:text-white mb-3">تحقق من بريدك الإلكتروني</h1>
+          <p className="text-gray-500 dark:text-zinc-400 mb-2">أرسلنا رابط التحقق إلى:</p>
+          <p className="font-bold text-[#1a2b3c] dark:text-white mb-6 dir-ltr">{registerData.email}</p>
+          <p className="text-sm text-gray-400 dark:text-zinc-500 mb-8">افتح الرابط من بريدك ثم اضغط الزر أدناه للمتابعة</p>
 
           <motion.button whileTap={{ scale: 0.97 }} onClick={handleCheckVerification} disabled={verificationCheckLoading}
             className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] py-3.5 rounded-full font-bold text-lg transition-colors flex items-center justify-center gap-2 mb-4 disabled:opacity-70">
@@ -307,13 +308,13 @@ export default function Login() {
   // ─────────────────────────────────────────────
   const ForgotPasswordPanel = () => (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-      className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+      className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 p-8">
       <div className="text-center mb-8">
         <div className="w-16 h-16 bg-[#00E676]/10 rounded-full flex items-center justify-center mx-auto mb-4">
           <Lock className="w-8 h-8 text-[#00E676]" />
         </div>
-        <h1 className="text-xl font-bold text-[#2C3A47]">استعادة كلمة المرور</h1>
-        <p className="text-gray-500 text-sm mt-1">سنرسل لك رابط إعادة التعيين</p>
+        <h1 className="text-xl font-bold text-[#2C3A47] dark:text-white">استعادة كلمة المرور</h1>
+        <p className="text-gray-500 dark:text-zinc-400 text-sm mt-1">سنرسل لك رابط إعادة التعيين</p>
       </div>
       <form onSubmit={handleForgotPassword} className="space-y-5">
         <div>
@@ -340,17 +341,24 @@ export default function Login() {
   // RENDER: Main Page
   // ─────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#E9ECEF] flex flex-col items-center justify-center p-4" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#E9ECEF] dark:from-zinc-950 dark:to-zinc-930 flex flex-col items-center justify-center p-4 transition-colors duration-300" dir="rtl">
+      {/* Theme Toggle Button */}
+      <button
+        onClick={() => {
+          const newTheme = settings.theme === "dark" ? "light" : "dark";
+          updateSettings({ ...settings, theme: newTheme });
+        }}
+        className="absolute top-4 left-4 md:top-6 md:left-6 p-3 rounded-full bg-white dark:bg-zinc-800 shadow-md text-zinc-600 dark:text-zinc-300 hover:text-[#00E676] dark:hover:text-[#00E676] border border-gray-100 dark:border-zinc-700 transition-colors z-50"
+      >
+        {settings.theme === "dark" ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+      </button>
+
       {/* Invisible recaptcha anchor */}
       <div id="recaptcha-container"></div>
 
       {/* Logo / Header */}
       <div className="flex flex-col items-center mb-8">
-        <img src="/icon-192.png" alt="كاشير تك" className="w-24 h-24 mb-2 drop-shadow-md" />
-        <div className="mt-3 text-center">
-          <h1 className="text-2xl font-extrabold text-[#2C3A47] leading-tight">كاشير تك</h1>
-          <p className="text-[#00E676] text-sm font-bold tracking-wide">Cashier Tech</p>
-        </div>
+        <CashierTechLogo className="w-28 h-28 md:w-36 md:h-36" textClassName="text-3xl md:text-5xl" />
       </div>
 
       <AnimatePresence mode="wait">
@@ -360,9 +368,9 @@ export default function Login() {
         {/* ─── LOGIN ─── */}
         {!showForgotPassword && mode === "login" && (
           <motion.div key="login" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-            className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+            className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 p-8">
 
-            <h2 className="text-xl font-bold text-[#2C3A47] text-center mb-6">تسجيل الدخول</h2>
+            <h2 className="text-xl font-bold text-[#2C3A47] dark:text-white text-center mb-6">تسجيل الدخول</h2>
 
             {/* Google */}
             <button type="button" onClick={handleGoogleLogin} disabled={loading}
@@ -372,19 +380,19 @@ export default function Login() {
 
             {/* Divider */}
             <div className="relative flex items-center my-5">
-              <div className="flex-grow border-t border-gray-200" />
-              <span className="mx-4 text-gray-400 text-sm bg-white px-2 rounded-full border border-gray-200">أو</span>
-              <div className="flex-grow border-t border-gray-200" />
+              <div className="flex-grow border-t border-gray-200 dark:border-zinc-700" />
+              <span className="mx-4 text-gray-400 dark:text-zinc-500 text-sm bg-white px-2 rounded-full border border-gray-200 dark:border-zinc-700">أو</span>
+              <div className="flex-grow border-t border-gray-200 dark:border-zinc-700" />
             </div>
 
             {/* Method Toggle */}
-            <div className="flex rounded-xl overflow-hidden border border-gray-200 mb-5">
+            <div className="flex rounded-xl overflow-hidden border border-gray-200 dark:border-zinc-700 mb-5">
               <button type="button" onClick={() => setAuthMethod("email")}
-                className={`flex-1 py-2.5 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${authMethod === "email" ? "bg-[#00E676] text-[#2C3A47]" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                className={`flex-1 py-2.5 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${authMethod === "email" ? "bg-[#00E676] text-[#2C3A47] dark:text-white" : "bg-white text-gray-500 dark:text-zinc-400 hover:bg-gray-50 dark:bg-zinc-800"}`}>
                 <Mail className="w-4 h-4" /> البريد الإلكتروني
               </button>
               <button type="button" onClick={() => { setAuthMethod("phone"); setPhoneStep("number"); }}
-                className={`flex-1 py-2.5 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${authMethod === "phone" ? "bg-[#00E676] text-[#2C3A47]" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                className={`flex-1 py-2.5 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${authMethod === "phone" ? "bg-[#00E676] text-[#2C3A47] dark:text-white" : "bg-white text-gray-500 dark:text-zinc-400 hover:bg-gray-50 dark:bg-zinc-800"}`}>
                 <Phone className="w-4 h-4" /> رقم الهاتف
               </button>
             </div>
@@ -393,29 +401,29 @@ export default function Login() {
             {authMethod === "email" && (
               <form onSubmit={handleEmailLogin} className="space-y-4">
                 <div className="relative">
-                  <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                  <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 w-5 h-5 pointer-events-none" />
                   <input type="email" required placeholder="example@mail.com" value={loginData.email}
                     onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                    className="w-full pr-10 pl-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 text-left" dir="ltr" />
+                    className="w-full pr-10 pl-4 py-3 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 dark:text-white text-left" dir="ltr" />
                 </div>
                 <div className="relative">
-                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 w-5 h-5 pointer-events-none" />
                   <input type={showPassword ? "text" : "password"} required placeholder="••••••••" value={loginData.password}
                     onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                    className="w-full pr-10 pl-10 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 text-left" dir="ltr" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    className="w-full pr-10 pl-10 py-3 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 dark:text-white text-left" dir="ltr" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 hover:text-gray-600">
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
                 <div className="flex items-center justify-between">
-                  <button type="button" onClick={() => setShowForgotPassword(true)} className="text-sm text-[#2C3A47] hover:text-[#00E676] font-semibold hover:underline">نسيت كلمة المرور؟</button>
+                  <button type="button" onClick={() => setShowForgotPassword(true)} className="text-sm text-[#2C3A47] dark:text-white hover:text-[#00E676] font-semibold hover:underline">نسيت كلمة المرور؟</button>
                   <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600 font-semibold">
                     <input type="checkbox" checked={loginData.rememberMe} onChange={(e) => setLoginData({ ...loginData, rememberMe: e.target.checked })} className="w-4 h-4 accent-[#00E676]" />
                     تذكرني
                   </label>
                 </div>
                 <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
-                  className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] py-3.5 rounded-full font-bold text-base transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md mt-2">
+                  className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] dark:text-white py-3.5 rounded-full font-bold text-base transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md mt-2">
                   {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><LogIn className="w-5 h-5" /> تسجيل الدخول</>}
                 </motion.button>
               </form>
@@ -426,9 +434,9 @@ export default function Login() {
               <>
                 {phoneStep === "number" ? (
                   <form onSubmit={handleSendOtp} className="space-y-4">
-                    <div className="flex border border-gray-300 rounded-xl overflow-hidden focus-within:border-[#00E676] transition-colors">
+                    <div className="flex border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl overflow-hidden focus-within:border-[#00E676] transition-colors">
                       <select value={registerData.countryCode} onChange={(e) => setRegisterData({ ...registerData, countryCode: e.target.value })}
-                        className="bg-gray-50 text-gray-700 px-3 py-3 text-sm font-bold outline-none border-l border-gray-300" dir="ltr">
+                        className="bg-gray-50 dark:bg-zinc-800 text-gray-700 dark:text-white px-3 py-3 text-sm font-bold outline-none border-l border-gray-300" dir="ltr">
                         <option value="+966">🇸🇦 +966</option>
                         <option value="+971">🇦🇪 +971</option>
                         <option value="+20">🇪🇬 +20</option>
@@ -437,32 +445,32 @@ export default function Login() {
                       </select>
                       <input type="tel" required placeholder="5XXXXXXXX" value={loginData.phone}
                         onChange={(e) => setLoginData({ ...loginData, phone: e.target.value })}
-                        className="flex-1 pl-4 pr-3 py-3 font-bold text-gray-700 outline-none text-left" dir="ltr" />
+                        className="flex-1 pl-4 pr-3 py-3 font-bold text-gray-700 dark:text-white outline-none text-left" dir="ltr" />
                     </div>
                     <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
-                      className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
+                      className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] dark:text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
                       {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" /> إرسال رمز التحقق</>}
                     </motion.button>
                   </form>
                 ) : (
                   <form onSubmit={handleVerifyOtp} className="space-y-4">
-                    <p className="text-sm text-gray-500 text-center font-bold">أدخل الرمز المكون من 6 أرقام المرسل إلى هاتفك</p>
+                    <p className="text-sm text-gray-500 dark:text-zinc-400 text-center font-bold">أدخل الرمز المكون من 6 أرقام المرسل إلى هاتفك</p>
                     <input type="text" required placeholder="_ _ _ _ _ _" maxLength={6} value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 text-center text-2xl tracking-[0.5em] font-bold" dir="ltr" />
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 dark:text-white text-center text-2xl tracking-[0.5em] font-bold" dir="ltr" />
                     <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
-                      className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
+                      className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] dark:text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
                       {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><Check className="w-5 h-5" /> تأكيد الرمز والدخول</>}
                     </motion.button>
-                    <button type="button" onClick={() => setPhoneStep("number")} className="w-full text-center text-sm font-bold text-gray-400 hover:text-[#2C3A47]">تغيير رقم الهاتف</button>
+                    <button type="button" onClick={() => setPhoneStep("number")} className="w-full text-center text-sm font-bold text-gray-400 dark:text-zinc-500 hover:text-[#2C3A47] dark:text-white">تغيير رقم الهاتف</button>
                   </form>
                 )}
               </>
             )}
 
-            <p className="text-center text-sm font-bold text-gray-500 mt-6">
+            <p className="text-center text-sm font-bold text-gray-500 dark:text-zinc-400 mt-6">
               ليس لديك حساب؟{" "}
-              <button onClick={() => switchMode("register")} className="text-[#2C3A47] hover:text-[#00E676] font-bold hover:underline">سجل الآن</button>
+              <button onClick={() => switchMode("register")} className="text-[#2C3A47] dark:text-white hover:text-[#00E676] font-bold hover:underline">سجل الآن</button>
             </p>
           </motion.div>
         )}
@@ -470,26 +478,26 @@ export default function Login() {
         {/* ─── REGISTER ─── */}
         {!showForgotPassword && mode === "register" && (
           <motion.div key="register" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-            className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+            className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 p-8">
 
-            <h2 className="text-xl font-bold text-[#2C3A47] text-center mb-2">إنشاء حساب جديد</h2>
-            <p className="text-gray-400 font-bold text-sm text-center mb-6">اختر طريقة التسجيل</p>
+            <h2 className="text-xl font-bold text-[#2C3A47] dark:text-white dark:text-white text-center mb-2">إنشاء حساب جديد</h2>
+            <p className="text-gray-400 dark:text-zinc-500 font-bold text-sm text-center mb-6">اختر طريقة التسجيل</p>
 
             {/* Method Cards */}
             <div className="grid grid-cols-3 gap-3 mb-6">
               <button type="button" onClick={handleGoogleLogin} disabled={loading}
-                className="flex flex-col items-center gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 py-4 rounded-xl transition-colors disabled:opacity-60">
+                className="flex flex-col items-center gap-2 bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 border border-gray-200 dark:border-zinc-700 py-4 rounded-xl transition-colors disabled:opacity-60">
                 <GoogleIcon />
                 <span className="text-xs text-gray-600 font-bold">Google</span>
               </button>
               <button type="button" onClick={() => setAuthMethod("email")}
-                className={`flex flex-col items-center gap-2 border py-4 rounded-xl transition-colors ${authMethod === "email" ? "bg-[#00E676]/10 border-[#00E676]" : "bg-gray-50 border-gray-200 hover:bg-gray-100"}`}>
-                <Mail className={`w-5 h-5 ${authMethod === "email" ? "text-[#00C853]" : "text-gray-500"}`} />
+                className={`flex flex-col items-center gap-2 border py-4 rounded-xl transition-colors ${authMethod === "email" ? "bg-[#00E676]/10 border-[#00E676]" : "bg-gray-50 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 hover:bg-gray-100"}`}>
+                <Mail className={`w-5 h-5 ${authMethod === "email" ? "text-[#00C853]" : "text-gray-500 dark:text-zinc-400"}`} />
                 <span className="text-xs font-bold text-gray-600">البريد</span>
               </button>
               <button type="button" onClick={() => { setAuthMethod("phone"); setPhoneStep("number"); }}
-                className={`flex flex-col items-center gap-2 border py-4 rounded-xl transition-colors ${authMethod === "phone" ? "bg-[#00E676]/10 border-[#00E676]" : "bg-gray-50 border-gray-200 hover:bg-gray-100"}`}>
-                <Phone className={`w-5 h-5 ${authMethod === "phone" ? "text-[#00C853]" : "text-gray-500"}`} />
+                className={`flex flex-col items-center gap-2 border py-4 rounded-xl transition-colors ${authMethod === "phone" ? "bg-[#00E676]/10 border-[#00E676]" : "bg-gray-50 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 hover:bg-gray-100"}`}>
+                <Phone className={`w-5 h-5 ${authMethod === "phone" ? "text-[#00C853]" : "text-gray-500 dark:text-zinc-400"}`} />
                 <span className="text-xs font-bold text-gray-600">الهاتف</span>
               </button>
             </div>
@@ -499,24 +507,24 @@ export default function Login() {
               <form onSubmit={handleEmailRegister} className="space-y-4">
                 <input type="text" required placeholder="الاسم الكامل" value={registerData.name}
                   onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 font-bold" />
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 dark:text-white font-bold" />
                 <div className="relative">
-                  <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 w-5 h-5" />
                   <input type="email" required placeholder="example@mail.com" value={registerData.email}
                     onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                    className="w-full pr-10 pl-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 text-left" dir="ltr" />
+                    className="w-full pr-10 pl-4 py-3 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 dark:text-white text-left" dir="ltr" />
                 </div>
                 <div className="relative">
-                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 w-5 h-5" />
                   <input type={showPassword ? "text" : "password"} required placeholder="كلمة المرور (6 أحرف على الأقل)" value={registerData.password}
                     onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                    className="w-full pr-10 pl-10 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 text-left" dir="ltr" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    className="w-full pr-10 pl-10 py-3 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 dark:text-white text-left" dir="ltr" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500">
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
                 <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
-                  className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
+                  className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] dark:text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
                   {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><Check className="w-5 h-5" /> إنشاء الحساب</>}
                 </motion.button>
               </form>
@@ -529,10 +537,10 @@ export default function Login() {
                   <form onSubmit={handleSendOtp} className="space-y-4">
                     <input type="text" required placeholder="الاسم الكامل" value={registerData.name}
                       onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 font-bold" />
-                    <div className="flex border border-gray-300 rounded-xl overflow-hidden focus-within:border-[#00E676] transition-colors">
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 dark:text-white font-bold" />
+                    <div className="flex border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl overflow-hidden focus-within:border-[#00E676] transition-colors">
                       <select value={registerData.countryCode} onChange={(e) => setRegisterData({ ...registerData, countryCode: e.target.value })}
-                        className="bg-gray-50 text-gray-700 px-3 py-3 text-sm font-bold outline-none border-l border-gray-300" dir="ltr">
+                        className="bg-gray-50 dark:bg-zinc-800 text-gray-700 dark:text-white px-3 py-3 text-sm font-bold outline-none border-l border-gray-300" dir="ltr">
                         <option value="+966">🇸🇦 +966</option>
                         <option value="+971">🇦🇪 +971</option>
                         <option value="+20">🇪🇬 +20</option>
@@ -541,34 +549,34 @@ export default function Login() {
                       </select>
                       <input type="tel" required placeholder="5XXXXXXXX" value={registerData.phone}
                         onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
-                        className="flex-1 pl-4 pr-3 py-3 text-gray-700 font-bold outline-none text-left" dir="ltr" />
+                        className="flex-1 pl-4 pr-3 py-3 text-gray-700 dark:text-white font-bold outline-none text-left" dir="ltr" />
                     </div>
                     <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
-                      className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
+                      className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] dark:text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
                       {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" /> إرسال رمز التحقق</>}
                     </motion.button>
                   </form>
                 ) : (
                   <form onSubmit={handleVerifyOtp} className="space-y-4">
-                    <p className="text-sm text-gray-500 font-bold text-center">أدخل رمز التحقق المرسل إلى هاتفك</p>
+                    <p className="text-sm text-gray-500 dark:text-zinc-400 font-bold text-center">أدخل رمز التحقق المرسل إلى هاتفك</p>
                     <input type="text" required placeholder="_ _ _ _ _ _" maxLength={6} value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#00E676] text-center text-2xl tracking-[0.5em] font-bold" dir="ltr" />
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-[#00E676] text-center text-2xl tracking-[0.5em] font-bold" dir="ltr" />
                     <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
-                      className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
+                      className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] dark:text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
                       {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><Check className="w-5 h-5" /> تأكيد الرمز وإنشاء الحساب</>}
                     </motion.button>
-                    <button type="button" onClick={() => setPhoneStep("number")} className="w-full text-center text-sm font-bold text-gray-400 hover:text-[#2C3A47]">تغيير رقم الهاتف</button>
+                    <button type="button" onClick={() => setPhoneStep("number")} className="w-full text-center text-sm font-bold text-gray-400 dark:text-zinc-500 hover:text-[#2C3A47] dark:text-white">تغيير رقم الهاتف</button>
                   </form>
                 )}
               </>
             )}
 
-            <p className="text-center text-sm font-bold text-gray-500 mt-6">
+            <p className="text-center text-sm font-bold text-gray-500 dark:text-zinc-400 mt-6">
               لديك حساب بالفعل؟{" "}
-              <button onClick={() => switchMode("login")} className="text-[#2C3A47] hover:text-[#00E676] font-bold hover:underline">سجل الدخول</button>
+              <button onClick={() => switchMode("login")} className="text-[#2C3A47] dark:text-white hover:text-[#00E676] font-bold hover:underline">سجل الدخول</button>
             </p>
-            <p className="text-center text-xs font-bold text-gray-400 mt-3">
+            <p className="text-center text-xs font-bold text-gray-400 dark:text-zinc-500 mt-3">
               بالتسجيل أنت توافق على <a href="/terms" className="text-[#00C853] hover:underline">الشروط والأحكام</a>
             </p>
           </motion.div>
