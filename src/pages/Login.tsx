@@ -19,33 +19,7 @@ import {
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import toast from "react-hot-toast";
 
-// ─────────────────────────────────────────────
-// Logo SVG — Cashier Tech / كاشير تك
-// ─────────────────────────────────────────────
-const CashierTechLogo = ({ size = 40 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* Background */}
-    <rect width="100" height="100" rx="22" fill="#1a2b3c" />
-    {/* Receipt body */}
-    <rect x="22" y="18" width="42" height="54" rx="5" fill="#48b09d" />
-    {/* Receipt lines (items) */}
-    <rect x="28" y="30" width="20" height="4" rx="2" fill="white" opacity="0.9" />
-    <rect x="28" y="39" width="28" height="4" rx="2" fill="white" opacity="0.7" />
-    <rect x="28" y="48" width="24" height="4" rx="2" fill="white" opacity="0.7" />
-    {/* Total line */}
-    <rect x="28" y="58" width="30" height="4" rx="2" fill="white" />
-    {/* Barcode at bottom */}
-    <rect x="28" y="65" width="3" height="5" rx="1" fill="white" opacity="0.85" />
-    <rect x="33" y="65" width="2" height="5" rx="1" fill="white" opacity="0.85" />
-    <rect x="37" y="65" width="4" height="5" rx="1" fill="white" opacity="0.85" />
-    <rect x="43" y="65" width="2" height="5" rx="1" fill="white" opacity="0.85" />
-    <rect x="47" y="65" width="3" height="5" rx="1" fill="white" opacity="0.85" />
-    {/* Green coin / currency accent */}
-    <circle cx="72" cy="68" r="16" fill="#48b09d" stroke="#1a2b3c" strokeWidth="2" />
-    <text x="72" y="74" textAnchor="middle" fontSize="18" fontWeight="bold" fill="white">＄</text>
-  </svg>
-);
-
+// Removed SVG Logo to use the new professional PNG logo
 // ─────────────────────────────────────────────
 // Provider Icons
 // ─────────────────────────────────────────────
@@ -302,10 +276,10 @@ export default function Login() {
   // ─────────────────────────────────────────────
   if (awaitingVerification) {
     return (
-      <div className="min-h-screen bg-[#f0faf8] flex items-center justify-center p-4" dir="rtl">
+      <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center p-4" dir="rtl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md bg-white rounded-2xl shadow-xl p-10 text-center">
-          <div className="w-20 h-20 bg-[#48b09d]/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Mail className="w-10 h-10 text-[#48b09d]" />
+          <div className="w-20 h-20 bg-[#00E676]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Mail className="w-10 h-10 text-[#00E676]" />
           </div>
           <h1 className="text-2xl font-bold text-[#1a2b3c] mb-3">تحقق من بريدك الإلكتروني</h1>
           <p className="text-gray-500 mb-2">أرسلنا رابط التحقق إلى:</p>
@@ -313,11 +287,11 @@ export default function Login() {
           <p className="text-sm text-gray-400 mb-8">افتح الرابط من بريدك ثم اضغط الزر أدناه للمتابعة</p>
 
           <motion.button whileTap={{ scale: 0.97 }} onClick={handleCheckVerification} disabled={verificationCheckLoading}
-            className="w-full bg-[#48b09d] hover:bg-[#3d9887] text-white py-3.5 rounded-full font-bold text-lg transition-colors flex items-center justify-center gap-2 mb-4 disabled:opacity-70">
-            {verificationCheckLoading ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><Check className="w-5 h-5" /> لقد تحققت، ادخل الآن</>}
+            className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] py-3.5 rounded-full font-bold text-lg transition-colors flex items-center justify-center gap-2 mb-4 disabled:opacity-70">
+            {verificationCheckLoading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><Check className="w-5 h-5" /> لقد تحققت، ادخل الآن</>}
           </motion.button>
 
-          <button onClick={handleResendVerification} className="text-sm text-[#48b09d] hover:underline flex items-center gap-1 mx-auto">
+          <button onClick={handleResendVerification} className="text-sm text-[#00E676] hover:underline flex items-center gap-1 mx-auto">
             <RefreshCw className="w-4 h-4" /> إعادة إرسال رابط التحقق
           </button>
           <button onClick={() => switchMode("login")} className="mt-4 text-sm text-gray-400 hover:text-gray-600">
@@ -335,25 +309,25 @@ export default function Login() {
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
       className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
       <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-[#48b09d]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Lock className="w-8 h-8 text-[#48b09d]" />
+        <div className="w-16 h-16 bg-[#00E676]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Lock className="w-8 h-8 text-[#00E676]" />
         </div>
-        <h1 className="text-xl font-bold text-[#1a2b3c]">استعادة كلمة المرور</h1>
+        <h1 className="text-xl font-bold text-[#2C3A47]">استعادة كلمة المرور</h1>
         <p className="text-gray-500 text-sm mt-1">سنرسل لك رابط إعادة التعيين</p>
       </div>
       <form onSubmit={handleForgotPassword} className="space-y-5">
         <div>
-          <label className="block text-sm font-bold text-[#1a2b3c] mb-2">البريد الإلكتروني</label>
+          <label className="block text-sm font-bold text-[#2C3A47] mb-2">البريد الإلكتروني</label>
           <div className="relative">
             <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input type="email" required placeholder="example@mail.com" value={forgotEmail}
               onChange={(e) => setForgotEmail(e.target.value)}
-              className="w-full pr-10 pl-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#48b09d] text-gray-700 text-left" dir="ltr" />
+              className="w-full pr-10 pl-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 text-left" dir="ltr" />
           </div>
         </div>
         <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
-          className="w-full bg-[#48b09d] hover:bg-[#3d9887] text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70">
-          {loading ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" /> إرسال رابط الاستعادة</>}
+          className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70">
+          {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" /> إرسال رابط الاستعادة</>}
         </motion.button>
         <button type="button" onClick={() => setShowForgotPassword(false)} className="w-full text-center text-sm text-gray-400 hover:text-gray-600 mt-2">
           العودة لتسجيل الدخول
@@ -366,16 +340,16 @@ export default function Login() {
   // RENDER: Main Page
   // ─────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f0faf8] to-[#e8f5f2] flex flex-col items-center justify-center p-4" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#E9ECEF] flex flex-col items-center justify-center p-4" dir="rtl">
       {/* Invisible recaptcha anchor */}
       <div id="recaptcha-container"></div>
 
       {/* Logo / Header */}
       <div className="flex flex-col items-center mb-8">
-        <CashierTechLogo size={64} />
+        <img src="/icon-192.png" alt="كاشير تك" className="w-24 h-24 mb-2 drop-shadow-md" />
         <div className="mt-3 text-center">
-          <h1 className="text-2xl font-extrabold text-[#1a2b3c] leading-tight">كاشير تك</h1>
-          <p className="text-[#48b09d] text-sm font-medium tracking-wide">Cashier Tech</p>
+          <h1 className="text-2xl font-extrabold text-[#2C3A47] leading-tight">كاشير تك</h1>
+          <p className="text-[#00E676] text-sm font-bold tracking-wide">Cashier Tech</p>
         </div>
       </div>
 
@@ -388,7 +362,7 @@ export default function Login() {
           <motion.div key="login" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
             className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
 
-            <h2 className="text-xl font-bold text-[#1a2b3c] text-center mb-6">تسجيل الدخول</h2>
+            <h2 className="text-xl font-bold text-[#2C3A47] text-center mb-6">تسجيل الدخول</h2>
 
             {/* Google */}
             <button type="button" onClick={handleGoogleLogin} disabled={loading}
@@ -406,11 +380,11 @@ export default function Login() {
             {/* Method Toggle */}
             <div className="flex rounded-xl overflow-hidden border border-gray-200 mb-5">
               <button type="button" onClick={() => setAuthMethod("email")}
-                className={`flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${authMethod === "email" ? "bg-[#48b09d] text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                className={`flex-1 py-2.5 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${authMethod === "email" ? "bg-[#00E676] text-[#2C3A47]" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
                 <Mail className="w-4 h-4" /> البريد الإلكتروني
               </button>
               <button type="button" onClick={() => { setAuthMethod("phone"); setPhoneStep("number"); }}
-                className={`flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${authMethod === "phone" ? "bg-[#48b09d] text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                className={`flex-1 py-2.5 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${authMethod === "phone" ? "bg-[#00E676] text-[#2C3A47]" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
                 <Phone className="w-4 h-4" /> رقم الهاتف
               </button>
             </div>
@@ -422,27 +396,27 @@ export default function Login() {
                   <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
                   <input type="email" required placeholder="example@mail.com" value={loginData.email}
                     onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                    className="w-full pr-10 pl-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#48b09d] text-gray-700 text-left" dir="ltr" />
+                    className="w-full pr-10 pl-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 text-left" dir="ltr" />
                 </div>
                 <div className="relative">
                   <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
                   <input type={showPassword ? "text" : "password"} required placeholder="••••••••" value={loginData.password}
                     onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                    className="w-full pr-10 pl-10 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#48b09d] text-gray-700 text-left" dir="ltr" />
+                    className="w-full pr-10 pl-10 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 text-left" dir="ltr" />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
                 <div className="flex items-center justify-between">
-                  <button type="button" onClick={() => setShowForgotPassword(true)} className="text-sm text-[#48b09d] hover:underline">نسيت كلمة المرور؟</button>
-                  <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600">
-                    <input type="checkbox" checked={loginData.rememberMe} onChange={(e) => setLoginData({ ...loginData, rememberMe: e.target.checked })} className="w-4 h-4 accent-[#48b09d]" />
+                  <button type="button" onClick={() => setShowForgotPassword(true)} className="text-sm text-[#2C3A47] hover:text-[#00E676] font-semibold hover:underline">نسيت كلمة المرور؟</button>
+                  <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600 font-semibold">
+                    <input type="checkbox" checked={loginData.rememberMe} onChange={(e) => setLoginData({ ...loginData, rememberMe: e.target.checked })} className="w-4 h-4 accent-[#00E676]" />
                     تذكرني
                   </label>
                 </div>
                 <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
-                  className="w-full bg-[#48b09d] hover:bg-[#3d9887] text-white py-3.5 rounded-full font-bold text-base transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md mt-2">
-                  {loading ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><LogIn className="w-5 h-5" /> تسجيل الدخول</>}
+                  className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] py-3.5 rounded-full font-bold text-base transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md mt-2">
+                  {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><LogIn className="w-5 h-5" /> تسجيل الدخول</>}
                 </motion.button>
               </form>
             )}
@@ -452,9 +426,9 @@ export default function Login() {
               <>
                 {phoneStep === "number" ? (
                   <form onSubmit={handleSendOtp} className="space-y-4">
-                    <div className="flex border border-gray-300 rounded-xl overflow-hidden focus-within:border-[#48b09d] transition-colors">
+                    <div className="flex border border-gray-300 rounded-xl overflow-hidden focus-within:border-[#00E676] transition-colors">
                       <select value={registerData.countryCode} onChange={(e) => setRegisterData({ ...registerData, countryCode: e.target.value })}
-                        className="bg-gray-50 text-gray-700 px-3 py-3 text-sm outline-none border-l border-gray-300" dir="ltr">
+                        className="bg-gray-50 text-gray-700 px-3 py-3 text-sm font-bold outline-none border-l border-gray-300" dir="ltr">
                         <option value="+966">🇸🇦 +966</option>
                         <option value="+971">🇦🇪 +971</option>
                         <option value="+20">🇪🇬 +20</option>
@@ -463,32 +437,32 @@ export default function Login() {
                       </select>
                       <input type="tel" required placeholder="5XXXXXXXX" value={loginData.phone}
                         onChange={(e) => setLoginData({ ...loginData, phone: e.target.value })}
-                        className="flex-1 pl-4 pr-3 py-3 text-gray-700 outline-none text-left" dir="ltr" />
+                        className="flex-1 pl-4 pr-3 py-3 font-bold text-gray-700 outline-none text-left" dir="ltr" />
                     </div>
                     <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
-                      className="w-full bg-[#48b09d] hover:bg-[#3d9887] text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
-                      {loading ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" /> إرسال رمز التحقق</>}
+                      className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
+                      {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" /> إرسال رمز التحقق</>}
                     </motion.button>
                   </form>
                 ) : (
                   <form onSubmit={handleVerifyOtp} className="space-y-4">
-                    <p className="text-sm text-gray-500 text-center">أدخل الرمز المكون من 6 أرقام المرسل إلى هاتفك</p>
+                    <p className="text-sm text-gray-500 text-center font-bold">أدخل الرمز المكون من 6 أرقام المرسل إلى هاتفك</p>
                     <input type="text" required placeholder="_ _ _ _ _ _" maxLength={6} value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#48b09d] text-gray-700 text-center text-2xl tracking-[0.5em] font-bold" dir="ltr" />
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 text-center text-2xl tracking-[0.5em] font-bold" dir="ltr" />
                     <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
-                      className="w-full bg-[#48b09d] hover:bg-[#3d9887] text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
-                      {loading ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><Check className="w-5 h-5" /> تأكيد الرمز والدخول</>}
+                      className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
+                      {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><Check className="w-5 h-5" /> تأكيد الرمز والدخول</>}
                     </motion.button>
-                    <button type="button" onClick={() => setPhoneStep("number")} className="w-full text-center text-sm text-gray-400 hover:text-gray-600">تغيير رقم الهاتف</button>
+                    <button type="button" onClick={() => setPhoneStep("number")} className="w-full text-center text-sm font-bold text-gray-400 hover:text-[#2C3A47]">تغيير رقم الهاتف</button>
                   </form>
                 )}
               </>
             )}
 
-            <p className="text-center text-sm text-gray-500 mt-6">
+            <p className="text-center text-sm font-bold text-gray-500 mt-6">
               ليس لديك حساب؟{" "}
-              <button onClick={() => switchMode("register")} className="text-[#48b09d] font-bold hover:underline">سجل الآن</button>
+              <button onClick={() => switchMode("register")} className="text-[#2C3A47] hover:text-[#00E676] font-bold hover:underline">سجل الآن</button>
             </p>
           </motion.div>
         )}
@@ -498,25 +472,25 @@ export default function Login() {
           <motion.div key="register" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
             className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
 
-            <h2 className="text-xl font-bold text-[#1a2b3c] text-center mb-2">إنشاء حساب جديد</h2>
-            <p className="text-gray-400 text-sm text-center mb-6">اختر طريقة التسجيل</p>
+            <h2 className="text-xl font-bold text-[#2C3A47] text-center mb-2">إنشاء حساب جديد</h2>
+            <p className="text-gray-400 font-bold text-sm text-center mb-6">اختر طريقة التسجيل</p>
 
             {/* Method Cards */}
             <div className="grid grid-cols-3 gap-3 mb-6">
               <button type="button" onClick={handleGoogleLogin} disabled={loading}
                 className="flex flex-col items-center gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 py-4 rounded-xl transition-colors disabled:opacity-60">
                 <GoogleIcon />
-                <span className="text-xs text-gray-600 font-medium">Google</span>
+                <span className="text-xs text-gray-600 font-bold">Google</span>
               </button>
               <button type="button" onClick={() => setAuthMethod("email")}
-                className={`flex flex-col items-center gap-2 border py-4 rounded-xl transition-colors ${authMethod === "email" ? "bg-[#48b09d]/10 border-[#48b09d]" : "bg-gray-50 border-gray-200 hover:bg-gray-100"}`}>
-                <Mail className={`w-5 h-5 ${authMethod === "email" ? "text-[#48b09d]" : "text-gray-500"}`} />
-                <span className="text-xs font-medium text-gray-600">البريد</span>
+                className={`flex flex-col items-center gap-2 border py-4 rounded-xl transition-colors ${authMethod === "email" ? "bg-[#00E676]/10 border-[#00E676]" : "bg-gray-50 border-gray-200 hover:bg-gray-100"}`}>
+                <Mail className={`w-5 h-5 ${authMethod === "email" ? "text-[#00C853]" : "text-gray-500"}`} />
+                <span className="text-xs font-bold text-gray-600">البريد</span>
               </button>
               <button type="button" onClick={() => { setAuthMethod("phone"); setPhoneStep("number"); }}
-                className={`flex flex-col items-center gap-2 border py-4 rounded-xl transition-colors ${authMethod === "phone" ? "bg-[#48b09d]/10 border-[#48b09d]" : "bg-gray-50 border-gray-200 hover:bg-gray-100"}`}>
-                <Phone className={`w-5 h-5 ${authMethod === "phone" ? "text-[#48b09d]" : "text-gray-500"}`} />
-                <span className="text-xs font-medium text-gray-600">الهاتف</span>
+                className={`flex flex-col items-center gap-2 border py-4 rounded-xl transition-colors ${authMethod === "phone" ? "bg-[#00E676]/10 border-[#00E676]" : "bg-gray-50 border-gray-200 hover:bg-gray-100"}`}>
+                <Phone className={`w-5 h-5 ${authMethod === "phone" ? "text-[#00C853]" : "text-gray-500"}`} />
+                <span className="text-xs font-bold text-gray-600">الهاتف</span>
               </button>
             </div>
 
@@ -525,25 +499,25 @@ export default function Login() {
               <form onSubmit={handleEmailRegister} className="space-y-4">
                 <input type="text" required placeholder="الاسم الكامل" value={registerData.name}
                   onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#48b09d] text-gray-700" />
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 font-bold" />
                 <div className="relative">
                   <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input type="email" required placeholder="example@mail.com" value={registerData.email}
                     onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                    className="w-full pr-10 pl-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#48b09d] text-gray-700 text-left" dir="ltr" />
+                    className="w-full pr-10 pl-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 text-left" dir="ltr" />
                 </div>
                 <div className="relative">
                   <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input type={showPassword ? "text" : "password"} required placeholder="كلمة المرور (6 أحرف على الأقل)" value={registerData.password}
                     onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                    className="w-full pr-10 pl-10 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#48b09d] text-gray-700 text-left" dir="ltr" />
+                    className="w-full pr-10 pl-10 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 text-left" dir="ltr" />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
                 <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
-                  className="w-full bg-[#48b09d] hover:bg-[#3d9887] text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
-                  {loading ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><Check className="w-5 h-5" /> إنشاء الحساب</>}
+                  className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
+                  {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><Check className="w-5 h-5" /> إنشاء الحساب</>}
                 </motion.button>
               </form>
             )}
@@ -555,10 +529,10 @@ export default function Login() {
                   <form onSubmit={handleSendOtp} className="space-y-4">
                     <input type="text" required placeholder="الاسم الكامل" value={registerData.name}
                       onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#48b09d] text-gray-700" />
-                    <div className="flex border border-gray-300 rounded-xl overflow-hidden focus-within:border-[#48b09d] transition-colors">
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 font-bold" />
+                    <div className="flex border border-gray-300 rounded-xl overflow-hidden focus-within:border-[#00E676] transition-colors">
                       <select value={registerData.countryCode} onChange={(e) => setRegisterData({ ...registerData, countryCode: e.target.value })}
-                        className="bg-gray-50 text-gray-700 px-3 py-3 text-sm outline-none border-l border-gray-300" dir="ltr">
+                        className="bg-gray-50 text-gray-700 px-3 py-3 text-sm font-bold outline-none border-l border-gray-300" dir="ltr">
                         <option value="+966">🇸🇦 +966</option>
                         <option value="+971">🇦🇪 +971</option>
                         <option value="+20">🇪🇬 +20</option>
@@ -567,35 +541,35 @@ export default function Login() {
                       </select>
                       <input type="tel" required placeholder="5XXXXXXXX" value={registerData.phone}
                         onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
-                        className="flex-1 pl-4 pr-3 py-3 text-gray-700 outline-none text-left" dir="ltr" />
+                        className="flex-1 pl-4 pr-3 py-3 text-gray-700 font-bold outline-none text-left" dir="ltr" />
                     </div>
                     <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
-                      className="w-full bg-[#48b09d] hover:bg-[#3d9887] text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
-                      {loading ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" /> إرسال رمز التحقق</>}
+                      className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
+                      {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" /> إرسال رمز التحقق</>}
                     </motion.button>
                   </form>
                 ) : (
                   <form onSubmit={handleVerifyOtp} className="space-y-4">
-                    <p className="text-sm text-gray-500 text-center">أدخل رمز التحقق المرسل إلى هاتفك</p>
+                    <p className="text-sm text-gray-500 font-bold text-center">أدخل رمز التحقق المرسل إلى هاتفك</p>
                     <input type="text" required placeholder="_ _ _ _ _ _" maxLength={6} value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#48b09d] text-center text-2xl tracking-[0.5em] font-bold" dir="ltr" />
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#00E676] text-center text-2xl tracking-[0.5em] font-bold" dir="ltr" />
                     <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
-                      className="w-full bg-[#48b09d] hover:bg-[#3d9887] text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
-                      {loading ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><Check className="w-5 h-5" /> تأكيد الرمز وإنشاء الحساب</>}
+                      className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
+                      {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><Check className="w-5 h-5" /> تأكيد الرمز وإنشاء الحساب</>}
                     </motion.button>
-                    <button type="button" onClick={() => setPhoneStep("number")} className="w-full text-center text-sm text-gray-400 hover:text-gray-600">تغيير رقم الهاتف</button>
+                    <button type="button" onClick={() => setPhoneStep("number")} className="w-full text-center text-sm font-bold text-gray-400 hover:text-[#2C3A47]">تغيير رقم الهاتف</button>
                   </form>
                 )}
               </>
             )}
 
-            <p className="text-center text-sm text-gray-500 mt-6">
+            <p className="text-center text-sm font-bold text-gray-500 mt-6">
               لديك حساب بالفعل؟{" "}
-              <button onClick={() => switchMode("login")} className="text-[#48b09d] font-bold hover:underline">سجل الدخول</button>
+              <button onClick={() => switchMode("login")} className="text-[#2C3A47] hover:text-[#00E676] font-bold hover:underline">سجل الدخول</button>
             </p>
-            <p className="text-center text-xs text-gray-400 mt-3">
-              بالتسجيل أنت توافق على <a href="/terms" className="text-[#48b09d] hover:underline">الشروط والأحكام</a>
+            <p className="text-center text-xs font-bold text-gray-400 mt-3">
+              بالتسجيل أنت توافق على <a href="/terms" className="text-[#00C853] hover:underline">الشروط والأحكام</a>
             </p>
           </motion.div>
         )}

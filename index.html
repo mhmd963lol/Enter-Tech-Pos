@@ -1,27 +1,29 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    />
-    <meta name="theme-color" content="#48b09d" />
-    <meta name="description" content="كاشير تك – نظام نقطة البيع الذكي لإدارة مبيعاتك بسهولة وأمان" />
-    <link rel="manifest" href="/manifest.json" />
-    <title>كاشير تك | Cashier Tech – نظام نقطة البيع</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-    <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker.register("/sw.js").catch((err) => {
-            console.log("SW registration failed: ", err);
-          });
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#2C3A47" />
+  <meta name="description" content="كاشير تك – نظام نقطة البيع الذكي لإدارة مبيعاتك بسهولة وأمان" />
+  <link rel="icon" type="image/png" href="/icon-192.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <title>كاشير تك | Cashier Tech – نظام نقطة البيع</title>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js").catch((err) => {
+          console.log("SW registration failed: ", err);
         });
-      }
-    </script>
-  </body>
+      });
+    }
+  </script>
+</body>
+
 </html>

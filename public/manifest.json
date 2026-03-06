@@ -1,21 +1,22 @@
 {
-  "name": "نظام إدارة المبيعات والصيانة",
-  "short_name": "مبيعات",
-  "description": "نظام محاسبة ونقاط بيع متكامل مع إدارة الصيانة",
+  "name": "كاشير تك | Cashier Tech",
+  "short_name": "كاشير تك",
+  "name_ar": "كاشير تك",
+  "description": "نظام مبيعات وصيانة للكاشير الذكي",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#4f46e5",
+  "theme_color": "#2C3A47",
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/store.svg",
+      "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/png"
     },
     {
-      "src": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/store.svg",
+      "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml"
+      "type": "image/png"
     }
   ]
 }

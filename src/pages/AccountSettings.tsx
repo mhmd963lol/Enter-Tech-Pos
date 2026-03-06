@@ -49,7 +49,7 @@ const Section = ({ title, icon, children, defaultOpen = false }: { title: string
       <button type="button" onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between p-5 text-right hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
         <div className="flex items-center gap-3">
-          <div className="text-[#48b09d]">{icon}</div>
+          <div className="text-[#00E676]">{icon}</div>
           <h3 className="font-bold text-zinc-900 dark:text-white">{title}</h3>
         </div>
         {open ? <ChevronUp className="w-5 h-5 text-zinc-400" /> : <ChevronDown className="w-5 h-5 text-zinc-400" />}
@@ -220,8 +220,8 @@ export default function AccountSettings() {
     finally { setLoading(false); }
   };
 
-  const inputClass = "w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#48b09d] dark:text-white transition-colors text-sm";
-  const btnPrimary = "flex items-center gap-2 px-6 py-2.5 bg-[#48b09d] hover:bg-[#3d9887] text-white rounded-xl font-bold transition-colors text-sm disabled:opacity-60";
+  const inputClass = "w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00E676] dark:text-white transition-colors text-sm";
+  const btnPrimary = "flex items-center gap-2 px-6 py-2.5 bg-[#00E676] hover:bg-[#3d9887] text-white rounded-xl font-bold transition-colors text-sm disabled:opacity-60";
 
   return (
     <div className="max-w-2xl mx-auto space-y-5 p-4 md:p-6" dir="rtl">
@@ -229,7 +229,7 @@ export default function AccountSettings() {
 
       <div>
         <h2 className="text-2xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-          <User className="w-6 h-6 text-[#48b09d]" /> إعدادات الحساب
+          <User className="w-6 h-6 text-[#00E676]" /> إعدادات الحساب
         </h2>
         <p className="text-zinc-500 dark:text-zinc-400 text-sm">إدارة ملفك الشخصي وبيانات الأمان</p>
       </div>
@@ -312,7 +312,7 @@ export default function AccountSettings() {
       <Section title="تغيير / ربط رقم الهاتف" icon={<Phone className="w-5 h-5" />}>
         {phoneStep === "input" ? (
           <form onSubmit={handleSendPhoneOtp} className="pt-4 space-y-3">
-            <div className="flex border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#48b09d]">
+            <div className="flex border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#00E676]">
               <select value={phoneForm.countryCode} onChange={(e) => setPhoneForm({ ...phoneForm, countryCode: e.target.value })}
                 className="bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-white px-3 py-3 text-sm outline-none border-l border-zinc-200 dark:border-zinc-700" dir="ltr">
                 <option value="+966">🇸🇦 +966</option>
@@ -388,8 +388,8 @@ export default function AccountSettings() {
 
       {/* Role Badge */}
       <div className="bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 p-5 flex items-center gap-4">
-        <div className="w-14 h-14 bg-[#48b09d]/10 rounded-full flex items-center justify-center shrink-0">
-          <Shield className="w-7 h-7 text-[#48b09d]" />
+        <div className="w-14 h-14 bg-[#00E676]/10 rounded-full flex items-center justify-center shrink-0">
+          <Shield className="w-7 h-7 text-[#00E676]" />
         </div>
         <div>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">الصلاحية الحالية</p>
