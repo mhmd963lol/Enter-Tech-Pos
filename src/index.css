@@ -165,7 +165,9 @@ html {
 }
 
 /* Prevent image overflows */
-img, video, svg {
+img,
+video,
+svg {
   max-width: 100%;
   height: auto;
 }
@@ -488,4 +490,178 @@ body.theme-master-luxury .dark\:bg-indigo-900\/20 {
 
 body.theme-master-luxury .rounded-2xl {
   animation: luxury-shimmer 4s ease-in-out infinite;
+}
+
+/* ========================
+   4. CASHIER TECH THEME (Smart POS / Fintech)
+   ======================== */
+
+body.theme-master-cashier-tech {
+  background-color: #0d1117;
+  background-image:
+    radial-gradient(ellipse at 20% 20%, rgba(0, 230, 118, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(44, 58, 71, 0.4) 0%, transparent 50%),
+    linear-gradient(rgba(0, 230, 118, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 230, 118, 0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+  background-attachment: fixed;
+  color: #e0f0e8;
+}
+
+/* Sidebar & Header */
+body.theme-master-cashier-tech .bg-white,
+body.theme-master-cashier-tech aside,
+body.theme-master-cashier-tech header {
+  background-color: #111820 !important;
+  border-color: rgba(0, 230, 118, 0.12) !important;
+  background-image: none !important;
+}
+
+/* Cards, Tables, Panels */
+body.theme-master-cashier-tech .bg-zinc-950,
+body.theme-master-cashier-tech .bg-zinc-900,
+body.theme-master-cashier-tech .dark\:bg-zinc-950,
+body.theme-master-cashier-tech .dark\:bg-zinc-900,
+body.theme-master-cashier-tech .bg-zinc-50,
+body.theme-master-cashier-tech .dark\:bg-zinc-900\/50 {
+  background-color: rgba(16, 24, 32, 0.94) !important;
+  border-color: rgba(0, 230, 118, 0.1) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 230, 118, 0.05) !important;
+  background-image: none !important;
+}
+
+/* Text visibility */
+body.theme-master-cashier-tech h1,
+body.theme-master-cashier-tech h2,
+body.theme-master-cashier-tech h3,
+body.theme-master-cashier-tech h4,
+body.theme-master-cashier-tech .text-zinc-900,
+body.theme-master-cashier-tech .dark\:text-white {
+  color: #e8f5ee !important;
+}
+
+body.theme-master-cashier-tech .text-zinc-500,
+body.theme-master-cashier-tech .text-zinc-400,
+body.theme-master-cashier-tech .dark\:text-zinc-400 {
+  color: rgba(160, 200, 180, 0.7) !important;
+}
+
+body.theme-master-cashier-tech .text-zinc-600,
+body.theme-master-cashier-tech .dark\:text-zinc-300 {
+  color: rgba(180, 220, 200, 0.85) !important;
+}
+
+body.theme-master-cashier-tech .divide-zinc-100,
+body.theme-master-cashier-tech .dark\:divide-zinc-800,
+body.theme-master-cashier-tech .border-zinc-100,
+body.theme-master-cashier-tech .dark\:border-zinc-800 {
+  border-color: rgba(0, 230, 118, 0.1) !important;
+}
+
+body.theme-master-cashier-tech tbody tr:hover {
+  background-color: rgba(0, 230, 118, 0.05) !important;
+}
+
+/* Green accent on active/primary elements */
+body.theme-master-cashier-tech .bg-indigo-600 {
+  background-color: #00C853 !important;
+  box-shadow: 0 0 16px rgba(0, 200, 80, 0.3) !important;
+}
+
+body.theme-master-cashier-tech .text-indigo-600,
+body.theme-master-cashier-tech .dark\:text-indigo-400 {
+  color: #00E676 !important;
+}
+
+body.theme-master-cashier-tech .bg-indigo-50,
+body.theme-master-cashier-tech .dark\:bg-indigo-900\/20 {
+  background-color: rgba(0, 230, 118, 0.08) !important;
+}
+
+body.theme-master-cashier-tech .border-indigo-500,
+body.theme-master-cashier-tech .ring-indigo-500 {
+  border-color: rgba(0, 230, 118, 0.5) !important;
+}
+
+/* Smooth border glow pulse on important cards */
+@keyframes cashier-tech-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgba(0, 230, 118, 0.06), 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 0 1px rgba(0, 230, 118, 0.14), 0 4px 25px rgba(0, 0, 0, 0.4);
+  }
+}
+
+body.theme-master-cashier-tech .rounded-2xl {
+  animation: cashier-tech-glow 4s ease-in-out infinite;
+}
+
+/* Interactive hover/click micro-animations — lightweight CSS only */
+body.theme-master-cashier-tech button:not([disabled]),
+body.theme-master-cashier-tech a[href] {
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease !important;
+}
+
+body.theme-master-cashier-tech button:not([disabled]):hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+body.theme-master-cashier-tech button:not([disabled]):active {
+  transform: scale(0.96) translateY(0px);
+  filter: brightness(0.95);
+}
+
+/* Nav links sheen effect */
+body.theme-master-cashier-tech nav a:hover,
+body.theme-master-cashier-tech nav button:hover {
+  border-right: 3px solid #00E676 !important;
+  padding-right: calc(1rem - 3px) !important;
+}
+
+/* Input focus ring in cashier green */
+body.theme-master-cashier-tech input:focus,
+body.theme-master-cashier-tech select:focus,
+body.theme-master-cashier-tech textarea:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(0, 230, 118, 0.35) !important;
+  border-color: rgba(0, 230, 118, 0.5) !important;
+}
+
+/* =========================================
+   GLOBAL INTERACTIVE MICRO-ANIMATIONS
+   (lightweight CSS transitions for all themes)
+   ========================================= */
+
+/* Buttons: subtle lift on hover, press on click */
+button:not([disabled]),
+a[href] {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+button:not([disabled]):hover {
+  transform: translateY(-1px);
+}
+
+button:not([disabled]):active {
+  transform: scale(0.97) translateY(0px);
+}
+
+/* Cards: gentle scale on hover */
+.rounded-2xl {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+/* =========================================
+   ADAPTIVE TEXT COLORS FOR DARK MODE
+   (ensures labels/text are readable on dark backgrounds)
+   ========================================= */
+
+/* Login page: fix hardcoded dark text on dark backgrounds */
+.dark label {
+  color: #e0e7ef;
 }

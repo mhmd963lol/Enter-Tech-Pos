@@ -33,8 +33,62 @@ const GoogleIcon = () => (
   </svg>
 );
 
+// ─────────────────────────────────────────────
+// Stable ForgotPasswordPanel (defined OUTSIDE Login to prevent re-mount on every keystroke)
+// ─────────────────────────────────────────────
+function ForgotPasswordPanel({
+  forgotEmail,
+  setForgotEmail,
+  loading,
+  onSubmit,
+  onBack,
+}: {
+  forgotEmail: string;
+  setForgotEmail: (v: string) => void;
+  loading: boolean;
+  onSubmit: (e: React.FormEvent) => void;
+  onBack: () => void;
+}) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+      className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 p-8">
+
+      {/* Back button */}
+      <button onClick={onBack} className="flex items-center gap-1 text-sm text-gray-400 dark:text-zinc-500 hover:text-[#00E676] transition-colors mb-4">
+        <ArrowRight className="w-4 h-4" /> العودة لتسجيل الدخول
+      </button>
+
+      <div className="text-center mb-8">
+        <div className="w-16 h-16 bg-[#00E676]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Lock className="w-8 h-8 text-[#00E676]" />
+        </div>
+        <h1 className="text-xl font-bold text-[#2C3A47] dark:text-white">استعادة كلمة المرور</h1>
+        <p className="text-gray-500 dark:text-zinc-400 text-sm mt-1">سنرسل لك رابط إعادة التعيين</p>
+      </div>
+      <form onSubmit={onSubmit} className="space-y-5">
+        <div>
+          <label className="block text-sm font-bold text-[#2C3A47] dark:text-zinc-200 mb-2">البريد الإلكتروني</label>
+          <div className="relative">
+            <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 w-5 h-5" />
+            <input type="email" required placeholder="example@mail.com" value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              className="w-full pr-10 pl-4 py-3 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 dark:text-white text-left" dir="ltr" />
+          </div>
+        </div>
+        <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
+          className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70">
+          {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" /> إرسال رابط الاستعادة</>}
+        </motion.button>
+        <button type="button" onClick={onBack} className="w-full text-center text-sm text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 mt-2">
+          العودة لتسجيل الدخول
+        </button>
+      </form>
+    </motion.div>
+  );
+}
+
 export default function Login() {
-  const { login, settings, updateSettings } = useAppContext();
+  const { login, settings, updateSettings, playSound } = useAppContext();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [authMethod, setAuthMethod] = useState<"email" | "phone">("email");
   const [loading, setLoading] = useState(false);
@@ -57,11 +111,13 @@ export default function Login() {
       .then(async (result) => {
         if (result?.user) {
           await handleAuthResult(result.user);
+          playSound("login_success");
           toast.success("تم تسجيل الدخول بـ Google بنجاح!");
         }
       })
       .catch((err) => {
         if (err.code && err.code !== "auth/no-current-user") {
+          playSound("error");
           toast.error("خطأ في تسجيل الدخول بـ Google");
         }
       });
@@ -138,14 +194,17 @@ export default function Login() {
     try {
       const cred = await signInWithEmailAndPassword(auth, loginData.email, loginData.password);
       if (!cred.user.emailVerified) {
+        playSound("error");
         toast.error("يجب تأكيد بريدك الإلكتروني أولاً. تحقق من صندوق الوارد.");
         await sendEmailVerification(cred.user);
         setLoading(false);
         return;
       }
       await handleAuthResult(cred.user);
+      playSound("login_success");
       toast.success("تم تسجيل الدخول بنجاح");
     } catch {
+      playSound("error");
       toast.error("البريد الإلكتروني أو كلمة المرور غير صحيحة");
     } finally {
       setLoading(false);
@@ -184,8 +243,10 @@ export default function Login() {
       await reload(currentUser);
       if (currentUser.emailVerified) {
         await handleAuthResult(currentUser);
+        playSound("login_success");
         toast.success("تم التحقق بنجاح! مرحباً بك.");
       } else {
+        playSound("error");
         toast.error("لم يتم التحقق بعد. تحقق من بريدك وأعد المحاولة.");
       }
     } catch {
@@ -247,8 +308,10 @@ export default function Login() {
         await syncNewUserToFirestore(cred.user.uid, registerData.name, `${registerData.countryCode}${registerData.phone}`);
       }
       await handleAuthResult(cred.user);
+      playSound("login_success");
       toast.success("تم التحقق وتسجيل الدخول بنجاح!");
     } catch {
+      playSound("error");
       toast.error("رمز التحقق غير صحيح أو منتهي الصلاحية");
     } finally {
       setLoading(false);
@@ -262,11 +325,13 @@ export default function Login() {
     setLoading(true);
     try {
       await sendPasswordResetEmail(auth, forgotEmail);
-      toast.success("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك!");
+      playSound("success");
+      toast.success("إذا كان البريد مسجلاً لدينا، سيتم إرسال رابط إعادة التعيين.");
       setShowForgotPassword(false);
       setForgotEmail("");
     } catch {
-      toast.error("البريد الإلكتروني غير مسجل في النظام");
+      playSound("error");
+      toast.error("تعذّر إرسال رابط الاستعادة. تحقق من البريد وأعد المحاولة.");
     } finally {
       setLoading(false);
     }
@@ -277,14 +342,20 @@ export default function Login() {
   // ─────────────────────────────────────────────
   if (awaitingVerification) {
     return (
-      <div className="min-h-screen bg-[#F8F9FA] dark:bg-zinc-950 flex items-center justify-center p-4 transition-colors duration-300" dir="rtl">
+      <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#E9ECEF] dark:from-zinc-950 dark:to-zinc-900 flex items-center justify-center p-4 transition-colors duration-300" dir="rtl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 p-10 text-center">
+
+          {/* Back button */}
+          <button onClick={() => switchMode("login")} className="flex items-center gap-1 text-sm text-gray-400 dark:text-zinc-500 hover:text-[#00E676] transition-colors mb-6">
+            <ArrowRight className="w-4 h-4" /> العودة لتسجيل الدخول
+          </button>
+
           <div className="w-20 h-20 bg-[#00E676]/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <Mail className="w-10 h-10 text-[#00E676]" />
           </div>
-          <h1 className="text-2xl font-bold text-[#1a2b3c] dark:text-white mb-3">تحقق من بريدك الإلكتروني</h1>
+          <h1 className="text-2xl font-bold text-zinc-800 dark:text-white mb-3">تحقق من بريدك الإلكتروني</h1>
           <p className="text-gray-500 dark:text-zinc-400 mb-2">أرسلنا رابط التحقق إلى:</p>
-          <p className="font-bold text-[#1a2b3c] dark:text-white mb-6 dir-ltr">{registerData.email}</p>
+          <p className="font-bold text-zinc-800 dark:text-white mb-6 dir-ltr">{registerData.email}</p>
           <p className="text-sm text-gray-400 dark:text-zinc-500 mb-8">افتح الرابط من بريدك ثم اضغط الزر أدناه للمتابعة</p>
 
           <motion.button whileTap={{ scale: 0.97 }} onClick={handleCheckVerification} disabled={verificationCheckLoading}
@@ -295,53 +366,18 @@ export default function Login() {
           <button onClick={handleResendVerification} className="text-sm text-[#00E676] hover:underline flex items-center gap-1 mx-auto">
             <RefreshCw className="w-4 h-4" /> إعادة إرسال رابط التحقق
           </button>
-          <button onClick={() => switchMode("login")} className="mt-4 text-sm text-gray-400 hover:text-gray-600">
-            العودة لتسجيل الدخول
-          </button>
         </motion.div>
       </div>
     );
   }
 
-  // ─────────────────────────────────────────────
-  // RENDER: Forgot Password Screen
-  // ─────────────────────────────────────────────
-  const ForgotPasswordPanel = () => (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-      className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 p-8">
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-[#00E676]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Lock className="w-8 h-8 text-[#00E676]" />
-        </div>
-        <h1 className="text-xl font-bold text-[#2C3A47] dark:text-white">استعادة كلمة المرور</h1>
-        <p className="text-gray-500 dark:text-zinc-400 text-sm mt-1">سنرسل لك رابط إعادة التعيين</p>
-      </div>
-      <form onSubmit={handleForgotPassword} className="space-y-5">
-        <div>
-          <label className="block text-sm font-bold text-[#2C3A47] mb-2">البريد الإلكتروني</label>
-          <div className="relative">
-            <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input type="email" required placeholder="example@mail.com" value={forgotEmail}
-              onChange={(e) => setForgotEmail(e.target.value)}
-              className="w-full pr-10 pl-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 text-left" dir="ltr" />
-          </div>
-        </div>
-        <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
-          className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70">
-          {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" /> إرسال رابط الاستعادة</>}
-        </motion.button>
-        <button type="button" onClick={() => setShowForgotPassword(false)} className="w-full text-center text-sm text-gray-400 hover:text-gray-600 mt-2">
-          العودة لتسجيل الدخول
-        </button>
-      </form>
-    </motion.div>
-  );
+  // ForgotPasswordPanel is now a stable component (see below) to prevent re-mount on keystroke
 
   // ─────────────────────────────────────────────
   // RENDER: Main Page
   // ─────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#E9ECEF] dark:from-zinc-950 dark:to-zinc-930 flex flex-col items-center justify-center p-4 transition-colors duration-300" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#E9ECEF] dark:from-zinc-950 dark:to-zinc-900 flex flex-col items-center justify-center p-4 transition-colors duration-300" dir="rtl">
       {/* Theme Toggle Button */}
       <button
         onClick={() => {
@@ -363,7 +399,15 @@ export default function Login() {
 
       <AnimatePresence mode="wait">
         {/* ─── Forgot Password ─── */}
-        {showForgotPassword && <ForgotPasswordPanel key="forgot" />}
+        {showForgotPassword && (
+          <ForgotPasswordPanel
+            forgotEmail={forgotEmail}
+            setForgotEmail={setForgotEmail}
+            loading={loading}
+            onSubmit={handleForgotPassword}
+            onBack={() => setShowForgotPassword(false)}
+          />
+        )}
 
         {/* ─── LOGIN ─── */}
         {!showForgotPassword && mode === "login" && (
@@ -381,7 +425,7 @@ export default function Login() {
             {/* Divider */}
             <div className="relative flex items-center my-5">
               <div className="flex-grow border-t border-gray-200 dark:border-zinc-700" />
-              <span className="mx-4 text-gray-400 dark:text-zinc-500 text-sm bg-white px-2 rounded-full border border-gray-200 dark:border-zinc-700">أو</span>
+              <span className="mx-4 text-gray-400 dark:text-zinc-500 text-sm bg-white dark:bg-zinc-900 px-2 rounded-full border border-gray-200 dark:border-zinc-700">أو</span>
               <div className="flex-grow border-t border-gray-200 dark:border-zinc-700" />
             </div>
 
@@ -480,7 +524,12 @@ export default function Login() {
           <motion.div key="register" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
             className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 p-8">
 
-            <h2 className="text-xl font-bold text-[#2C3A47] dark:text-white dark:text-white text-center mb-2">إنشاء حساب جديد</h2>
+            {/* Back button */}
+            <button onClick={() => switchMode("login")} className="flex items-center gap-1 text-sm text-gray-400 dark:text-zinc-500 hover:text-[#00E676] transition-colors mb-4">
+              <ArrowRight className="w-4 h-4" /> العودة لتسجيل الدخول
+            </button>
+
+            <h2 className="text-xl font-bold text-[#2C3A47] dark:text-white text-center mb-2">إنشاء حساب جديد</h2>
             <p className="text-gray-400 dark:text-zinc-500 font-bold text-sm text-center mb-6">اختر طريقة التسجيل</p>
 
             {/* Method Cards */}

@@ -32,6 +32,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 
 interface AppContextType {
   user: User | null;
+  isAuthLoading: boolean;
   products: Product[];
   categories: Category[];
   orders: Order[];
@@ -78,7 +79,7 @@ interface AppContextType {
   updateOrderStatus: (orderId: string, status: Order["status"]) => void;
   updateSettings: (newSettings: Partial<Settings>) => void;
   upgradeToPro: () => void;
-  playSound: (type: "success" | "error" | "click") => void;
+  playSound: (type: "success" | "error" | "click" | "login_success" | "logout") => void;
   resetApp: () => void;
   addReturn: (returnItem: Omit<ReturnItem, "id">) => void;
   addMaintenanceJob: (job: Omit<MaintenanceJob, "id">) => void;
@@ -153,6 +154,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
   const [isPro, setIsPro] = useLocalStorage<boolean>("app_isPro", true);
   const [isPrivacyMode, setIsPrivacyMode] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   const [returns, setReturns] = useLocalStorage<ReturnItem[]>(
     "app_returns",
@@ -209,6 +211,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!auth) {
       console.warn("Auth object is null, skipping auth state listener (Check Firebase config).");
+      setIsAuthLoading(false);
       return;
     }
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -239,6 +242,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           console.error("Error fetching user data from Firestore", error);
         }
       }
+      setIsAuthLoading(false);
     });
     return () => unsubscribe();
   }, []);
@@ -278,78 +282,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     notifications, suppliers, purchases, employees, transactions, user?.id
   ]);
 
-  // Handle Authentication and restore data from Firestore
-  useEffect(() => {
-    if (!auth) {
-      console.warn("Auth object is null, skipping auth state listener (Check Firebase config).");
-      return;
-    }
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        try {
-          const userDocRef = doc(db, "users", firebaseUser.uid);
-          const userDocSnap = await getDoc(userDocRef);
-
-          if (userDocSnap.exists()) {
-            const data = userDocSnap.data();
-            if (data.products) setProducts(data.products);
-            if (data.categories) setCategories(data.categories);
-            if (data.orders) setOrders(data.orders);
-            if (data.cart) setCart(data.cart);
-            if (data.settings) setSettings(data.settings);
-            if (data.returns) setReturns(data.returns);
-            if (data.maintenanceJobs) setMaintenanceJobs(data.maintenanceJobs);
-            if (data.expenses) setExpenses(data.expenses);
-            if (data.incomes) setIncomes(data.incomes);
-            if (data.customers) setCustomers(data.customers);
-            if (data.notifications) setNotifications(data.notifications);
-            if (data.suppliers) setSuppliers(data.suppliers);
-            if (data.purchases) setPurchases(data.purchases);
-            if (data.employees) setEmployees(data.employees);
-            if (data.transactions) setTransactions(data.transactions);
-          }
-        } catch (error) {
-          console.error("Error fetching user data from Firestore", error);
-        }
-      }
-    });
-    return () => unsubscribe();
-  }, []);
-
-  // Debounced Sync to Firestore
-  useEffect(() => {
-    if (!user?.id || !db) return;
-
-    const timeoutId = setTimeout(async () => {
-      try {
-        await setDoc(doc(db, "users", user.id), {
-          products,
-          categories,
-          orders,
-          cart,
-          settings,
-          returns,
-          maintenanceJobs,
-          expenses,
-          incomes,
-          customers,
-          notifications,
-          suppliers,
-          purchases,
-          employees,
-          transactions
-        }, { merge: true });
-      } catch (error) {
-        console.error("Error syncing data to Firestore", error);
-      }
-    }, 2000);
-
-    return () => clearTimeout(timeoutId);
-  }, [
-    products, categories, orders, cart, settings, returns,
-    maintenanceJobs, expenses, incomes, customers,
-    notifications, suppliers, purchases, employees, transactions, user?.id
-  ]);
+  // (Duplicate useEffects removed — single onAuthStateChanged and single Firestore sync above)
 
   // Handle Theme
   useEffect(() => {
@@ -392,7 +325,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       "theme-master-default",
       "theme-master-gaming",
       "theme-master-carbon",
-      "theme-master-luxury"
+      "theme-master-luxury",
+      "theme-master-cashier-tech"
     );
     if (settings.masterTheme && settings.masterTheme !== "default") {
       body.classList.add(`theme-master-${settings.masterTheme}`);
@@ -411,7 +345,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [settings.theme, settings.activeTheme, settings.borderRadius, settings.masterTheme, settings.fontFamily]);
 
-  const playSound = (type: "success" | "error" | "click") => {
+  const playSound = (type: "success" | "error" | "click" | "login_success" | "logout") => {
     if (!settings.enableSounds) return;
     try {
       const audioCtx = new (
@@ -425,6 +359,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       const t = audioCtx.currentTime;
       const master = settings.masterTheme || "default";
+
+      // ----------------------------------------------------
+      // SYSTEM SOUNDS (Login/Logout across all themes)
+      // ----------------------------------------------------
+      if (type === "login_success") {
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(440, t);
+        oscillator.frequency.exponentialRampToValueAtTime(880, t + 0.1);
+        oscillator.frequency.exponentialRampToValueAtTime(1200, t + 0.3);
+        gainNode.gain.setValueAtTime(0, t);
+        gainNode.gain.linearRampToValueAtTime(0.2, t + 0.1);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.6);
+        oscillator.start(t);
+        oscillator.stop(t + 0.6);
+        return;
+      }
+      if (type === "logout") {
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(800, t);
+        oscillator.frequency.exponentialRampToValueAtTime(400, t + 0.2);
+        gainNode.gain.setValueAtTime(0, t);
+        gainNode.gain.linearRampToValueAtTime(0.1, t + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+        oscillator.start(t);
+        oscillator.stop(t + 0.3);
+        return;
+      }
 
       // ----------------------------------------------------
       // GAMING THEME SOUNDS (Sci-Fi, 8-bit, Sharp)
@@ -453,6 +414,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
           oscillator.frequency.linearRampToValueAtTime(100, t + 0.3);
           gainNode.gain.setValueAtTime(0.1, t);
           gainNode.gain.linearRampToValueAtTime(0.01, t + 0.3);
+          oscillator.start(t);
+          oscillator.stop(t + 0.3);
+        }
+      }
+      // ----------------------------------------------------
+      // CASHIER TECH THEME SOUNDS (Fintech, Clean, Digital)
+      // ----------------------------------------------------
+      else if (master === "cashier-tech") {
+        if (type === "success") {
+          oscillator.type = "sine";
+          oscillator.frequency.setValueAtTime(523, t);
+          oscillator.frequency.exponentialRampToValueAtTime(784, t + 0.08);
+          oscillator.frequency.exponentialRampToValueAtTime(1047, t + 0.2);
+          gainNode.gain.setValueAtTime(0, t);
+          gainNode.gain.linearRampToValueAtTime(0.12, t + 0.05);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.35);
+          oscillator.start(t);
+          oscillator.stop(t + 0.35);
+        } else if (type === "click") {
+          oscillator.type = "sine";
+          oscillator.frequency.setValueAtTime(700, t);
+          oscillator.frequency.exponentialRampToValueAtTime(900, t + 0.04);
+          gainNode.gain.setValueAtTime(0.04, t);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+          oscillator.start(t);
+          oscillator.stop(t + 0.08);
+        } else {
+          // Error: two-tone descending beep
+          oscillator.type = "triangle";
+          oscillator.frequency.setValueAtTime(400, t);
+          oscillator.frequency.exponentialRampToValueAtTime(200, t + 0.25);
+          gainNode.gain.setValueAtTime(0.1, t);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
           oscillator.start(t);
           oscillator.stop(t + 0.3);
         }
@@ -556,6 +550,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const login = (userData: User) => setUser(userData);
   const logout = async () => {
+    playSound("logout");
     if (auth) {
       await signOut(auth);
     }
@@ -1174,6 +1169,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     <AppContext.Provider
       value={{
         user,
+        isAuthLoading,
         products,
         categories,
         orders,
