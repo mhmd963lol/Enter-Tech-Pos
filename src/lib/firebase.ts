@@ -3,9 +3,6 @@ import { getAnalytics, isSupported } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// Firebase configuration — reads from environment variables
-// For local dev: set values in .env file
-// For production: set as GitHub Secrets (injected by GitHub Actions)
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -16,24 +13,18 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-// Prevent duplicate app initialization (e.g., during HMR in dev)
-let app;
-let auth: any = null;
-let db: any = null;
-
-try {
-  if (!firebaseConfig.apiKey) {
-    console.warn("Firebase configuration is missing! Please set VITE_FIREBASE_API_KEY in your environment variables.");
-  } else {
-    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-    auth = getAuth(app);
-    db = getFirestore(app);
-  }
-} catch (error) {
-  console.error("Firebase initialization error:", error);
+// If API Key is missing, alert the user explicitly.
+if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes('YOUR_FIREBASE')) {
+  throw new Error(
+    "🔥 Firebase configuration is missing! 🔥\n" +
+    "Please make sure your VITE_FIREBASE_* environment variables are added to Vercel Settings and that you triggered a *Redeploy* without Build Cache."
+  );
 }
 
-// Analytics is only supported in browser environments (not SSR/Node)
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+const auth = getAuth(app);
+const db = getFirestore(app);
+
 const analyticsPromise = isSupported().then((supported) =>
   supported ? getAnalytics(app) : null
 );
