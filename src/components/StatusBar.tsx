@@ -1,0 +1,93 @@
+import React, { useState, useEffect } from "react";
+import { Clock, Calendar, DollarSign, TrendingUp } from "lucide-react";
+import { useAppContext } from "../context/AppContext";
+import { useNavigate } from "react-router-dom";
+import { motion } from "motion/react";
+
+export default function StatusBar() {
+    const { settings, orders, isPrivacyMode, playSound } = useAppContext();
+    const [time, setTime] = useState(new Date());
+    const navigate = useNavigate();
+
+    // Update time every second
+    useEffect(() => {
+        const timer = setInterval(() => setTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    // Today's Sales Calculation
+    const today = new Date().toISOString().split("T")[0];
+    const todaysSales = orders
+        .filter((o) => o.date.startsWith(today) && o.status === "completed")
+        .reduce((sum, o) => sum + o.total, 0);
+
+    // Format date in Arabic explicitly if language is AR
+    const dateOptions: Intl.DateTimeFormatOptions = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    };
+    const formattedDate = time.toLocaleDateString(settings.language === 'ar' ? 'ar-EG' : 'en-US', dateOptions);
+
+    // Format time (HH:MM:SS)
+    const formattedTime = time.toLocaleTimeString(settings.language === 'ar' ? 'ar-EG' : 'en-US', {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+    });
+
+    const handleSalesClick = () => {
+        if (playSound) playSound("success");
+        navigate("/orders");
+    };
+
+    return (
+        <div className="bg-gradient-to-l from-indigo-900 via-indigo-800 to-indigo-950 text-indigo-50 text-xs sm:text-sm py-1.5 px-4 flex flex-wrap items-center justify-between shrink-0 shadow-inner z-10 w-full relative">
+
+            {/* Right side: Time and Date */}
+            <div className="flex items-center gap-4 sm:gap-6">
+                <div className="flex items-center gap-1.5 font-semibold tracking-wider">
+                    <Clock size={14} className="text-indigo-300" />
+                    <span className="w-20 text-right font-mono">{formattedTime}</span>
+                </div>
+                <div className="hidden md:flex items-center gap-1.5 text-indigo-200">
+                    <Calendar size={14} className="text-indigo-400" />
+                    <span>{formattedDate}</span>
+                </div>
+            </div>
+
+            {/* Left side: Ticker / Exchange Rate & Sales Summary */}
+            <div className="flex items-center gap-3 sm:gap-6">
+
+                {/* Exchange Rate Placeholder (Mocking real-market connect) */}
+                <div className="flex items-center gap-1.5 bg-indigo-950/50 px-2.5 py-0.5 rounded-md border border-indigo-700/50" title="سعر الصرف المباشر (يمكن ضبطه من الإعدادات)">
+                    <DollarSign size={14} className="text-emerald-400" />
+                    <span className="text-emerald-300 font-bold whitespace-nowrap">
+                        1 USD = {settings.exchangeRate ? settings.exchangeRate.toFixed(2) : "1.00"} {settings.currency}
+                    </span>
+                    <span className="relative flex h-2 w-2 mr-1">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                </div>
+
+                {/* Daily Summary Button */}
+                <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleSalesClick}
+                    className="flex items-center gap-1.5 bg-indigo-500/20 hover:bg-indigo-500/40 px-2.5 py-0.5 rounded-md border border-indigo-500/30 transition-colors cursor-pointer"
+                    title="الذهاب لسجل المبيعات"
+                >
+                    <TrendingUp size={14} className="text-indigo-300" />
+                    <span className="hidden sm:inline text-indigo-200">غلة اليوم:</span>
+                    <span className={`font-bold text-white ${isPrivacyMode ? "filter blur-sm select-none transition-all duration-300" : ""}`}>
+                        {todaysSales.toFixed(2)} {settings.currency}
+                    </span>
+                </motion.button>
+
+            </div>
+        </div>
+    );
+}

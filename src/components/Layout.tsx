@@ -29,6 +29,7 @@ import {
 import { useAppContext } from "../context/AppContext";
 import NotificationPanel from "./NotificationPanel";
 import ThemePageTransition from "./ThemePageTransition";
+import StatusBar from "./StatusBar";
 
 interface NavItem {
   icon: React.ElementType;
@@ -204,7 +205,10 @@ export default function Layout() {
     orders,
     isPrivacyMode,
     togglePrivacyMode,
+    playSound,
   } = useAppContext();
+
+  const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState(false);
 
   const unreadNotificationsCount = notifications.filter((n) => !n.read).length;
 
@@ -244,8 +248,8 @@ export default function Layout() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 right-0 z-50 w-72 bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 transform transition-transform duration-300 ease-in-out flex flex-col ${isMobileMenuOpen
-          ? "translate-x-0"
+        className={`fixed lg:static inset-y-0 right-0 z-50 bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 transition-all duration-500 ease-in-out flex flex-col overflow-hidden ${isDesktopSidebarCollapsed ? "w-0 border-l-0 opacity-0 lg:opacity-100" : "w-72 opacity-100"} ${isMobileMenuOpen
+          ? "translate-x-0 w-72"
           : "translate-x-full lg:translate-x-0"
           }`}
       >
@@ -289,12 +293,20 @@ export default function Layout() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+        <StatusBar />
         {/* Top Header */}
         <header className="h-16 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 lg:px-8 shrink-0">
           <div className="flex items-center gap-4">
             <button
-              className="lg:hidden p-2 text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg"
-              onClick={() => setIsMobileMenuOpen(true)}
+              className="p-2 text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              onClick={() => {
+                playSound("click");
+                if (window.innerWidth < 1024) {
+                  setIsMobileMenuOpen(true);
+                } else {
+                  setIsDesktopSidebarCollapsed(!isDesktopSidebarCollapsed);
+                }
+              }}
             >
               <Menu className="w-6 h-6" />
             </button>

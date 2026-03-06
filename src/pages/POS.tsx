@@ -17,12 +17,19 @@ import {
   UserPlus,
   ChevronDown,
   ChevronUp,
+  Folder,
+  ArrowRight,
+  Settings2,
+  LayoutGrid,
+  Grid3X3,
+  Calculator,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import NumberInput from "../components/NumberInput";
 import AddMaintenanceJobModal from "../components/AddMaintenanceJobModal";
 import QuickAddCustomerModal from "../components/QuickAddCustomerModal";
+import CustomKeypad from "../components/CustomKeypad";
 
 export default function POS() {
   const {
@@ -38,6 +45,7 @@ export default function POS() {
     user,
     maintenanceJobs,
     customers,
+    playSound,
   } = useAppContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<
@@ -53,11 +61,19 @@ export default function POS() {
   // Maintenance Modal State
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
 
-  // Quick Add Customer State
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
 
   // Maintenance panel collapse state
   const [isMaintenanceExpanded, setIsMaintenanceExpanded] = useState(false);
+
+  // POS Display States
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [gridSize, setGridSize] = useState<"large" | "small">("large");
+  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
+
+  // Keypad State
+  const [isKeypadOpen, setIsKeypadOpen] = useState(false);
+  const [activeKeypadInput, setActiveKeypadInput] = useState<"amountPaid" | "splitCash" | "splitCard" | null>("amountPaid");
 
   // PIN Modal State
   const [showPinModal, setShowPinModal] = useState(false);
@@ -73,11 +89,18 @@ export default function POS() {
       categories.find((c) => c.id === p.categoryId) ||
       categories.find((c) => c.name === p.category);
     const isCategoryActive = category ? category.isActive : true;
-    return (
-      (p.isActive ?? true) &&
-      isCategoryActive &&
-      (p.name.includes(searchTerm) || p.barcode.includes(searchTerm))
-    );
+
+    if (p.isActive === false || !isCategoryActive) return false;
+
+    if (searchTerm) {
+      return p.name.includes(searchTerm) || p.barcode.includes(searchTerm);
+    }
+
+    if (selectedCategoryId) {
+      return category?.id === selectedCategoryId || p.categoryId === selectedCategoryId;
+    }
+
+    return false; // Show nothing if no search and no category is selected (we will render categories instead)
   });
 
   const cartTotal = cart.reduce(
@@ -151,13 +174,29 @@ export default function POS() {
     }
   };
 
+  const handleKeypadPress = (key: string) => {
+    if (!activeKeypadInput) return;
+    const setter = activeKeypadInput === "amountPaid" ? setAmountPaid : activeKeypadInput === "splitCash" ? setSplitCash : setSplitCard;
+    const currentVal = activeKeypadInput === "amountPaid" ? amountPaid : activeKeypadInput === "splitCash" ? splitCash : splitCard;
+
+    if (key === '.' && currentVal.includes('.')) return;
+    setter(currentVal + key);
+  };
+
+  const handleKeypadClear = () => {
+    if (!activeKeypadInput) return;
+    const setter = activeKeypadInput === "amountPaid" ? setAmountPaid : activeKeypadInput === "splitCash" ? setSplitCash : setSplitCard;
+    const currentVal = activeKeypadInput === "amountPaid" ? amountPaid : activeKeypadInput === "splitCash" ? splitCash : splitCard;
+    setter(currentVal.slice(0, -1));
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-7rem)] min-h-0" dir="rtl">
       <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0 overflow-hidden">
         {/* Products Section */}
         <div className="flex-1 flex flex-col bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden">
-          <div className="p-4 border-b border-zinc-100 dark:border-zinc-800">
-            <div className="relative">
+          <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-4">
+            <div className="relative flex-1">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 w-5 h-5" />
               <input
                 type="text"
@@ -175,95 +214,202 @@ export default function POS() {
                 </button>
               )}
             </div>
+            {!searchTerm && (
+              <div className="flex bg-zinc-100 dark:bg-zinc-900 rounded-lg p-1 shrink-0">
+                <button
+                  onClick={() => setGridSize("small")}
+                  className={`p-2 rounded-md transition-colors ${gridSize === "small"
+                    ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400"
+                    : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                    }`}
+                  title="تصغير العناصر"
+                >
+                  <Grid3X3 className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setGridSize("large")}
+                  className={`p-2 rounded-md transition-colors ${gridSize === "large"
+                    ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400"
+                    : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                    }`}
+                  title="تكبير العناصر"
+                >
+                  <LayoutGrid className="w-5 h-5" />
+                </button>
+              </div>
+            )}
           </div>
 
-          <div className="flex-1 overflow-auto p-4">
-            <div className="fluid-grid">
-              {filteredProducts.map((product) => (
-                <motion.div
-                  key={product.id}
-                  whileHover={{
-                    scale:
-                      product.trackInventory === false || product.stock > 0
-                        ? 1.02
-                        : 1,
-                  }}
-                  whileTap={{
-                    scale:
-                      product.trackInventory === false || product.stock > 0
-                        ? 0.98
-                        : 1,
-                  }}
-                  className={`relative flex flex-col items-center text-center p-4 rounded-2xl border transition-all ${product.trackInventory !== false && product.stock === 0
-                    ? "opacity-50 cursor-not-allowed border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50"
-                    : "border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md bg-white dark:bg-zinc-950 cursor-pointer"
-                    }`}
-                  onClick={() => {
-                    if (product.trackInventory === false || product.stock > 0)
-                      addToCart(product);
-                  }}
-                >
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate("/products");
-                    }}
-                    className="absolute top-2 right-2 p-1.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg transition-colors z-10"
-                    title="الذهاب للمخزون"
+          <div className="flex-1 overflow-auto p-4 custom-scrollbar">
+            {/* If NO search term, and NO category selected -> show Categories as Folders */}
+            {!searchTerm && !selectedCategoryId && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {categories.filter(c => c.isActive).map((category) => (
+                  <motion.button
+                    key={category.id}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setSelectedCategoryId(category.id)}
+                    className="flex flex-col items-center justify-center p-6 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 border border-indigo-100 dark:border-indigo-800 rounded-2xl transition-colors gap-3"
                   >
-                    <Package className="w-4 h-4" />
-                  </button>
-                  {product.trackInventory !== false && product.stock === 0 && (
-                    <div
-                      className="absolute top-2 left-2 p-1.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg z-10"
-                      title="نفاد الكمية"
+                    <Folder className="w-12 h-12 text-indigo-500 dark:text-indigo-400" fill="currentColor" fillOpacity={0.2} />
+                    <span className="font-bold text-zinc-900 dark:text-white text-center line-clamp-2">
+                      {category.name}
+                    </span>
+                    <span className="text-xs text-indigo-600 dark:text-indigo-400 bg-white dark:bg-zinc-950 px-2 py-1 rounded-full shadow-sm">
+                      {products.filter(p => (p.categoryId === category.id || p.category === category.name) && p.isActive !== false).length} صنف
+                    </span>
+                  </motion.button>
+                ))}
+              </div>
+            )}
+
+            {/* If NO search term, but category IS selected -> show Back button + Products */}
+            {!searchTerm && selectedCategoryId && (
+              <div className="mb-4 flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedCategoryId(null)}
+                  className="flex items-center gap-2 px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl transition-colors font-medium text-sm"
+                >
+                  <ArrowRight className="w-4 h-4" />
+                  رجوع للأقسام
+                </button>
+                <h3 className="font-bold text-zinc-900 dark:text-white mr-2">
+                  {categories.find(c => c.id === selectedCategoryId)?.name}
+                </h3>
+              </div>
+            )}
+
+            {/* Render Products Grid */}
+            {(searchTerm || selectedCategoryId) && (
+              <div
+                className={`grid gap-4 ${gridSize === "large"
+                  ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+                  : "grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+                  }`}
+              >
+                {filteredProducts.map((product) => (
+                  <motion.div
+                    key={product.id}
+                    whileHover={{
+                      scale:
+                        product.trackInventory === false || product.stock > 0
+                          ? 1.02
+                          : 1,
+                    }}
+                    whileTap={{
+                      scale:
+                        product.trackInventory === false || product.stock > 0
+                          ? 0.98
+                          : 1,
+                    }}
+                    className={`relative flex flex-col items-center text-center p-4 rounded-2xl border transition-all ${product.trackInventory !== false && product.stock === 0
+                      ? "opacity-50 cursor-not-allowed border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50"
+                      : "border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md bg-white dark:bg-zinc-950 cursor-pointer"
+                      }`}
+                    onClick={() => {
+                      if (product.trackInventory === false || product.stock > 0)
+                        addToCart(product);
+                    }}
+                  >
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate("/products");
+                      }}
+                      className="absolute top-2 right-2 p-1.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg transition-colors z-10"
+                      title="الذهاب للمخزون"
                     >
-                      <XCircle className="w-4 h-4" />
-                    </div>
-                  )}
-                  {product.trackInventory !== false &&
-                    product.stock > 0 &&
-                    product.stock <= (product.minStockAlert || 5) && (
+                      <Package className="w-4 h-4" />
+                    </button>
+                    {product.trackInventory !== false && product.stock === 0 && (
                       <div
-                        className="absolute top-2 left-2 p-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg z-10"
-                        title="كمية منخفضة"
+                        className="absolute top-2 left-2 p-1.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg z-10"
+                        title="نفاد الكمية"
                       >
-                        <AlertTriangle className="w-4 h-4" />
+                        <XCircle className="w-4 h-4" />
                       </div>
                     )}
-                  <div className="w-24 h-24 mb-3 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-900">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <h3 className="font-medium text-zinc-900 dark:text-white text-sm line-clamp-2 mb-1">
-                    {product.name}
-                  </h3>
-                  <p className="text-indigo-600 dark:text-indigo-400 font-bold mt-auto">
-                    {product.price} {settings.currency}
-                  </p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                    المخزون:{" "}
-                    {product.trackInventory === false ? "∞" : product.stock}
-                  </p>
-                </motion.div>
-              ))}
-            </div>
+                    {product.trackInventory !== false &&
+                      product.stock > 0 &&
+                      product.stock <= (product.minStockAlert || 5) && (
+                        <div
+                          className="absolute top-2 left-2 p-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg z-10"
+                          title="كمية منخفضة"
+                        >
+                          <AlertTriangle className="w-4 h-4" />
+                        </div>
+                      )}
+                    <div className="w-24 h-24 mb-3 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-900">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <h3 className="font-medium text-zinc-900 dark:text-white text-sm line-clamp-2 mb-1">
+                      {product.name}
+                    </h3>
+                    <p className="text-indigo-600 dark:text-indigo-400 font-bold mt-auto">
+                      {product.price} {settings.currency}
+                    </p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                      المخزون:{" "}
+                      {product.trackInventory === false ? "∞" : product.stock}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
+        {/* Mobile Cart Overlay */}
+        <AnimatePresence>
+          {isMobileCartOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileCartOpen(false)}
+              className="lg:hidden fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+            />
+          )}
+        </AnimatePresence>
+
         {/* Cart Section */}
-        <div className="w-full lg:w-96 flex flex-col bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden shrink-0 min-h-0 max-h-full">
-          <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-            <h2 className="font-bold text-zinc-900 dark:text-white">
-              سلة المشتريات
-            </h2>
-            <span className="mr-auto bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 py-0.5 px-2 rounded-full text-xs font-bold">
-              {cart.length}
-            </span>
+        <div
+          className={`
+            w-full lg:w-96 flex flex-col bg-white dark:bg-zinc-950 shadow-sm border border-zinc-100 dark:border-zinc-800 shrink-0
+            fixed lg:relative lg:flex lg:rounded-2xl min-h-0 lg:max-h-full
+            bottom-0 left-0 right-0 z-50 lg:z-auto rounded-t-3xl lg:rounded-b-2xl
+            transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
+            ${isMobileCartOpen ? 'translate-y-0 h-[85vh]' : 'translate-y-full lg:translate-y-0'}
+          `}
+        >
+          <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              <h2 className="font-bold text-zinc-900 dark:text-white">
+                سلة المشتريات
+              </h2>
+              <span className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 py-0.5 px-2 rounded-full text-xs font-bold mr-auto">
+                {cart.length}
+              </span>
+              <button
+                onClick={() => setIsKeypadOpen(!isKeypadOpen)}
+                className={`p-1.5 rounded-lg transition-colors ${isKeypadOpen ? "bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400" : "text-zinc-400 hover:text-indigo-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
+                title="لوحة الأرقام السريعة"
+              >
+                <Calculator className="w-5 h-5" />
+              </button>
+            </div>
+            <button
+              onClick={() => setIsMobileCartOpen(false)}
+              className="lg:hidden p-2 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+            >
+              <X className="w-6 h-6" />
+            </button>
           </div>
 
           <div className="flex-1 overflow-auto p-4 space-y-3">
@@ -326,31 +472,25 @@ export default function POS() {
                         ).toFixed(2)}{" "}
                         {settings.currency}
                       </p>
-                      <div className="flex items-center gap-3 bg-zinc-100 dark:bg-zinc-800/50 rounded-xl p-1">
+                      <div className="flex items-center gap-1.5 bg-zinc-100/80 dark:bg-zinc-800/80 rounded-full p-1 border border-zinc-200/50 dark:border-zinc-700/50">
                         <button
-                          onClick={() =>
-                            updateCartQuantity(item.id, item.quantity - 1)
-                          }
-                          className="p-2 bg-white dark:bg-zinc-700 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 rounded-lg shadow-sm transition-all text-zinc-600 dark:text-zinc-300"
+                          onClick={() => updateCartQuantity(item.id, item.quantity - 1)}
+                          className="w-8 h-8 flex items-center justify-center bg-white dark:bg-zinc-700 hover:bg-rose-100 dark:hover:bg-rose-900/30 hover:text-rose-600 dark:hover:text-rose-400 rounded-full shadow-sm transition-all text-zinc-500 dark:text-zinc-300"
                         >
                           <Minus className="w-4 h-4" />
                         </button>
-                        <div className="w-16">
+                        <div className="w-10">
                           <NumberInput
                             value={item.quantity}
-                            onChange={(val) =>
-                              updateCartQuantity(item.id, parseInt(val) || 1)
-                            }
-                            className="w-full text-center bg-transparent border-none focus:ring-0 dark:text-white font-bold p-0"
+                            onChange={(val) => updateCartQuantity(item.id, parseInt(val) || 1)}
+                            className="w-full text-center bg-transparent border-none focus:ring-0 dark:text-white font-bold p-0 text-sm"
                             min="1"
                             hideControls
                           />
                         </div>
                         <button
-                          onClick={() =>
-                            updateCartQuantity(item.id, item.quantity + 1)
-                          }
-                          className="p-2 bg-white dark:bg-zinc-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg shadow-sm transition-all text-zinc-600 dark:text-zinc-300"
+                          onClick={() => updateCartQuantity(item.id, item.quantity + 1)}
+                          className="w-8 h-8 flex items-center justify-center bg-white dark:bg-zinc-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-full shadow-sm transition-all text-zinc-500 dark:text-zinc-300"
                         >
                           <Plus className="w-4 h-4" />
                         </button>
@@ -488,7 +628,8 @@ export default function POS() {
                     <NumberInput
                       value={amountPaid}
                       onChange={(val) => setAmountPaid(val)}
-                      className="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-colors"
+                      onFocus={() => setActiveKeypadInput("amountPaid")}
+                      className={`w-full px-4 py-2 bg-white dark:bg-zinc-950 border rounded-xl text-sm focus:outline-none transition-colors ${activeKeypadInput === "amountPaid" && isKeypadOpen ? "border-indigo-500 ring-2 ring-indigo-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-indigo-500"} dark:text-white`}
                       placeholder={
                         paymentMethod === "debt"
                           ? "المبلغ المدفوع مقدماً (اختياري)"
@@ -527,7 +668,8 @@ export default function POS() {
                     <NumberInput
                       value={splitCash}
                       onChange={(val) => setSplitCash(val)}
-                      className="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:text-white transition-colors"
+                      onFocus={() => setActiveKeypadInput("splitCash")}
+                      className={`w-full px-4 py-2 bg-white dark:bg-zinc-950 border rounded-xl text-sm focus:outline-none transition-colors ${activeKeypadInput === "splitCash" && isKeypadOpen ? "border-purple-500 ring-2 ring-purple-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-purple-500"} dark:text-white`}
                       placeholder="مبلغ الكاش"
                       min="0"
                       step="0.01"
@@ -536,7 +678,8 @@ export default function POS() {
                     <NumberInput
                       value={splitCard}
                       onChange={(val) => setSplitCard(val)}
-                      className="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:text-white transition-colors"
+                      onFocus={() => setActiveKeypadInput("splitCard")}
+                      className={`w-full px-4 py-2 bg-white dark:bg-zinc-950 border rounded-xl text-sm focus:outline-none transition-colors ${activeKeypadInput === "splitCard" && isKeypadOpen ? "border-purple-500 ring-2 ring-purple-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-purple-500"} dark:text-white`}
                       placeholder="مبلغ الشبكة"
                       min="0"
                       step="0.01"
@@ -596,6 +739,33 @@ export default function POS() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Cart Toggle Floating Button */}
+      {!isMobileCartOpen && (
+        <div className="lg:hidden fixed bottom-4 left-4 right-4 z-30 pointer-events-none">
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              if (playSound) playSound("click");
+              setIsMobileCartOpen(true);
+            }}
+            className="w-full py-4 bg-indigo-600 shadow-xl rounded-2xl text-white font-bold flex items-center justify-between px-6 pointer-events-auto shadow-indigo-500/30"
+          >
+            <div className="flex items-center gap-2">
+              <ShoppingCart className="w-6 h-6" />
+              <span>عرض السلة</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">
+                {cart.length} أصناف
+              </div>
+              <span className="text-lg">
+                {grandTotal.toFixed(2)} {settings.currency}
+              </span>
+            </div>
+          </motion.button>
+        </div>
+      )}
 
       {/* PIN Modal */}
       <AnimatePresence>
@@ -772,6 +942,16 @@ export default function POS() {
           // If we had the actual object we could set selectedCustomerId(id)
           // but just setting the name for the invoice is enough for a quick sale.
         }}
+      />
+
+      <CustomKeypad
+        isOpen={isKeypadOpen}
+        onClose={() => setIsKeypadOpen(false)}
+        onKeyPress={handleKeypadPress}
+        onClear={handleKeypadClear}
+        onEnter={handleCheckout}
+        title={activeKeypadInput === 'amountPaid' ? 'المبلغ المستلم' : activeKeypadInput === 'splitCash' ? 'مبلغ الكاش' : 'مبلغ الشبكة'}
+        value={activeKeypadInput === 'amountPaid' ? amountPaid : activeKeypadInput === 'splitCash' ? splitCash : splitCard}
       />
     </div>
   );

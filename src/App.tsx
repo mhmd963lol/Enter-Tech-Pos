@@ -49,6 +49,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 import { Toaster } from "react-hot-toast";
+import SetupWizardModal from "./components/SetupWizardModal";
 
 function AppContent() {
   const { user, isAuthLoading } = useAppContext();
@@ -63,6 +64,7 @@ function AppContent() {
 
   return (
     <>
+      <SetupWizardModal />
       <Toaster position="top-center" />
       <Routes>
         <Route

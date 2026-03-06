@@ -130,6 +130,8 @@ export interface Settings {
   storeName: string;
   storeLogo?: string;
   currency: string;
+  exchangeRate?: number; // Added for Status Bar
+  setupCompleted?: boolean; // Added for Setup Wizard
   language: "ar" | "en";
   taxRate: number;
   enableTax: boolean;
