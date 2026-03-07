@@ -269,7 +269,7 @@ export default function Layout() {
 
   return (
     <div
-      className={`flex h-screen bg-zinc-50 dark:bg-zinc-900 transition-colors ${isPrivacyMode ? "privacy-mode" : ""}`}
+      className={`flex h-screen bg-zinc-50 dark:bg-zinc-900 transition-colors theme-master-${settings.masterTheme} ${isPrivacyMode ? "privacy-mode" : ""}`}
       dir="rtl"
     >
       {/* Mobile Menu Overlay */}
@@ -282,7 +282,7 @@ export default function Layout() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 right-0 z-50 bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 transition-all duration-500 ease-in-out flex flex-col overflow-hidden ${isDesktopSidebarCollapsed ? "w-0 border-l-0 opacity-0 lg:opacity-100" : "w-72 opacity-100"} ${isMobileMenuOpen
+        className={`fixed lg:static inset-y-0 right-0 z-50 bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 transition-all duration-500 ease-in-out flex flex-col overflow-hidden ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""} ${isDesktopSidebarCollapsed ? "w-0 border-l-0 opacity-0 lg:opacity-100" : "w-72 opacity-100"} ${isMobileMenuOpen
           ? "translate-x-0 w-72"
           : "translate-x-full lg:translate-x-0"
           }`}
@@ -337,7 +337,7 @@ export default function Layout() {
       <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
         <StatusBar />
         {/* Top Header */}
-        <header className="h-16 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 lg:px-8 shrink-0">
+        <header className={`h-16 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 lg:px-8 shrink-0 ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""}`}>
           <div className="flex items-center gap-4">
             <button
               className="p-2 text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"

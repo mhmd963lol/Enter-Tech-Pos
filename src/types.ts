@@ -140,7 +140,7 @@ export interface Settings {
   theme: "light" | "dark" | "system";
 
   // The new Master Theme overriding setting
-  masterTheme: "default" | "gaming" | "carbon" | "luxury" | "cashier-tech";
+  masterTheme: "default" | "gaming" | "carbon" | "luxury" | "cashier-tech" | "ios-glass";
 
   activeTheme?: "indigo" | "emerald" | "rose" | "amber" | "cyan" | "violet" | "gaming";
   cardStyle?: "flat" | "shadow" | "glass" | "default";

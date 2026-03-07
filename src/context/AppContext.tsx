@@ -453,6 +453,52 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
       }
       // ----------------------------------------------------
+      // iOS GLASS THEME SOUNDS (Crystalline, Airy, Premium)
+      // ----------------------------------------------------
+      else if (master === "ios-glass") {
+        if (type === "success") {
+          // Double crystalline beep
+          oscillator.type = "sine";
+          oscillator.frequency.setValueAtTime(1200, t);
+          oscillator.frequency.exponentialRampToValueAtTime(1600, t + 0.1);
+          gainNode.gain.setValueAtTime(0, t);
+          gainNode.gain.linearRampToValueAtTime(0.08, t + 0.05);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+          oscillator.start(t);
+          oscillator.stop(t + 0.3);
+
+          const osc2 = audioCtx.createOscillator();
+          const gain2 = audioCtx.createGain();
+          osc2.connect(gain2);
+          gain2.connect(audioCtx.destination);
+          osc2.type = "sine";
+          osc2.frequency.setValueAtTime(1800, t + 0.1);
+          gain2.gain.setValueAtTime(0, t + 0.1);
+          gain2.gain.linearRampToValueAtTime(0.05, t + 0.15);
+          gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+          osc2.start(t + 0.1);
+          osc2.stop(t + 0.4);
+        } else if (type === "click") {
+          // Soft "pop/bubble" sound
+          oscillator.type = "sine";
+          oscillator.frequency.setValueAtTime(800, t);
+          oscillator.frequency.exponentialRampToValueAtTime(100, t + 0.05);
+          gainNode.gain.setValueAtTime(0.02, t);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+          oscillator.start(t);
+          oscillator.stop(t + 0.05);
+        } else {
+          // Error: Soft dual-tone
+          oscillator.type = "triangle";
+          oscillator.frequency.setValueAtTime(440, t);
+          oscillator.frequency.linearRampToValueAtTime(330, t + 0.2);
+          gainNode.gain.setValueAtTime(0.05, t);
+          gainNode.gain.linearRampToValueAtTime(0.01, t + 0.3);
+          oscillator.start(t);
+          oscillator.stop(t + 0.3);
+        }
+      }
+      // ----------------------------------------------------
       // CASHIER TECH THEME SOUNDS (Fintech, Clean, Digital)
       // ----------------------------------------------------
       else if (master === "cashier-tech") {

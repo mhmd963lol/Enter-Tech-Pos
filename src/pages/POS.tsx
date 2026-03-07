@@ -199,7 +199,7 @@ export default function POS() {
     <div className="flex flex-col h-[calc(100vh-7rem)] min-h-0" dir="rtl">
       <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0 overflow-hidden">
         {/* Products Section */}
-        <div className="flex-1 flex flex-col bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden">
+        <div className={`flex-1 flex flex-col bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""}`}>
           <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-4">
             <div className="relative flex-1">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 w-5 h-5" />
@@ -252,16 +252,16 @@ export default function POS() {
                 {categories.filter(c => c.isActive).map((category) => (
                   <motion.button
                     key={category.id}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => setSelectedCategoryId(category.id)}
-                    className="flex flex-col items-center justify-center p-6 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 border border-indigo-100 dark:border-indigo-800 rounded-2xl transition-colors gap-3"
+                    className={`flex flex-col items-center justify-center p-6 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 border border-indigo-100 dark:border-indigo-800 rounded-2xl transition-all gap-3 ${settings.masterTheme === "ios-glass" ? "glass-card liquid-morph" : ""}`}
                   >
                     <Folder className="w-12 h-12 text-indigo-500 dark:text-indigo-400" fill="currentColor" fillOpacity={0.2} />
                     <span className="font-bold text-zinc-900 dark:text-white text-center line-clamp-2">
                       {category.name}
                     </span>
-                    <span className="text-xs text-indigo-600 dark:text-indigo-400 bg-white dark:bg-zinc-950 px-2 py-1 rounded-full shadow-sm">
+                    <span className={`text-xs text-indigo-600 dark:text-indigo-400 bg-white dark:bg-zinc-950 px-2 py-1 rounded-full shadow-sm ${settings.masterTheme === "ios-glass" ? "bg-white/50 backdrop-blur-md" : ""}`}>
                       {products.filter(p => (p.categoryId === category.id || p.category === category.name) && p.isActive !== false).length}  صنف
                     </span>
                   </motion.button>
@@ -310,7 +310,7 @@ export default function POS() {
                     }}
                     className={`relative flex flex-col items-center text-center p-4 rounded-2xl border transition-all ${product.trackInventory !== false && product.stock === 0
                       ? "opacity-50 cursor-not-allowed border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50"
-                      : "border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md bg-white dark:bg-zinc-950 cursor-pointer"
+                      : `${settings.masterTheme === "ios-glass" ? "glass-card liquid-morph" : "border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md bg-white dark:bg-zinc-950"} cursor-pointer`
                       } `}
                     onClick={() => {
                       if (product.trackInventory === false || product.stock > 0)
@@ -389,6 +389,7 @@ export default function POS() {
             fixed lg:relative lg:flex lg:rounded-2xl min-h-0 lg:max-h-full
             bottom-0 left-0 right-0 z-50 lg:z-auto rounded-t-3xl lg:rounded-b-2xl
             transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
+            ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""}
             ${isMobileCartOpen ? 'translate-y-0 h-[85vh]' : 'translate-y-full lg:translate-y-0'}
           `}
         >
@@ -733,7 +734,13 @@ export default function POS() {
                   (paymentMethod === "split" &&
                     Number(splitCash) + Number(splitCard) < grandTotal)
                 }
-                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-800 disabled:text-zinc-500 dark:disabled:text-zinc-600 disabled:cursor-not-allowed text-white rounded-xl font-bold text-lg transition-colors shadow-sm"
+                className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg flex items-center justify-center gap-2 ${cart.length === 0 ||
+                    (paymentMethod === "cash" && amountPaid !== "" && Number(amountPaid) < grandTotal) ||
+                    (paymentMethod === "debt" && !selectedCustomerId) ||
+                    (paymentMethod === "split" && Number(splitCash) + Number(splitCard) < grandTotal)
+                    ? "bg-zinc-200 dark:bg-zinc-800 text-zinc-400 cursor-not-allowed"
+                    : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20"
+                  } ${settings.masterTheme === "ios-glass" ? "liquid-morph" : ""}`}
               >
                 {paymentMethod === "debt"
                   ? "إتمام البيع الآجل"
@@ -747,31 +754,33 @@ export default function POS() {
       </div>
 
       {/* Mobile Cart Toggle Floating Button */}
-      {!isMobileCartOpen && (
-        <div className="lg:hidden fixed bottom-4 left-4 right-4 z-30 pointer-events-none">
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              if (playSound) playSound("click");
-              setIsMobileCartOpen(true);
-            }}
-            className="w-full py-4 bg-indigo-600 shadow-xl rounded-2xl text-white font-bold flex items-center justify-between px-6 pointer-events-auto shadow-indigo-500/30"
-          >
-            <div className="flex items-center gap-2">
-              <ShoppingCart className="w-6 h-6" />
-              <span>عرض السلة</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">
-                {cart.length}  أصناف
+      {
+        !isMobileCartOpen && (
+          <div className="lg:hidden fixed bottom-4 left-4 right-4 z-30 pointer-events-none">
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                if (playSound) playSound("click");
+                setIsMobileCartOpen(true);
+              }}
+              className={`w-full py-4 bg-indigo-600 shadow-xl rounded-2xl text-white font-bold flex items-center justify-between px-6 pointer-events-auto shadow-indigo-500/30 ${settings.masterTheme === "ios-glass" ? "liquid-morph" : ""}`}
+            >
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="w-6 h-6" />
+                <span>عرض السلة</span>
               </div>
-              <span className="text-lg">
-                {grandTotal.toFixed(2)} {settings.currency}
-              </span>
-            </div>
-          </motion.button>
-        </div>
-      )}
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">
+                  {cart.length}  أصناف
+                </div>
+                <span className="text-lg">
+                  {grandTotal.toFixed(2)} {settings.currency}
+                </span>
+              </div>
+            </motion.button>
+          </div>
+        )
+      }
 
       {/* PIN Modal */}
       <AnimatePresence>
@@ -958,6 +967,6 @@ export default function POS() {
         title={activeKeypadInput === 'amountPaid' ? 'المبلغ المستلم' : activeKeypadInput === 'splitCash' ? 'مبلغ الكاش' : 'مبلغ الشبكة'}
         value={activeKeypadInput === 'amountPaid' ? amountPaid : activeKeypadInput === 'splitCash' ? splitCash : splitCard}
       />
-    </div>
+    </div >
   );
 }
