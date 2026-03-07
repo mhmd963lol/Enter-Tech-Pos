@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useRef } from "react";
 
 export default function StatusBar() {
-    const { settings, orders, isPrivacyMode, playSound, user, logout, exchangeRate } = useAppContext();
+    const { settings, orders, isPrivacyMode, playSound, user, logout, exchangeRate, cart, isCartOpen, setIsCartOpen } = useAppContext();
     const [time, setTime] = useState(new Date());
     const [isRateReversed, setIsRateReversed] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -114,16 +114,31 @@ export default function StatusBar() {
                     </span>
                 </motion.button>
 
-                {/* Cart Shortcut Button */}
+                {/* Cart Toggle Button */}
                 <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate("/pos")}
-                    className="flex items-center gap-1.5 bg-indigo-500/20 hover:bg-indigo-500/40 px-2.5 py-0.5 rounded-md border border-indigo-500/30 transition-colors cursor-pointer"
-                    title="الذهاب لشاشة البيع"
+                    onClick={() => {
+                        if (playSound) playSound("click");
+                        setIsCartOpen(!isCartOpen);
+                    }}
+                    className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-md border transition-all cursor-pointer relative ${isCartOpen
+                        ? "bg-indigo-400 text-indigo-950 border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]"
+                        : "bg-indigo-500/20 hover:bg-indigo-500/40 border-indigo-500/30 text-indigo-100"}`}
+                    title={isCartOpen ? "إغلاق السلة" : "فتح السلة"}
                 >
-                    <ShoppingCart size={14} className="text-indigo-200" />
-                    <span className="font-bold text-white">السلة</span>
+                    <ShoppingCart size={14} className={isCartOpen ? "text-indigo-950" : "text-indigo-200"} />
+                    <span className={`font-bold ${isCartOpen ? "text-indigo-950" : "text-white"}`}>
+                        {isCartOpen ? "إخفاء السلة" : "عرض السلة"}
+                    </span>
+                    {cart.length > 0 && (
+                        <span className="absolute -top-1.5 -left-1.5 flex h-4 w-4">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-4 w-4 bg-rose-500 text-[10px] items-center justify-center text-white font-bold border border-white">
+                                {cart.length}
+                            </span>
+                        </span>
+                    )}
                 </motion.button>
 
                 <div className="w-px h-4 bg-indigo-700/50 mx-1 hidden sm:block"></div>

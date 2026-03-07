@@ -124,9 +124,20 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 import { Toaster } from "react-hot-toast";
 import SetupWizardModal from "./components/SetupWizardModal";
+import { useLocation } from "react-router-dom";
 
 function AppContent() {
-  const { user, isAuthLoading, settings } = useAppContext();
+  const { user, isAuthLoading, settings, setIsCartOpen } = useAppContext();
+  const location = useLocation();
+
+  React.useEffect(() => {
+    // Auto-open on POS, auto-close elsewhere
+    if (location.pathname === "/pos") {
+      setIsCartOpen(true);
+    } else {
+      setIsCartOpen(false);
+    }
+  }, [location.pathname, setIsCartOpen]);
 
   React.useEffect(() => {
     // Apply data-theme to HTML tag for CSS selectors

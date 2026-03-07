@@ -113,12 +113,10 @@ interface AppContextType {
   addTransaction: (transaction: Omit<Transaction, "id">) => void;
   deferredPrompt: any;
   setDeferredPrompt: (prompt: any) => void;
-  // Exchange Rate
-  exchangeRate: number;
-  isRateLive: boolean;
-  rateSource: string;
-  rateTimestamp: number;
-  refreshExchangeRate: () => Promise<void>;
+  isCartOpen: boolean;
+  setIsCartOpen: (open: boolean) => void;
+  isSidebarCollapsed: boolean;
+  setIsSidebarCollapsed: (collapsed: boolean) => void;
 }
 
 const defaultSettings: Settings = {
@@ -171,6 +169,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isPrivacyMode, setIsPrivacyMode] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isCartOpen, setIsCartOpen] = useLocalStorage<boolean>("app_cart_open", false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useLocalStorage<boolean>("app_sidebar_collapsed", false);
 
   // Exchange Rate (live)
   const {
@@ -1372,6 +1372,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         rateSource,
         rateTimestamp,
         refreshExchangeRate,
+        isCartOpen,
+        setIsCartOpen,
+        isSidebarCollapsed,
+        setIsSidebarCollapsed,
       }}
     >
       {children}

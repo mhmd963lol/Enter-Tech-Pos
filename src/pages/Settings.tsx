@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useAppContext } from "../context/AppContext";
 import {
   Settings as SettingsIcon,
@@ -41,14 +41,27 @@ export default function SettingsPage() {
     }));
   };
 
-  const handleSave = () => {
-    setIsSaving(true);
-    setTimeout(() => {
+  // Auto-save logic
+  useEffect(() => {
+    if (JSON.stringify(localSettings) === JSON.stringify(settings)) return;
+
+    const timeoutId = setTimeout(() => {
+      setIsSaving(true);
       updateSettings(localSettings);
-      setIsSaving(false);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
-    }, 500);
+      setTimeout(() => {
+        setIsSaving(false);
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 2000);
+      }, 300);
+    }, 1000); // 1s debounce for auto-save
+
+    return () => clearTimeout(timeoutId);
+  }, [localSettings, updateSettings, settings]);
+
+  const handleSave = () => {
+    // Explicit manual save (optional bridge if needed, but the useEffect handles it)
+    updateSettings(localSettings);
+    toast.success("تم حفظ الإعدادات يدوياً");
   };
 
   const handleReset = () => {

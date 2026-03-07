@@ -119,8 +119,9 @@ const navItems: NavItem[] = [
 const SidebarItem: React.FC<{
   item: NavItem;
   isMobile: boolean;
+  isCollapsed: boolean;
   closeMobile: () => void;
-}> = ({ item, isMobile, closeMobile }) => {
+}> = ({ item, isMobile, isCollapsed, closeMobile }) => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const { user } = useAppContext();
@@ -135,27 +136,36 @@ const SidebarItem: React.FC<{
 
   if (item.subItems) {
     return (
-      <div className="mb-1">
+      <div className="mb-1 relative group/item">
         <button
-          onClick={() => setIsOpen(!isOpen)}
-          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors ${isActive || isOpen
+          onClick={() => !isCollapsed && setIsOpen(!isOpen)}
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 ${isActive || isOpen
             ? "bg-indigo-50/50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
             : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
-            }`}
+            } ${isCollapsed ? "justify-center px-0 h-12 w-12 mx-auto" : ""}`}
         >
           <div className="flex items-center gap-3">
             <item.icon
-              className={`w-5 h-5 ${isActive || isOpen ? "text-indigo-600 dark:text-indigo-400" : "text-zinc-400 dark:text-zinc-500"}`}
+              className={`w-5 h-5 transition-transform duration-300 ${isCollapsed ? "scale-110" : ""} ${isActive || isOpen ? "text-indigo-600 dark:text-indigo-400" : "text-zinc-400 dark:text-zinc-500"}`}
             />
-            <span className="font-medium">{item.label}</span>
+            {!isCollapsed && <span className="font-medium whitespace-nowrap overflow-hidden">{item.label}</span>}
           </div>
-          {isOpen ? (
-            <ChevronUp className="w-4 h-4" />
-          ) : (
-            <ChevronDown className="w-4 h-4" />
+          {!isCollapsed && (
+            isOpen ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )
           )}
         </button>
-        {isOpen && (
+
+        {isCollapsed && (
+          <div className="absolute right-full mr-2 top-0 py-2 px-3 bg-zinc-900 text-white text-xs rounded-lg opacity-0 group-hover/item:opacity-100 pointer-events-none transition-opacity z-[100] whitespace-nowrap shadow-xl">
+            {item.label}
+          </div>
+        )}
+
+        {isOpen && !isCollapsed && (
           <div className="mt-1 ml-4 pr-8 space-y-1 border-r-2 border-zinc-100 dark:border-zinc-800">
             {item.subItems.map((subItem) => (
               <NavLink
@@ -180,26 +190,32 @@ const SidebarItem: React.FC<{
   }
 
   return (
-    <NavLink
-      to={item.to!}
-      onClick={isMobile ? closeMobile : undefined}
-      className={({ isActive }) =>
-        `flex items-center gap-3 px-4 py-3 rounded-xl transition-all mb-1 ${isActive
-          ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium"
-          : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-200"
-        }`
-      }
-    >
-      <item.icon className="w-5 h-5" />
-      <span>{item.label}</span>
-    </NavLink>
+    <div className="relative group/item">
+      <NavLink
+        to={item.to!}
+        onClick={isMobile ? closeMobile : undefined}
+        className={({ isActive }) =>
+          `flex items-center gap-3 px-4 py-3 rounded-xl transition-all mb-1 ${isActive
+            ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium"
+            : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-200"
+          } ${isCollapsed ? "justify-center px-0 h-12 w-12 mx-auto" : ""}`
+        }
+      >
+        <item.icon className={`w-5 h-5 ${isCollapsed ? "scale-110" : ""}`} />
+        {!isCollapsed && <span className="whitespace-nowrap overflow-hidden">{item.label}</span>}
+      </NavLink>
+      {isCollapsed && (
+        <div className="absolute right-full mr-2 top-0 py-2 px-3 bg-zinc-900 text-white text-xs rounded-lg opacity-0 group-hover/item:opacity-100 pointer-events-none transition-opacity z-[100] whitespace-nowrap shadow-xl">
+          {item.label}
+        </div>
+      )}
+    </div>
   );
 };
 
 export default function Layout() {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState(false);
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -216,6 +232,8 @@ export default function Layout() {
     playSound,
     deferredPrompt,
     setDeferredPrompt,
+    isSidebarCollapsed,
+    setIsSidebarCollapsed,
   } = useAppContext();
 
   const unreadNotificationsCount = notifications.filter((n) => !n.read).length;
@@ -282,35 +300,40 @@ export default function Layout() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 right-0 z-50 bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 transition-all duration-500 ease-in-out flex flex-col overflow-hidden ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""} ${isDesktopSidebarCollapsed ? "w-0 border-l-0 opacity-0 lg:opacity-100" : "w-72 opacity-100"} ${isMobileMenuOpen
+        className={`fixed lg:static inset-y-0 right-0 z-50 bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 transition-all duration-500 ease-in-out flex flex-col overflow-hidden ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""} ${isSidebarCollapsed ? "w-20" : "w-72"} ${isMobileMenuOpen
           ? "translate-x-0 w-72"
           : "translate-x-full lg:translate-x-0"
           }`}
       >
-        <div className="p-6 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800">
+        <div className={`p-4 flex items-center transition-all duration-300 border-b border-zinc-100 dark:border-zinc-800 ${isSidebarCollapsed ? "justify-center" : "justify-between"}`}>
           <div className="flex items-center gap-3">
-            <CashierTechLogo showText={false} className="w-10 h-10" />
-            <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-white">
-                {settings.storeName}
-              </h1>
-              <p className="text-xs text-zinc-500">نظام إدارة المبيعات</p>
-            </div>
+            <CashierTechLogo showText={false} className="w-10 h-10 shrink-0" />
+            {!isSidebarCollapsed && (
+              <div>
+                <h1 className="text-xl font-bold text-zinc-900 dark:text-white truncate">
+                  {settings.storeName}
+                </h1>
+                <p className="text-[10px] text-zinc-500 truncate">نظام إدارة المبيعات</p>
+              </div>
+            )}
           </div>
-          <button
-            className="lg:hidden p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {!isSidebarCollapsed && (
+            <button
+              className="lg:hidden p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+        <nav className="flex-1 overflow-y-auto p-2 custom-scrollbar space-y-2">
           {navItems.map((item) => (
             <SidebarItem
               key={item.label}
               item={item}
-              isMobile={true}
+              isMobile={false}
+              isCollapsed={isSidebarCollapsed}
               closeMobile={() => setIsMobileMenuOpen(false)}
             />
           ))}
@@ -320,14 +343,14 @@ export default function Layout() {
           {deferredPrompt && (
             <button
               onClick={handleInstallApp}
-              className={`w-full flex items-center gap-3 p-3 mb-4 rounded-xl transition-all font-bold group shadow-sm bg-gradient-to-r from-[#00E676] to-[#00C853] text-indigo-950 hover:shadow-[#00E676]/20 bg-[length:200%_auto] hover:bg-right ${isDesktopSidebarCollapsed ? "justify-center px-0" : ""
+              className={`w-full flex items-center gap-3 p-3 mb-4 rounded-xl transition-all font-bold group shadow-sm bg-gradient-to-r from-[#00E676] to-[#00C853] text-indigo-950 hover:shadow-[#00E676]/20 bg-[length:200%_auto] hover:bg-right ${isSidebarCollapsed ? "justify-center px-0 h-12 w-12 mx-auto" : ""
                 }`}
             >
               <Download className="w-5 h-5 shrink-0" />
-              {!isDesktopSidebarCollapsed && <span>تثبيت النظام</span>}
+              {!isSidebarCollapsed && <span>تثبيت النظام</span>}
             </button>
           )}
-          <p className="text-xs text-zinc-400 font-medium">
+          <p className={`text-[10px] text-zinc-400 font-medium ${isSidebarCollapsed ? "opacity-0" : "opacity-100"}`}>
             برمجة محمد عرجون © {new Date().getFullYear()}
           </p>
         </div>
@@ -346,7 +369,7 @@ export default function Layout() {
                 if (window.innerWidth < 1024) {
                   setIsMobileMenuOpen(true);
                 } else {
-                  setIsDesktopSidebarCollapsed(!isDesktopSidebarCollapsed);
+                  setIsSidebarCollapsed(!isSidebarCollapsed);
                 }
               }}
             >
