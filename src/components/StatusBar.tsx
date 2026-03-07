@@ -60,7 +60,7 @@ export default function StatusBar() {
     };
 
     return (
-        <div className="bg-gradient-to-l from-indigo-900 via-indigo-800 to-indigo-950 text-indigo-50 text-xs sm:text-sm py-1.5 px-4 flex flex-wrap items-center justify-between shrink-0 shadow-inner z-[100] w-full relative">
+        <div className="bg-gradient-to-l from-indigo-900 via-indigo-800 to-indigo-950 text-indigo-50 text-xs sm:text-sm py-1.5 px-4 flex flex-wrap items-center justify-between shrink-0 shadow-inner z-40 w-full relative">
 
             {/* Right side: Time and Date */}
             <div className="flex items-center gap-4 sm:gap-6">
@@ -153,7 +153,7 @@ export default function StatusBar() {
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
                                 transition={{ duration: 0.15 }}
-                                className="absolute left-0 top-full mt-2 w-56 bg-white dark:bg-[#1a1b1e] border border-zinc-200 dark:border-zinc-800/50 rounded-xl shadow-2xl overflow-hidden z-[200] flex flex-col"
+                                className="absolute left-0 top-full mt-2 w-56 bg-white dark:bg-[#1a1b1e] border border-zinc-200 dark:border-zinc-800/50 rounded-xl shadow-2xl overflow-hidden z-50 flex flex-col"
                             >
                                 <div className="p-4 border-b border-zinc-100 dark:border-zinc-800/50 flex flex-col items-center">
                                     <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-2">

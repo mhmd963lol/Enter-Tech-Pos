@@ -16,9 +16,7 @@ import toast from "react-hot-toast";
 import { Expense } from "../types";
 
 export default function Expenses() {
-  const { expenses, addTransaction, settings } = useAppContext();
-  // Local state for expenses until fully integrated in context if needed
-  const [localExpenses, setLocalExpenses] = useState<Expense[]>(expenses || []);
+  const { expenses, addExpense, deleteExpense, addTransaction, settings } = useAppContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,7 +29,7 @@ export default function Expenses() {
 
   const categories = ["رواتب", "إيجار", "فواتير", "صيانة", "نثريات", "أخرى"];
 
-  const filteredExpenses = localExpenses.filter((e) => {
+  const filteredExpenses = expenses.filter((e) => {
     const matchesSearch =
       e.description.includes(searchTerm) || e.category.includes(searchTerm);
     const matchesCategory =
@@ -39,7 +37,7 @@ export default function Expenses() {
     return matchesSearch && matchesCategory;
   });
 
-  const totalExpensesAmount = localExpenses.reduce(
+  const totalExpensesAmount = expenses.reduce(
     (sum, e) => sum + e.amount,
     0,
   );
@@ -51,8 +49,7 @@ export default function Expenses() {
       return;
     }
 
-    const expenseObj: Expense = {
-      id: `EXP-${Math.random().toString(36).substring(7)}`,
+    const expenseObj: Omit<Expense, "id"> = {
       amount: Number(newExpense.amount),
       category: newExpense.category,
       description: newExpense.description,
@@ -60,7 +57,7 @@ export default function Expenses() {
       type: newExpense.type,
     };
 
-    setLocalExpenses([expenseObj, ...localExpenses]);
+    addExpense(expenseObj);
 
     // Also add to transactions
     addTransaction({
@@ -80,8 +77,8 @@ export default function Expenses() {
     });
   };
 
-  const deleteExpense = (id: string) => {
-    setLocalExpenses(localExpenses.filter((e) => e.id !== id));
+  const handleDeleteExpense = (id: string) => {
+    deleteExpense(id);
     toast.success("تم الحذف");
   };
 
@@ -132,7 +129,7 @@ export default function Expenses() {
                 عدد العمليات
               </p>
               <h3 className="text-2xl font-bold text-zinc-900 dark:text-white">
-                {localExpenses.length}
+                {expenses.length}
               </h3>
             </div>
           </div>

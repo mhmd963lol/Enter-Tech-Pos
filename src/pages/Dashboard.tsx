@@ -26,16 +26,23 @@ export default function Dashboard() {
     .filter((p) => p.trackInventory !== false)
     .reduce((sum, p) => sum + p.costPrice * p.stock, 0);
 
-  // Simple mock data for chart
-  const data = [
-    { name: "السبت", sales: 4000 },
-    { name: "الأحد", sales: 3000 },
-    { name: "الإثنين", sales: 2000 },
-    { name: "الثلاثاء", sales: 2780 },
-    { name: "الأربعاء", sales: 1890 },
-    { name: "الخميس", sales: 2390 },
-    { name: "الجمعة", sales: 3490 },
-  ];
+  // Generate real data for the chart (last 7 days)
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return d;
+  });
+
+  const data = last7Days.map((date) => {
+    const dateString = date.toISOString().split("T")[0];
+    const dailySales = orders
+      .filter((o) => o.status === "completed" && o.date.startsWith(dateString))
+      .reduce((sum, o) => sum + o.total, 0);
+
+    const dayName = date.toLocaleDateString("ar-SA", { weekday: "long" });
+    // Remove "يوم " prefix if present in some locales, keep it clean
+    return { name: dayName.replace("يوم ", ""), sales: dailySales };
+  });
 
   const stats = [
     {
@@ -167,10 +174,10 @@ export default function Dashboard() {
                   </p>
                   <span
                     className={`text-xs px-2 py-1 rounded-full font-medium ${order.status === "completed"
-                        ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                        : order.status === "pending"
-                          ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400"
-                          : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                      ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                      : order.status === "pending"
+                        ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400"
+                        : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
                       }`}
                   >
                     {order.status === "completed"

@@ -13,12 +13,10 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import NumberInput from "../components/NumberInput";
 import toast from "react-hot-toast";
+import { type Income as IncomeType } from "../types";
 
 export default function Income() {
-  const { incomes, addTransaction, settings } = useAppContext();
-  // Using a local state just to append incomes without changing the full context schema,
-  // though we should ideally use addTransaction context to reflect in payments center
-  const [localIncomes, setLocalIncomes] = useState(incomes);
+  const { incomes, addIncome, deleteIncome, addTransaction, settings } = useAppContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newIncome, setNewIncome] = useState({
@@ -27,13 +25,13 @@ export default function Income() {
     description: "",
   });
 
-  const filteredIncomes = localIncomes.filter(
+  const filteredIncomes = incomes.filter(
     (i) =>
       i.source.toLowerCase().includes(searchTerm.toLowerCase()) ||
       i.description.includes(searchTerm),
   );
 
-  const totalIncomeAmount = localIncomes.reduce((sum, i) => sum + i.amount, 0);
+  const totalIncomeAmount = incomes.reduce((sum, i) => sum + i.amount, 0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,15 +40,14 @@ export default function Income() {
       return;
     }
 
-    const incomeObj = {
-      id: `INC-${Math.random().toString(36).substring(7)}`,
+    const incomeObj: Omit<IncomeType, "id"> = {
       amount: Number(newIncome.amount),
       source: newIncome.source,
       description: newIncome.description,
       date: new Date().toISOString(),
     };
 
-    setLocalIncomes([incomeObj, ...localIncomes]);
+    addIncome(incomeObj);
 
     // Also add to transactions
     addTransaction({
@@ -65,8 +62,8 @@ export default function Income() {
     setNewIncome({ amount: "", source: "", description: "" });
   };
 
-  const deleteIncome = (id: string) => {
-    setLocalIncomes(localIncomes.filter((i) => i.id !== id));
+  const handleDeleteIncome = (id: string) => {
+    deleteIncome(id);
     toast.success("تم الحذف");
   };
 
@@ -117,7 +114,7 @@ export default function Income() {
                 عدد العمليات
               </p>
               <h3 className="text-2xl font-bold text-zinc-900 dark:text-white">
-                {localIncomes.length}
+                {incomes.length}
               </h3>
             </div>
           </div>
@@ -178,7 +175,7 @@ export default function Income() {
                     </td>
                     <td className="px-6 py-4">
                       <button
-                        onClick={() => deleteIncome(income.id)}
+                        onClick={() => handleDeleteIncome(income.id)}
                         className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />

@@ -245,7 +245,7 @@ export default function POS() {
             )}
           </div>
 
-          <div className="flex-1 overflow-auto p-4 custom-scrollbar">
+          <div className="flex-1 overflow-auto p-4 pb-24 lg:pb-4 custom-scrollbar">
             {/* If NO search term, and NO category selected -> show Categories as Folders */}
             {!searchTerm && !selectedCategoryId && (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">

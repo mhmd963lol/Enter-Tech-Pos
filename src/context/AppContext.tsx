@@ -106,6 +106,10 @@ interface AppContextType {
   addEmployee: (employee: Omit<Employee, "id">) => void;
   updateEmployee: (id: string, employee: Partial<Employee>) => void;
   deleteEmployee: (id: string) => void;
+  addExpense: (expense: Omit<Expense, "id">) => void;
+  deleteExpense: (id: string) => void;
+  addIncome: (income: Omit<Income, "id">) => void;
+  deleteIncome: (id: string) => void;
   addTransaction: (transaction: Omit<Transaction, "id">) => void;
   deferredPrompt: any;
   setDeferredPrompt: (prompt: any) => void;
@@ -1150,10 +1154,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     // We only handle switching from pending to completed for simplicity
     if (invoice.status === "pending" && status === "completed") {
-      // Re-use logic to apply the invoice
-      addPurchaseInvoice(invoice);
-      // But we must overwrite the old one, so let's just do it inline here properly instead of calling add
-      // (This is a simplified approach, a real system would need more robust handling for reversals)
+      // Do NOT call addPurchaseInvoice(invoice); as it creates a duplicate invoice.
+      // We process the logic inline here properly instead.
 
       setPurchases((prev) =>
         prev.map((p) => (p.id === id ? { ...p, status } : p)),
@@ -1228,6 +1230,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setEmployees((prev) => prev.filter((e) => e.id !== id));
   };
 
+  const addExpense = (expense: Omit<Expense, "id">) => {
+    const newExpense: Expense = {
+      ...expense,
+      id: `EXP-${Math.floor(Math.random() * 10000) + 1000}`,
+    };
+    setExpenses((prev) => [newExpense, ...prev]);
+  };
+
+  const deleteExpense = (id: string) => {
+    setExpenses((prev) => prev.filter((e) => e.id !== id));
+  };
+
+  const addIncome = (income: Omit<Income, "id">) => {
+    const newIncome: Income = {
+      ...income,
+      id: `INC-${Math.floor(Math.random() * 10000) + 1000}`,
+    };
+    setIncomes((prev) => [newIncome, ...prev]);
+  };
+
+  const deleteIncome = (id: string) => {
+    setIncomes((prev) => prev.filter((i) => i.id !== id));
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -1288,6 +1314,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addEmployee,
         updateEmployee,
         deleteEmployee,
+        addExpense,
+        deleteExpense,
+        addIncome,
+        deleteIncome,
         addTransaction,
         deferredPrompt,
         setDeferredPrompt,
