@@ -196,10 +196,11 @@ function AppContent() {
           <Route path="inbox" element={<Inbox />} />
           <Route path="tools/barcode" element={<BarcodeGenerator />} />
           <Route path="settings/account" element={<AccountSettings />} />
-          <Route path="support" element={<StaticPages />} />
-          <Route path="terms" element={<StaticPages />} />
-          <Route path="privacy" element={<StaticPages />} />
         </Route>
+        {/* Public Static Pages (Moved outside for Google Verification) */}
+        <Route path="/support" element={<StaticPages />} />
+        <Route path="/terms" element={<StaticPages />} />
+        <Route path="/privacy" element={<StaticPages />} />
       </Routes>
     </>
   );

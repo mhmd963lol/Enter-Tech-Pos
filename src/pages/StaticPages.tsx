@@ -19,9 +19,9 @@ export default function StaticPages() {
                 النظام، يرجى التواصل معنا عبر القنوات التالية:
               </p>
               <ul className="list-disc list-inside space-y-2 text-zinc-600 dark:text-zinc-400">
-                <li>البريد الإلكتروني: support@example.com</li>
-                <li>الهاتف: +966 12 345 6789</li>
-                <li>ساعات العمل: الأحد إلى الخميس، 9:00 صباحاً - 5:00 مساءً</li>
+                <li>البريد الإلكتروني: support@cashier-tech.com</li>
+                <li>الهاتف: +966 50 000 0000</li>
+                <li>ساعات العمل: 24/7 للمشتركين</li>
               </ul>
               <div className="mt-8 p-4 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-400 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
                 <p className="font-bold">ملاحظة مستخدم Pro:</p>
@@ -40,7 +40,7 @@ export default function StaticPages() {
           content: (
             <div className="space-y-4 text-justify">
               <p>
-                مرحباً بك في نظام نقاط البيع. باستخدامك لهذا النظام، فإنك توافق
+                مرحباً بك في نظام كاشير تك (Cashier Tech). باستخدامك لهذا النظام، فإنك توافق
                 على الشروط التالية:
               </p>
               <ol className="list-decimal list-inside space-y-4 text-zinc-600 dark:text-zinc-400 mt-4">
@@ -113,19 +113,32 @@ export default function StaticPages() {
   const pageData = getContent();
 
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6" dir="rtl">
-      <div className="bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden">
-        <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 bg-white dark:bg-zinc-900 rounded-full flex items-center justify-center mb-4 shadow-sm">
-            {pageData.icon}
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-4 md:p-8" dir="rtl">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="mb-4">
+          <button
+            onClick={() => window.location.href = "/"}
+            className="flex items-center gap-2 text-sm text-zinc-500 hover:text-indigo-600 transition-colors bg-white dark:bg-zinc-900 px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800"
+          >
+            العودة للرئيسية
+          </button>
+        </div>
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-100 dark:border-zinc-800 overflow-hidden">
+          <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 bg-white dark:bg-zinc-800 rounded-full flex items-center justify-center mb-4 shadow-sm border border-zinc-100 dark:border-zinc-800">
+              {pageData.icon}
+            </div>
+            <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">
+              {pageData.title}
+            </h1>
           </div>
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">
-            {pageData.title}
-          </h1>
+          <div className="p-8 text-zinc-700 dark:text-zinc-300 leading-relaxed">
+            {pageData.content}
+          </div>
         </div>
-        <div className="p-8 text-zinc-700 dark:text-zinc-300 leading-relaxed">
-          {pageData.content}
-        </div>
+        <footer className="text-center text-zinc-400 text-xs py-4">
+          &copy; {new Date().getFullYear()} كاشير تك - نظام نقاط البيع الذكي
+        </footer>
       </div>
     </div>
   );
