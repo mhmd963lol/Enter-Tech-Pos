@@ -385,12 +385,12 @@ export default function POS() {
         {/* Cart Section */}
         <div
           className={`
-w - full lg: w-96 flex flex-col bg-white dark: bg-zinc - 950 shadow - sm border border-zinc - 100 dark: border-zinc - 800 shrink - 0
-            fixed lg:relative lg:flex lg: rounded-2xl min - h-0 lg: max - h - full
-bottom-0 left - 0 right - 0 z-50 lg: z - auto rounded-t - 3xl lg: rounded-b - 2xl
-transition-transform duration - 300 ease - [cubic - bezier(0.32, 0.72, 0, 1)]
+            w-full lg:w-96 flex flex-col bg-white dark:bg-zinc-950 shadow-sm border border-zinc-100 dark:border-zinc-800 shrink-0
+            fixed lg:relative lg:flex lg:rounded-2xl min-h-0 lg:max-h-full
+            bottom-0 left-0 right-0 z-50 lg:z-auto rounded-t-3xl lg:rounded-b-2xl
+            transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
             ${isMobileCartOpen ? 'translate-y-0 h-[85vh]' : 'translate-y-full lg:translate-y-0'}
-`}
+          `}
         >
           <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -637,7 +637,7 @@ transition-transform duration - 300 ease - [cubic - bezier(0.32, 0.72, 0, 1)]
                       value={amountPaid}
                       onChange={(val) => setAmountPaid(val)}
                       onFocus={() => setActiveKeypadInput("amountPaid")}
-                      className={`w - full px-4 py-2 bg-white dark: bg-zinc - 950 border rounded-xl text-sm focus: outline - none transition-colors ${activeKeypadInput === "amountPaid" && isKeypadOpen ? "border-indigo-500 ring-2 ring-indigo-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-indigo-500"} dark: text-white`}
+                      className={`w-full px-4 py-2 bg-white dark:bg-zinc-950 border rounded-xl text-sm focus:outline-none transition-colors ${activeKeypadInput === "amountPaid" && isKeypadOpen ? "border-indigo-500 ring-2 ring-indigo-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-indigo-500"} dark:text-white`}
                       placeholder={
                         paymentMethod === "debt"
                           ? "المبلغ المدفوع مقدماً (وع مقدماً (اختياري)"
@@ -677,7 +677,7 @@ transition-transform duration - 300 ease - [cubic - bezier(0.32, 0.72, 0, 1)]
                       value={splitCash}
                       onChange={(val) => setSplitCash(val)}
                       onFocus={() => setActiveKeypadInput("splitCash")}
-                      className={`w - full px-4 py-2 bg-white dark: bg-zinc - 950 border rounded-xl text-sm focus: outline - none transition-colors ${activeKeypadInput === "splitCash" && isKeypadOpen ? "border-purple-500 ring-2 ring-purple-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-purple-500"} dark: text-white`}
+                      className={`w-full px-4 py-2 bg-white dark:bg-zinc-950 border rounded-xl text-sm focus:outline-none transition-colors ${activeKeypadInput === "splitCash" && isKeypadOpen ? "border-purple-500 ring-2 ring-purple-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-purple-500"} dark:text-white`}
                       placeholder="مبلغ الكاش"
                       min="0"
                       step="0.01"
@@ -687,7 +687,7 @@ transition-transform duration - 300 ease - [cubic - bezier(0.32, 0.72, 0, 1)]
                       value={splitCard}
                       onChange={(val) => setSplitCard(val)}
                       onFocus={() => setActiveKeypadInput("splitCard")}
-                      className={`w - full px-4 py-2 bg-white dark: bg-zinc - 950 border rounded-xl text-sm focus: outline - none transition-colors ${activeKeypadInput === "splitCard" && isKeypadOpen ? "border-purple-500 ring-2 ring-purple-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-purple-500"} dark: text-white`}
+                      className={`w-full px-4 py-2 bg-white dark:bg-zinc-950 border rounded-xl text-sm focus:outline-none transition-colors ${activeKeypadInput === "splitCard" && isKeypadOpen ? "border-purple-500 ring-2 ring-purple-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-purple-500"} dark:text-white`}
                       placeholder="مبلغ الشبكة"
                       min="0"
                       step="0.01"
@@ -729,9 +729,7 @@ transition-transform duration - 300 ease - [cubic - bezier(0.32, 0.72, 0, 1)]
                   (paymentMethod === "cash" &&
                     amountPaid !== "" &&
                     Number(amountPaid) < grandTotal) ||
-                  (paymentMethod === "debt" &&
-                    !selectedCustomerId &&
-                    !customerName) ||
+                  (paymentMethod === "debt" && !selectedCustomerId) ||
                   (paymentMethod === "split" &&
                     Number(splitCash) + Number(splitCard) < grandTotal)
                 }
@@ -947,8 +945,7 @@ transition-transform duration - 300 ease - [cubic - bezier(0.32, 0.72, 0, 1)]
         onClose={() => setIsAddCustomerModalOpen(false)}
         onSuccess={(id, name) => {
           setCustomerName(name);
-          // If we had the actual object we could set selectedCustomerId(id)
-          // but just setting the name for the invoice is enough for a quick sale.
+          setSelectedCustomerId(id); // Assign the generated ID to track debts!
         }}
       />
 

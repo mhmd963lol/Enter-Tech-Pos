@@ -589,9 +589,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const togglePrivacyMode = () => setIsPrivacyMode(!isPrivacyMode);
 
   const addToCart = (product: Product) => {
+    const existing = cart.find((item) => item.id === product.id);
+    if (existing && product.trackInventory !== false && existing.quantity >= product.stock) {
+      addNotification({
+        title: "عذراً",
+        message: `لا يوجد مخزون كافي. المتبقي: ${product.stock}`,
+        type: "warning",
+      });
+      playSound("error");
+      return;
+    }
+    if (!existing && product.trackInventory !== false && product.stock <= 0) {
+      addNotification({
+        title: "عذراً",
+        message: `المنتج نافذ من المخزون`,
+        type: "error",
+      });
+      playSound("error");
+      return;
+    }
+
     playSound("click");
     setCart((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
       if (existing) {
         return prev.map((item) =>
           item.id === product.id
@@ -610,6 +629,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updateCartQuantity = (productId: string, quantity: number) => {
     if (quantity <= 0) {
+      removeFromCart(productId);
+      return;
+    }
+    const product = products.find(p => p.id === productId);
+    if (product && product.trackInventory !== false && quantity > product.stock) {
+      addNotification({
+        title: "عذراً",
+        message: `أقصى كمية متوفرة هي ${product.stock}`,
+        type: "warning",
+      });
+      playSound("error");
+      quantity = product.stock;
+    }
+    if (quantity === 0) {
       removeFromCart(productId);
       return;
     }
