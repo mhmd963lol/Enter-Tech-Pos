@@ -120,7 +120,12 @@ export default function StatusBar() {
                     whileTap={{ scale: 0.95 }}
                     onClick={() => {
                         if (playSound) playSound("click");
-                        setIsCartOpen(!isCartOpen);
+                        if (location.pathname !== "/pos") {
+                            navigate("/pos");
+                            setTimeout(() => setIsCartOpen(true), 100);
+                        } else {
+                            setIsCartOpen(!isCartOpen);
+                        }
                     }}
                     className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-all cursor-pointer relative ${isCartOpen
                         ? "bg-indigo-400 text-indigo-950 border-white shadow-[0_0_15px_rgba(255,255,255,0.4)]"

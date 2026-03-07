@@ -341,10 +341,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       "theme-amber",
       "theme-cyan",
       "theme-violet",
-      "theme-gaming"
+      "theme-gaming",
+      "theme-custom"
     );
     if (settings.activeTheme && settings.activeTheme !== "indigo") {
       body.classList.add(`theme-${settings.activeTheme}`);
+    }
+
+    // Apply Custom Primary Color
+    if (settings.primaryColor) {
+      document.documentElement.style.setProperty("--custom-primary", settings.primaryColor);
     }
 
     // Apply shape theme

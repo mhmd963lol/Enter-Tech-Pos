@@ -332,14 +332,35 @@ export default function SettingsPage() {
   return (
     <div className="max-w-4xl mx-auto pb-24 space-y-6" dir="rtl">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl flex items-center justify-center">
-          <SettingsIcon className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 bg-indigo-100 dark:bg-indigo-900/40 rounded-2xl flex items-center justify-center shadow-inner">
+            <SettingsIcon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+          </div>
+          <div>
+            <h2 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tight">الإعدادات الشاملة</h2>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">تحكم بجميع تفاصيل خيارات النظام والمظهر</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-2xl font-bold text-zinc-900 dark:text-white">الإعدادات الشاملة</h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">تحكم بجميع تفاصيل متجرك من مكان واحد</p>
-        </div>
+
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleSave}
+          disabled={isSaving}
+          className={`flex items-center justify-center gap-2 px-4 md:px-6 py-3 rounded-2xl font-bold transition-all shadow-lg ${showSuccess
+            ? "bg-emerald-500 text-white"
+            : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20"
+            }`}
+        >
+          {showSuccess ? (
+            <><Check className="w-5 h-5" /> <span className="hidden sm:inline">تم الحفظ</span></>
+          ) : isSaving ? (
+            <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> <span className="hidden sm:inline">جاري...</span></>
+          ) : (
+            <><Save className="w-5 h-5" /> <span className="hidden sm:inline">حفظ يدوي</span></>
+          )}
+        </motion.button>
       </div>
 
       {/* Tabs Menu */}
@@ -672,30 +693,114 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Colors */}
-                  <div className="col-span-1 md:col-span-2 p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                    <label className="block text-sm font-bold text-zinc-900 dark:text-white mb-3">اللون الأساسي للواجهة</label>
-                    <div className="flex flex-wrap gap-3">
-                      {[
-                        { id: "indigo", color: "bg-indigo-500", name: "نيلي" },
-                        { id: "emerald", color: "bg-emerald-500", name: "زمردي" },
-                        { id: "rose", color: "bg-rose-500", name: "وردي" },
-                        { id: "amber", color: "bg-amber-500", name: "كهرماني" },
-                        { id: "cyan", color: "bg-cyan-500", name: "سماوي" },
-                        { id: "violet", color: "bg-violet-500", name: "بنفسجي" },
-                        { id: "gaming", color: "bg-fuchsia-500", name: "جيمنج" },
-                      ].map((t) => (
-                        <button
-                          key={t.id}
-                          onClick={() => setLocalSettings({ ...localSettings, activeTheme: t.id as any })}
-                          className={`w-12 h-12 rounded-full ${t.color} flex items-center justify-center transition-all duration-300 shadow-sm ${(localSettings.activeTheme || "indigo") === t.id
-                            ? "ring-4 ring-offset-2 ring-indigo-500/50 dark:ring-indigo-500/50 dark:ring-offset-zinc-900 scale-110"
-                            : "hover:scale-110"
-                            }`}
-                          title={t.name}
-                        >
-                          {(localSettings.activeTheme || "indigo") === t.id && <Check className="w-6 h-6 text-white" />}
-                        </button>
-                      ))}
+                  <div className="col-span-1 md:col-span-2 p-6 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden relative">
+                    <label className="block text-lg font-black text-zinc-900 dark:text-white mb-2">تخصيص ألوان الواجهة (Spectrum)</label>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">اختر لونك المفضل أو قم بتعيين لون مخصص تماماً ليناسب علامتك التجارية.</p>
+
+                    <div className="flex flex-col gap-6">
+                      {/* Presets Grid */}
+                      <div className="flex flex-wrap gap-4">
+                        {[
+                          { id: "indigo", color: "#4f46e5", bgClass: "bg-indigo-500", name: "نيلي" },
+                          { id: "emerald", color: "#10b981", bgClass: "bg-emerald-500", name: "زمردي" },
+                          { id: "rose", color: "#f43f5e", bgClass: "bg-rose-500", name: "وردي" },
+                          { id: "amber", color: "#f59e0b", bgClass: "bg-amber-500", name: "كهرماني" },
+                          { id: "cyan", color: "#06b6d4", bgClass: "bg-cyan-500", name: "سماوي" },
+                          { id: "violet", color: "#8b5cf6", bgClass: "bg-violet-500", name: "بنفسجي" },
+                          { id: "gaming", color: "#d946ef", bgClass: "bg-fuchsia-500", name: "جيمنج" },
+                          { id: "custom", color: localSettings.primaryColor || "#4f46e5", bgClass: "", name: "مخصص" },
+                        ].map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() =>
+                              setLocalSettings({
+                                ...localSettings,
+                                activeTheme: t.id as any,
+                                primaryColor: t.id === "custom" ? localSettings.primaryColor : t.color
+                              })
+                            }
+                            className={`group relative w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${localSettings.activeTheme === t.id
+                              ? "ring-4 ring-offset-2 ring-indigo-500/50 dark:ring-indigo-500/50 dark:ring-offset-zinc-900 scale-110"
+                              : "hover:scale-110"
+                              }`}
+                            style={t.id === "custom" ? { backgroundColor: localSettings.primaryColor } : {}}
+                          >
+                            <div className={`absolute inset-0 rounded-full ${t.bgClass}`} />
+                            <div className="relative z-10 flex flex-col items-center">
+                              {localSettings.activeTheme === t.id && <Check className="w-6 h-6 text-white drop-shadow-md" />}
+                              <span className="text-[8px] font-bold text-white drop-shadow-md">{t.name}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Custom Color Bar / Spectrum */}
+                      <div className="flex flex-col sm:flex-row items-center gap-6 p-4 bg-white dark:bg-zinc-950 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-inner">
+                        <div className="flex-1 w-full">
+                          <label className="block text-xs font-bold text-zinc-400 mb-3 text-right">خريط الألوان التفاعلية:</label>
+                          <div className="relative h-12 w-full rounded-2xl overflow-hidden shadow-inner border border-zinc-200 dark:border-zinc-800">
+                            <input
+                              type="range"
+                              min="0"
+                              max="360"
+                              step="1"
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                              onChange={(e) => {
+                                const h = e.target.value;
+                                const color = `hsl(${h}, 70%, 50%)`;
+                                setLocalSettings({
+                                  ...localSettings,
+                                  activeTheme: "custom",
+                                  primaryColor: color
+                                });
+                              }}
+                            />
+                            <div
+                              className="w-full h-full"
+                              style={{
+                                background: "linear-gradient(to left, #ff0000, #ff00ff, #0000ff, #00ffff, #00ff00, #ffff00, #ff0000)"
+                              }}
+                            />
+                            <div
+                              className="absolute top-0 bottom-0 w-2 bg-white shadow-xl pointer-events-none border-x border-black/10"
+                              style={{
+                                right: `${((localSettings.primaryColor?.match(/hsl\((\d+)/)?.[1] || 0) / 360) * 100}%`
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 flex flex-col items-center">
+                          <label className="block text-xs font-bold text-zinc-400 mb-2">لون حر (HEX/HSL):</label>
+                          <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-900 p-1 rounded-2xl border-2 border-zinc-200 dark:border-zinc-800 focus-within:border-indigo-500 transition-colors">
+                            <input
+                              type="color"
+                              value={localSettings.primaryColor?.startsWith('hsl') ? '#4f46e5' : localSettings.primaryColor}
+                              onChange={(e) =>
+                                setLocalSettings({
+                                  ...localSettings,
+                                  activeTheme: "custom",
+                                  primaryColor: e.target.value,
+                                })
+                              }
+                              className="w-10 h-10 rounded-xl cursor-pointer bg-transparent border-none overflow-hidden"
+                            />
+                            <input
+                              type="text"
+                              value={localSettings.primaryColor}
+                              onChange={(e) =>
+                                setLocalSettings({
+                                  ...localSettings,
+                                  activeTheme: "custom",
+                                  primaryColor: e.target.value,
+                                })
+                              }
+                              className="w-28 bg-transparent border-none focus:ring-0 text-sm font-mono dark:text-white ltr"
+                              dir="ltr"
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -903,36 +1008,6 @@ export default function SettingsPage() {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-
-      {/* Floating Save Button Overlay */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 z-40 flex justify-center shadow-[0_-10px_40px_rgba(0,0,0,0.05)] transition-all">
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleSave}
-          disabled={isSaving}
-          className={`flex items-center justify-center gap-2 px-10 py-3.5 rounded-full font-bold text-lg transition-all shadow-lg min-w-[300px] ${showSuccess
-            ? "bg-emerald-500 hover:bg-emerald-600 text-white ring-4 ring-emerald-500/30"
-            : "bg-indigo-600 hover:bg-indigo-700 text-white ring-4 ring-indigo-500/20"
-            }`}
-        >
-          <AnimatePresence mode="wait">
-            {showSuccess ? (
-              <motion.div key="success" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="flex items-center gap-2">
-                <Check className="w-6 h-6" /> تم حفظ التغييرات بنجاح
-              </motion.div>
-            ) : isSaving ? (
-              <motion.div key="saving" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
-                <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" /> جاري الحفظ...
-              </motion.div>
-            ) : (
-              <motion.div key="save" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
-                <Save className="w-6 h-6" /> حفظ جميع الإعدادات
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.button>
       </div>
 
       {/* Centered Reset Confirmation Modal */}

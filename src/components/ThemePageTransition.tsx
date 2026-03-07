@@ -54,7 +54,7 @@ export default function ThemePageTransition({ children }: ThemePageTransitionPro
     }
 
     return (
-        <AnimatePresence mode="popLayout">
+        <AnimatePresence mode="wait">
             <motion.div
                 key={location.pathname}
                 initial="initial"
@@ -62,7 +62,7 @@ export default function ThemePageTransition({ children }: ThemePageTransitionPro
                 exit="exit"
                 variants={variants}
                 transition={transition}
-                style={{ willChange: 'transform, opacity' }}
+                style={{ willChange: 'opacity, transform' }}
                 className="w-full h-full"
             >
                 {children}

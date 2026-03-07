@@ -12,6 +12,20 @@
    COLOR THEMES (accent overrides)
    ========================================= */
 
+body.theme-custom {
+  --color-indigo-50: color-mix(in srgb, var(--custom-primary) 10%, white);
+  --color-indigo-100: color-mix(in srgb, var(--custom-primary) 20%, white);
+  --color-indigo-200: color-mix(in srgb, var(--custom-primary) 40%, white);
+  --color-indigo-300: color-mix(in srgb, var(--custom-primary) 60%, white);
+  --color-indigo-400: color-mix(in srgb, var(--custom-primary) 80%, white);
+  --color-indigo-500: var(--custom-primary);
+  --color-indigo-600: color-mix(in srgb, var(--custom-primary) 80%, black);
+  --color-indigo-700: color-mix(in srgb, var(--custom-primary) 60%, black);
+  --color-indigo-800: color-mix(in srgb, var(--custom-primary) 40%, black);
+  --color-indigo-900: color-mix(in srgb, var(--custom-primary) 20%, black);
+  --color-indigo-950: color-mix(in srgb, var(--custom-primary) 10%, black);
+}
+
 body.theme-emerald {
   --color-indigo-50: #ecfdf5;
   --color-indigo-100: #d1fae5;
@@ -750,358 +764,280 @@ html:not(.dark) body.theme-master-cashier-tech .text-indigo-600 {
 
 /* =========================================
    GLOBAL INTERACTIVE MICRO-ANIMATIONS
-   (lightweight CSS transitions for all themes)
    ========================================= */
 
-/* Buttons: subtle lift on hover, press on click */
-button:not([disabled]),
-a[href] {
-  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+/* Item Card Hover Effects */
+.product-card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-button:not([disabled]):hover {
-  transform: translateY(-1px);
+.product-card-hover:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.15) !important;
+  border-color: var(--color-indigo-400) !important;
 }
 
-button:not([disabled]):active {
-  transform: scale(0.97) translateY(0px);
+.product-card-hover:active {
+  transform: scale(0.98);
 }
 
-/* Cards: gentle scale on hover */
-.rounded-2xl {
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+/* Category Item Hover */
+.category-item-hover {
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.category-item-hover::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--color-indigo-500);
+  transition: width 0.3s ease;
+}
+
+.category-item-hover:hover::after {
+  width: 100%;
+}
+
+.category-item-hover:hover {
+  background: var(--color-indigo-50);
+  color: var(--color-indigo-600);
+}
+
+.dark .category-item-hover:hover {
+  background: var(--color-indigo-900/30);
+  color: var(--color-indigo-400);
+}
+
+/* Carbon Fiber Texture */
+.carbon-texture {
+  background-image:
+    linear-gradient(45deg, rgba(0, 0, 0, 0.1) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(0, 0, 0, 0.1) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.1) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.1) 75%);
+  background-size: 4px 4px;
+}
+
+/* Scanning Line for Gaming */
+.scanning-line {
+  position: relative;
+}
+
+.scanning-line::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: rgba(0, 255, 255, 0.1);
+  animation: scan 3s linear infinite;
+  pointer-events: none;
+  z-index: 50;
+}
+
+@keyframes scan {
+  0% {
+    transform: translateY(0);
+  }
+
+  100% {
+    transform: translateY(100vh);
+  }
 }
 
 /* =========================================
-   ADAPTIVE TEXT COLORS FOR DARK MODE
-   (ensures labels/text are readable on dark backgrounds)
+   ENHANCED THEME IMPLEMENTATIONS
    ========================================= */
 
-/* Login page: fix hardcoded dark text on dark backgrounds */
-.dark label {
-  color: #e0e7ef;
+/* Luxury Theme: Gold & Deep Shadows */
+body.theme-master-luxury {
+  background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #0a0a0a 100%) !important;
 }
 
-/* =========================================
-   CARBON FIBER THEME
-   ========================================= */
-body.theme-carbon {
-  background-color: #111111;
-  background-image:
-    repeating-linear-gradient(135deg,
-      transparent,
-      transparent 3px,
-      rgba(255, 255, 255, 0.02) 3px,
-      rgba(255, 255, 255, 0.02) 4px),
-    repeating-linear-gradient(45deg,
-      transparent,
-      transparent 3px,
-      rgba(255, 255, 255, 0.02) 3px,
-      rgba(255, 255, 255, 0.02) 4px);
-  background-size: 8px 8px;
+body.theme-master-luxury::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0 L100 50 L50 100 L0 50 Z' fill='none' stroke='rgba(212,175,55,0.03)' stroke-width='0.5'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: -1;
 }
 
-/* Apply "leather" feel to sidebar and menus in carbon theme */
-body.theme-carbon nav,
-body.theme-carbon aside {
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath d='M0 0h4v1H0zM4 4h4v1H4zM8 8h4v1H8zM12 12h4v1H12z' fill='rgba(255,255,255,0.03)'/%3E%3C/svg%3E"),
-    linear-gradient(180deg, rgba(40, 30, 20, 0.9) 0%, rgba(20, 15, 10, 0.95) 100%);
-  background-size: 16px 16px, 100% 100%;
+/* Carbon Theme: High Tech & Red Accents */
+body.theme-master-carbon {
+  background-color: #0d0d0d !important;
 }
 
-/* =========================================
-   GAMING THEME
-   ========================================= */
-body.theme-gaming {
-  background-color: #0a0a12;
-  background-image:
-    radial-gradient(ellipse at 20% 20%, rgba(192, 38, 211, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(56, 189, 248, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 60%);
-}
-
-/* Subtle PlayStation-icon like pattern overlay */
-body.theme-gaming::before {
+body.theme-master-carbon::after {
   content: '';
   position: fixed;
   inset: 0;
   background-image:
-    radial-gradient(circle 4px at 20px 20px, rgba(255, 255, 255, 0.04) 100%, transparent 100%),
-    radial-gradient(circle 2px at 40px 10px, rgba(255, 255, 255, 0.04) 100%, transparent 100%);
-  background-size: 60px 60px;
+    linear-gradient(45deg, rgba(255, 0, 0, 0.02) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255, 0, 0, 0.02) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255, 0, 0, 0.02) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255, 0, 0, 0.02) 75%);
+  background-size: 20px 20px;
   pointer-events: none;
-  z-index: 0;
+  z-index: -1;
 }
 
-/* RGB border animation */
-@keyframes gaming-rgb {
+/* Gaming Theme: Neon & Scanning Line */
+body.theme-master-gaming {
+  background: #050110 !important;
+}
+
+body.theme-master-gaming::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(255, 0, 150, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 90% 90%, rgba(0, 255, 255, 0.05) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* iOS Glass Theme: Fluid Blobs */
+@keyframes ios-blob-1 {
   0% {
-    border-color: #ff004c;
-    box-shadow: 0 0 8px #ff004c44, inset 0 0 8px #ff004c11;
-  }
-
-  25% {
-    border-color: #00e5ff;
-    box-shadow: 0 0 8px #00e5ff44, inset 0 0 8px #00e5ff11;
-  }
-
-  50% {
-    border-color: #76ff03;
-    box-shadow: 0 0 8px #76ff0344, inset 0 0 8px #76ff0311;
-  }
-
-  75% {
-    border-color: #d500f9;
-    box-shadow: 0 0 8px #d500f944, inset 0 0 8px #d500f911;
-  }
-
-  100% {
-    border-color: #ff004c;
-    box-shadow: 0 0 8px #ff004c44, inset 0 0 8px #ff004c11;
-  }
-}
-
-/* Apply RGB borders and dark glass feel to menus, cards, modals in gaming theme */
-body.theme-gaming .dark\:bg-zinc-900,
-body.theme-gaming .dark\:bg-zinc-950,
-body.theme-gaming .dark\:bg-\[\#1a1b1e\],
-body.theme-gaming [role="dialog"],
-body.theme-gaming aside {
-  background-color: rgba(10, 10, 20, 0.85) !important;
-  backdrop-filter: blur(16px);
-  border: 1px solid #ff004c;
-  animation: gaming-rgb 4s linear infinite;
-}
-
-/* Light mode gaming panels */
-body.theme-gaming:not(.dark) .bg-white,
-body.theme-gaming:not(.dark) .bg-zinc-50 {
-  background-color: rgba(255, 255, 255, 0.88) !important;
-  backdrop-filter: blur(12px);
-  border: 1px solid #c026d3;
-  animation: gaming-rgb 4s linear infinite;
-}
-
-/* =========================================
-   ADVANCED THEME ENHANCEMENTS (via [data-theme])
-   ========================================= */
-
-/* Carbon Fiber Theme Advanced */
-[data-theme="carbon"] body {
-  background: repeating-linear-gradient(45deg,
-      #111 0px,
-      #1a1a1a 1px,
-      #111 1px,
-      #111 4px) !important;
-}
-
-[data-theme="carbon"] aside,
-[data-theme="carbon"] nav {
-  background: linear-gradient(180deg, #1c1c1c 0%, #111 100%) !important;
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath d='M0 0h4v1H0zM4 4h4v1H4zM8 8h4v1H8zM12 12h4v1H12z' fill='rgba(255,255,255,0.03)'/%3E%3C/svg%3E"),
-    linear-gradient(180deg, #2a2a2a 0%, #111111 100%) !important;
-  border-color: #333 !important;
-}
-
-/* Gaming RGB Theme Advanced */
-[data-theme="gaming"] body {
-  background: radial-gradient(ellipse at 20% 20%, rgba(139, 0, 255, 0.15) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 80%, rgba(0, 229, 255, 0.1) 0%, #050010 100%) !important;
-}
-
-[data-theme="gaming"] aside,
-[data-theme="gaming"] nav,
-[data-theme="gaming"] [role="dialog"],
-[data-theme="gaming"] .bg-zinc-900,
-[data-theme="gaming"] .bg-zinc-950,
-[data-theme="gaming"] .dark\:bg-zinc-900,
-[data-theme="gaming"] .dark\:bg-zinc-950 {
-  animation: gaming-rgb-advanced 3s linear infinite !important;
-  background: rgba(5, 0, 20, 0.85) !important;
-  backdrop-filter: blur(12px) !important;
-  border-width: 1px !important;
-  border-style: solid !important;
-}
-
-@keyframes gaming-rgb-advanced {
-  0% {
-    border-color: #ff0040;
-    box-shadow: 0 0 15px rgba(255, 0, 64, 0.4);
-  }
-
-  33% {
-    border-color: #00e5ff;
-    box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
-  }
-
-  66% {
-    border-color: #00ff88;
-    box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
-  }
-
-  100% {
-    border-color: #ff0040;
-    box-shadow: 0 0 15px rgba(255, 0, 64, 0.4);
-  }
-}
-
-/* =========================================
-   5. iOS GLASS THEME (Fluid & Premium)
-   ========================================= */
-
-/* Background Animation */
-@keyframes fluid-blob {
-
-  0%,
-  100% {
     transform: translate(0, 0) scale(1);
   }
 
-  33% {
-    transform: translate(30px, -50px) scale(1.1);
-  }
-
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
-  }
-}
-
-@keyframes liquid-morph {
-  0% {
-    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-  }
-
   50% {
-    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+    transform: translate(10%, 15%) scale(1.2);
   }
 
   100% {
-    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    transform: translate(0, 0) scale(1);
   }
 }
 
-body.theme-master-ios-glass {
-  background-color: #f0f2f5;
-  color: #1c1c1e;
-  overflow-x: hidden;
+@keyframes ios-blob-2 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(-15%, -10%) scale(1.1);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
 }
 
-.dark body.theme-master-ios-glass {
-  background-color: #000000;
-  color: #ffffff;
+body.theme-master-ios-glass::after {
+  content: '';
+  position: fixed;
+  top: 10%;
+  left: 20%;
+  width: 400px;
+  height: 400px;
+  background: rgba(0, 122, 255, 0.1);
+  filter: blur(100px);
+  border-radius: 50%;
+  z-index: -2;
+  animation: ios-blob-1 15s infinite alternate;
 }
 
 body.theme-master-ios-glass::before {
   content: '';
   position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at 30% 30%, rgba(0, 122, 255, 0.15), transparent 40%),
-    radial-gradient(circle at 70% 70%, rgba(255, 45, 85, 0.1), transparent 40%),
-    radial-gradient(circle at 50% 10%, rgba(88, 86, 214, 0.12), transparent 40%);
-  z-index: -1;
-  filter: blur(80px);
-  animation: fluid-blob 20s infinite alternate ease-in-out;
+  bottom: 10%;
+  right: 20%;
+  width: 300px;
+  height: 300px;
+  background: rgba(255, 45, 85, 0.08);
+  filter: blur(100px);
+  border-radius: 50%;
+  z-index: -2;
+  animation: ios-blob-2 12s infinite alternate;
 }
 
-.dark body.theme-master-ios-glass::before {
-  background: radial-gradient(circle at 20% 20%, rgba(10, 132, 255, 0.2), transparent 30%),
-    radial-gradient(circle at 80% 80%, rgba(255, 55, 95, 0.15), transparent 30%),
-    radial-gradient(circle at 50% 50%, rgba(94, 92, 230, 0.1), transparent 40%);
+/* General Interactive Enhancements */
+.product-card-hover {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
 }
 
-/* Glass Utilities */
-body.theme-master-ios-glass .glass-panel {
-  background: rgba(255, 255, 255, 0.7) !important;
-  backdrop-filter: saturate(180%) blur(20px) !important;
-  -webkit-backdrop-filter: saturate(180%) blur(20px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+.product-card-hover:hover {
+  transform: translateY(-8px) scale(1.03) !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
 }
 
-.dark body.theme-master-ios-glass .glass-panel {
-  background: rgba(28, 28, 30, 0.7) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+/* Premium Scrollbars per Theme */
+body.theme-master-luxury ::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.3);
 }
 
-body.theme-master-ios-glass .glass-card {
-  background: rgba(255, 255, 255, 0.4) !important;
-  backdrop-filter: saturate(180%) blur(15px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07) !important;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+body.theme-master-gaming ::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 255, 0.3);
 }
 
-.dark body.theme-master-ios-glass .glass-card {
-  background: rgba(44, 44, 46, 0.4) !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+body.theme-master-carbon ::-webkit-scrollbar-thumb {
+  background: rgba(255, 51, 51, 0.3);
 }
 
-body.theme-master-ios-glass .glass-card:hover {
-  transform: translateY(-4px) scale(1.02);
-  background: rgba(255, 255, 255, 0.5) !important;
-  box-shadow: 0 12px 48px 0 rgba(31, 38, 135, 0.12) !important;
+/* Transparent Idea: Applying to all cards */
+.glass-effect {
+  backdrop-filter: blur(8px) !important;
+  background-color: rgba(255, 255, 255, 0.4) !important;
 }
 
-.dark body.theme-master-ios-glass .glass-card:hover {
-  background: rgba(58, 58, 60, 0.5) !important;
+.dark .glass-effect {
+  background-color: rgba(9, 9, 11, 0.4) !important;
 }
 
-/* Liquid Morph Class */
-.liquid-morph {
-  animation: liquid-morph 4s infinite ease-in-out;
-  transition: all 0.3s ease;
+/* Transitions */
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
-.liquid-morph:active {
-  transform: scale(0.92);
-  filter: brightness(1.1);
+/* Fix for Sidebar items in Master Themes */
+.nav-item {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Sidebar & Header Overrides */
-body.theme-master-ios-glass aside,
-body.theme-master-ios-glass header {
-  background: rgba(255, 255, 255, 0.6) !important;
-  backdrop-filter: saturate(180%) blur(25px) !important;
-  border-color: rgba(0, 0, 0, 0.05) !important;
+.nav-item:hover {
+  transform: translateX(-5px);
+  background-color: rgba(99, 102, 241, 0.05);
 }
 
-.dark body.theme-master-ios-glass aside,
-.dark body.theme-master-ios-glass header {
-  background: rgba(0, 0, 0, 0.6) !important;
-  border-color: rgba(255, 255, 255, 0.05) !important;
+.dark .nav-item:hover {
+  background-color: rgba(99, 102, 241, 0.1);
 }
 
-/* Buttons */
-body.theme-master-ios-glass .bg-indigo-600 {
-  background: linear-gradient(135deg, #007aff, #5856d6) !important;
-  border: none !important;
-  box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3) !important;
-}
-
-body.theme-master-ios-glass .text-indigo-600 {
+body.theme-master-ios-glass .nav-item-active {
+  background: rgba(0, 122, 255, 0.15) !important;
   color: #007aff !important;
 }
 
-/* Scrollbar */
-body.theme-master-ios-glass ::-webkit-scrollbar {
-  width: 6px;
+body.theme-master-gaming .nav-item-active {
+  background: rgba(217, 70, 239, 0.1) !important;
+  color: #e879f9 !important;
+  box-shadow: inset 0 0 10px rgba(217, 70, 239, 0.2);
+  border-right: 2px solid #e879f9;
 }
 
-body.theme-master-ios-glass ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
+body.theme-master-carbon .nav-item-active {
+  background: #333 !important;
+  color: #ff3333 !important;
+  border-right: 3px solid #ff3333;
 }
 
-.dark body.theme-master-ios-glass ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+body.theme-master-luxury .nav-item-active {
+  background: rgba(184, 150, 46, 0.1) !important;
+  color: #d4af37 !important;
+  border-right: 2px solid #d4af37;
 }
 
-/* Transition improvements */
-.theme-page-transition {
-  transition: all 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+body.theme-master-cashier-tech .nav-item-active {
+  background: rgba(0, 230, 118, 0.1) !important;
+  color: #00E676 !important;
 }

@@ -275,7 +275,7 @@ export default function POS() {
                   </button>
                 </div>
 
-                {/* Category Grid Controls (Only shown when no category is selected) */}
+                {/* Category Grid Size Controls */}
                 {!selectedCategoryId && (
                   <div className="flex bg-zinc-100 dark:bg-zinc-900 rounded-lg p-1 border-r border-zinc-200 dark:border-zinc-800 pr-2 ml-1">
                     <button
@@ -294,96 +294,95 @@ export default function POS() {
                     </button>
                   </div>
                 )}
+
+                {/* Maintenance Quick Search Shortcut */}
+                <button
+                  onClick={() => setIsMaintenanceExpanded(!isMaintenanceExpanded)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${isMaintenanceExpanded ? "bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-600/30" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 border-zinc-200 dark:border-zinc-700"}`}
+                  title="استعلام الصيانة السريع"
+                >
+                  <Wrench className="w-4 h-4" />
+                  <span className="text-xs font-bold hidden sm:inline">الصيانة</span>
+                  {maintenanceJobs.length > 0 && !isMaintenanceExpanded && (
+                    <span className="bg-indigo-600 dark:bg-white dark:text-indigo-600 text-white text-[10px] font-bold px-1.5 rounded-full">
+                      {maintenanceJobs.length}
+                    </span>
+                  )}
+                </button>
               </div>
             )}
           </div>
 
-          <div className="flex-1 flex flex-col min-h-0">
-            {/* Maintenance Quick View - Fixed above products but inside the main panel */}
-            <div className="mx-4 mt-4 bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 shrink-0 overflow-hidden">
-              <button
-                onClick={() => setIsMaintenanceExpanded(!isMaintenanceExpanded)}
-                className="w-full flex items-center justify-between p-3 px-4 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg">
-                    <Wrench className="w-4 h-4" />
-                  </div>
-                  <h3 className="font-bold text-zinc-900 dark:text-white text-sm">استعلام الصيانة السريع</h3>
-                  {maintenanceJobs.length > 0 && (
-                    <span className="bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                      {maintenanceJobs.length}
-                    </span>
-                  )}
-                </div>
-                {isMaintenanceExpanded ? <ChevronUp className="w-4 h-4 text-zinc-400" /> : <ChevronDown className="w-4 h-4 text-zinc-400" />}
-              </button>
-
-              <AnimatePresence>
-                {isMaintenanceExpanded && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-4 pb-4 border-t border-zinc-50 dark:border-zinc-900 pt-4">
-                      <div className="flex items-center gap-2 mb-4">
-                        <button
-                          onClick={() => navigate("/maintenance")}
-                          className="px-3 py-1.5 text-xs bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-lg font-medium transition-colors border border-zinc-200 dark:border-zinc-700"
-                        >
-                          عرض الكل
-                        </button>
-                        <button
-                          onClick={() => setIsMaintenanceModalOpen(true)}
-                          className="flex items-center gap-1 px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors shadow-sm"
-                        >
-                          <Plus className="w-3 h-3" />
-                          استلام جهاز
-                        </button>
+          <div className="flex-1 flex flex-col min-h-0 relative">
+            {/* Maintenance Quick View - Overlays above products when expanded */}
+            <AnimatePresence>
+              {isMaintenanceExpanded && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                  className="absolute inset-x-4 top-4 z-40 bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl border border-zinc-100 dark:border-zinc-800 shrink-0 overflow-hidden"
+                >
+                  <div className="flex items-center justify-between p-3 px-4 border-b border-zinc-50 dark:border-zinc-900 bg-zinc-50/50 dark:bg-zinc-900/50">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg">
+                        <Wrench className="w-4 h-4" />
                       </div>
-
-                      <div className="overflow-x-auto max-h-[300px] custom-scrollbar">
-                        <table className="w-full text-right text-xs">
-                          <thead className="sticky top-0 bg-white dark:bg-zinc-950 z-10">
-                            <tr className="text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800">
-                              <th className="pb-2 font-medium">العميل</th>
-                              <th className="pb-2 font-medium">الجهاز</th>
-                              <th className="pb-2 font-medium">الحالة</th>
-                              <th className="pb-2 font-medium text-left">التكلفة</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                            {maintenanceJobs.slice(0, 5).map((job) => (
-                              <tr key={job.id} className="text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50/50 dark:hover:bg-zinc-900/10">
-                                <td className="py-2.5">{job.customerName}</td>
-                                <td className="py-2.5">{job.device}</td>
-                                <td className="py-2.5">
-                                  {job.status === "pending" && <span className="text-amber-500 font-medium">قيد الانتظار</span>}
-                                  {job.status === "in_progress" && <span className="text-blue-500 font-medium">جاري العمل</span>}
-                                  {job.status === "ready" && <span className="text-emerald-500 font-medium">جاهز</span>}
-                                  {job.status === "paid" && <span className="text-purple-500 font-medium">تم التسليم</span>}
-                                </td>
-                                <td className="py-2.5 font-bold text-left">{job.cost} {settings.currency}</td>
-                              </tr>
-                            ))}
-                            {maintenanceJobs.length === 0 && (
-                              <tr>
-                                <td colSpan={4} className="py-6 text-center text-zinc-400 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-xl mt-2">
-                                  <Wrench className="w-8 h-8 mx-auto opacity-10 mb-2" />
-                                  <p>لا توجد طلبات صيانة حالياً</p>
-                                </td>
-                              </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
+                      <h3 className="font-bold text-zinc-900 dark:text-white text-sm">استعلام الصيانة السريع</h3>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => navigate("/maintenance")}
+                        className="px-3 py-1.5 text-[10px] bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-500 rounded-lg font-bold border border-zinc-100 dark:border-zinc-700 transition-colors"
+                      >
+                        إدارة الصيانة
+                      </button>
+                      <button
+                        onClick={() => setIsMaintenanceExpanded(false)}
+                        className="p-1.5 bg-zinc-200 dark:bg-zinc-800 text-zinc-500 rounded-lg hover:text-rose-500"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="p-4 max-h-[400px] overflow-auto custom-scrollbar">
+                    <table className="w-full text-right text-sm">
+                      <thead className="sticky top-0 bg-white dark:bg-zinc-950">
+                        <tr className="text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800">
+                          <th className="pb-2 font-medium">العميل</th>
+                          <th className="pb-2 font-medium">الجهاز</th>
+                          <th className="pb-2 font-medium">الحالة</th>
+                          <th className="pb-2 font-medium text-left">التكلفة</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                        {maintenanceJobs.slice(0, 10).map((job) => (
+                          <tr key={job.id} className="text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900/30">
+                            <td className="py-2.5">{job.customerName}</td>
+                            <td className="py-2.5">{job.device}</td>
+                            <td className="py-2.5 text-xs">
+                              {job.status === "pending" && <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/20 text-amber-600 rounded-full font-bold">قيد الانتظار</span>}
+                              {job.status === "in_progress" && <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/20 text-blue-600 rounded-full font-bold">جاري العمل</span>}
+                              {job.status === "ready" && <span className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 rounded-full font-bold">جاهز</span>}
+                              {job.status === "paid" && <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/20 text-purple-600 rounded-full font-bold">تم التسليم</span>}
+                            </td>
+                            <td className="py-2.5 font-bold text-left">{job.cost} {settings.currency}</td>
+                          </tr>
+                        ))}
+                        {maintenanceJobs.length === 0 && (
+                          <tr>
+                            <td colSpan={4} className="py-12 text-center text-zinc-400">
+                              <Wrench className="w-12 h-12 mx-auto opacity-10 mb-2" />
+                              <p className="font-bold opacity-30">لا توجد طلبات صيانة حالياً</p>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <div className="flex-1 overflow-auto p-4 pb-24 lg:pb-4 custom-scrollbar">
 
@@ -397,7 +396,7 @@ export default function POS() {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setSelectedCategoryId(category.id)}
-                      className={`flex flex-col items-center justify-center bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 border border-indigo-100 dark:border-indigo-800 rounded-2xl transition-all gap-2 ${categoryGridSize === "small" ? "p-3" : "p-6"} ${settings.masterTheme === "ios-glass" ? "glass-card liquid-morph" : ""}`}
+                      className={`group flex flex-col items-center justify-center bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 border border-indigo-100 dark:border-indigo-800 rounded-2xl transition-all gap-2 category-item-hover ${categoryGridSize === "small" ? "p-3" : "p-6"} ${settings.masterTheme === "ios-glass" ? "glass-card liquid-morph" : ""}`}
                     >
                       <Folder className={`${categoryGridSize === "small" ? "w-8 h-8" : "w-12 h-12"} text-indigo-500 dark:text-indigo-400`} fill="currentColor" fillOpacity={0.2} />
                       <span className={`font-bold text-zinc-900 dark:text-white text-center line-clamp-1 ${categoryGridSize === "small" ? "text-xs" : "text-sm"}`}>
@@ -462,7 +461,7 @@ export default function POS() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className={`
-                      relative flex flex-col items-center text-center p-3 rounded-2xl border transition-all cursor-pointer group
+                      relative flex flex-col items-center text-center p-3 rounded-2xl border transition-all cursor-pointer group product-card-hover
                       ${settings.masterTheme === "ios-glass" ? "glass-card hover:bg-white/40 dark:hover:bg-zinc-900/40" : "bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800"}
                       border-zinc-100 dark:border-zinc-800 hover:border-indigo-200 dark:hover:border-indigo-900 hover:shadow-xl hover:shadow-indigo-500/5
                       ${gridSize === "tiny" ? "p-2" : "p-3"}
@@ -524,24 +523,26 @@ export default function POS() {
         </motion.div>
 
         {/* Mobile Cart Overlay */}
-        {isCartOpen && window.innerWidth < 1024 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setIsCartOpen(false)}
-            className="lg:hidden fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
-          />
-        )}
+        {
+          isCartOpen && window.innerWidth < 1024 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsCartOpen(false)}
+              className="lg:hidden fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+            />
+          )
+        }
 
         {/* Cart Section */}
         <AnimatePresence>
           {isCartOpen && (
             <motion.div
-              initial={{ y: -100, x: 50, scale: 0.8, opacity: 0, filter: "blur(10px)" }}
-              animate={{ y: 0, x: 0, scale: 1, opacity: 1, filter: "blur(0px)" }}
-              exit={{ y: -100, x: 50, scale: 0.8, opacity: 0, filter: "blur(10px)" }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              initial={{ y: -600, x: 200, scale: 0.5, opacity: 0, rotate: 10 }}
+              animate={{ y: 0, x: 0, scale: 1, opacity: 1, rotate: 0 }}
+              exit={{ y: -600, x: 200, scale: 0.5, opacity: 0, rotate: 10 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
               className={`
                 w-full lg:w-[420px] flex flex-col bg-white dark:bg-zinc-950 shadow-2xl border-r lg:border-r-0 lg:border-l border-zinc-200 dark:border-zinc-800 shrink-0
                 fixed lg:relative lg:flex lg:rounded-2xl min-h-0 lg:max-h-full
@@ -571,11 +572,14 @@ export default function POS() {
                     <Calculator className="w-5 h-5" />
                   </button>
                   <button
-                    onClick={() => setIsCartOpen(false)}
-                    className="p-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 rounded-xl transition-colors"
-                    title="إخفاء السلة"
+                    onClick={() => {
+                      if (playSound) playSound("click");
+                      setIsCartOpen(false);
+                    }}
+                    className="p-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-xl transition-all active:scale-90"
+                    title="طي سلة المبيعات"
                   >
-                    <ArrowRight className="w-5 h-5 rotate-180 lg:rotate-0" />
+                    <ChevronLeft className="w-5 h-5" />
                   </button>
                 </div>
               </div>
@@ -856,7 +860,7 @@ export default function POS() {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </div >
 
 
 
