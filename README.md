@@ -2,11 +2,9 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Run and deploy your AI Studio app
+# Cashier Tech - نظام نقطة البيع الذكي
 
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/76530c4c-639c-4870-8e4c-dcc1e7d6758d
+نظام متطور لإدارة المبيعات والمخزون والمشاريع بأسلوب عصري مستوحى من iOS.
 
 ## Run Locally
 
