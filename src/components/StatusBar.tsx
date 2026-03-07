@@ -114,7 +114,7 @@ export default function StatusBar() {
                     </span>
                 </motion.button>
 
-                {/* Cart Toggle Button */}
+                {/* Cart Toggle Button with Total Value */}
                 <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -122,23 +122,33 @@ export default function StatusBar() {
                         if (playSound) playSound("click");
                         setIsCartOpen(!isCartOpen);
                     }}
-                    className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-md border transition-all cursor-pointer relative ${isCartOpen
-                        ? "bg-indigo-400 text-indigo-950 border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]"
+                    className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-all cursor-pointer relative ${isCartOpen
+                        ? "bg-indigo-400 text-indigo-950 border-white shadow-[0_0_15px_rgba(255,255,255,0.4)]"
                         : "bg-indigo-500/20 hover:bg-indigo-500/40 border-indigo-500/30 text-indigo-100"}`}
                     title={isCartOpen ? "إغلاق السلة" : "فتح السلة"}
                 >
-                    <ShoppingCart size={14} className={isCartOpen ? "text-indigo-950" : "text-indigo-200"} />
-                    <span className={`font-bold ${isCartOpen ? "text-indigo-950" : "text-white"}`}>
-                        {isCartOpen ? "إخفاء السلة" : "عرض السلة"}
-                    </span>
-                    {cart.length > 0 && (
-                        <span className="absolute -top-1.5 -left-1.5 flex h-4 w-4">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-4 w-4 bg-rose-500 text-[10px] items-center justify-center text-white font-bold border border-white">
-                                {cart.length}
+                    <div className="relative">
+                        <ShoppingCart size={18} className={isCartOpen ? "text-indigo-100" : "text-indigo-200"} />
+                        {cart.length > 0 && (
+                            <span className="absolute -top-3 -right-3 flex h-5 w-5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-5 w-5 bg-rose-500 text-[10px] items-center justify-center text-white font-black border-2 border-indigo-900 shadow-sm leading-none">
+                                    {cart.length}
+                                </span>
                             </span>
+                        )}
+                    </div>
+
+                    <div className="flex flex-col items-start leading-none gap-0.5">
+                        <span className={`text-[10px] font-bold ${isCartOpen ? "text-indigo-900" : "text-indigo-300"}`}>
+                            {isCartOpen ? "نشط الآن" : "سلة المبيعات"}
                         </span>
-                    )}
+                        {cart.length > 0 && (
+                            <span className={`text-xs font-black ${isCartOpen ? "text-indigo-950" : "text-white"} ${isPrivacyMode ? "blur-[3px]" : ""}`}>
+                                {cart.reduce((sum, item) => sum + (item.customPrice ?? item.price) * item.quantity, 0).toFixed(2)} {settings.currency}
+                            </span>
+                        )}
+                    </div>
                 </motion.button>
 
                 <div className="w-px h-4 bg-indigo-700/50 mx-1 hidden sm:block"></div>

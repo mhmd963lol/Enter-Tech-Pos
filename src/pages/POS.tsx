@@ -78,7 +78,8 @@ export default function POS() {
 
   // POS Display States
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
-  const [gridSize, setGridSize] = useState<"large" | "small" | "tiny">("large");
+  const [gridSize, setGridSize] = useState<"large" | "small" | "tiny">("small");
+  const [categoryGridSize, setCategoryGridSize] = useState<"large" | "small">("small");
   const [isShowMoreOptions, setIsShowMoreOptions] = useState(false);
 
   // Keypad State
@@ -93,6 +94,26 @@ export default function POS() {
     id: string;
     price: number;
   } | null>(null);
+
+  // Auto-open cart on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsCartOpen(true);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [setIsCartOpen]);
+
+  // Alert for pending cart on leave (simplified logic)
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (cart.length > 0) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [cart]);
 
   const filteredProducts = products.filter((p) => {
     const category =
@@ -228,44 +249,58 @@ export default function POS() {
               )}
             </div>
             {!searchTerm && (
-              <div className="flex bg-zinc-100 dark:bg-zinc-900 rounded-lg p-1 shrink-0">
-                <button
-                  onClick={() => setGridSize("tiny")}
-                  className={`p-2 rounded-md transition-colors ${gridSize === "tiny"
-                    ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400"
-                    : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-                    } `}
-                  title="عرض مكثف جداً"
-                >
-                  <LayoutTemplate className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setGridSize("small")}
-                  className={`p-2 rounded-md transition-colors ${gridSize === "small"
-                    ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400"
-                    : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-                    } `}
-                  title="تصغير العناصر"
-                >
-                  <Grid3X3 className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setGridSize("large")}
-                  className={`p-2 rounded-md transition-colors ${gridSize === "large"
-                    ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400"
-                    : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-                    } `}
-                  title="تكبير العناصر"
-                >
-                  <LayoutGrid className="w-5 h-5" />
-                </button>
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Product Grid Controls */}
+                <div className="flex bg-zinc-100 dark:bg-zinc-900 rounded-lg p-1">
+                  <button
+                    onClick={() => setGridSize("tiny")}
+                    className={`p-2 rounded-md transition-colors ${gridSize === "tiny" ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400" : "text-zinc-500 hover:text-zinc-900"}`}
+                    title="عرض مكثف جداً"
+                  >
+                    <LayoutTemplate className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => setGridSize("small")}
+                    className={`p-2 rounded-md transition-colors ${gridSize === "small" ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400" : "text-zinc-500 hover:text-zinc-900"}`}
+                    title="تصغير العناصر"
+                  >
+                    <Grid3X3 className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => setGridSize("large")}
+                    className={`p-2 rounded-md transition-colors ${gridSize === "large" ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400" : "text-zinc-500 hover:text-zinc-900"}`}
+                    title="تكبير العناصر"
+                  >
+                    <LayoutGrid className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Category Grid Controls (Only shown when no category is selected) */}
+                {!selectedCategoryId && (
+                  <div className="flex bg-zinc-100 dark:bg-zinc-900 rounded-lg p-1 border-r border-zinc-200 dark:border-zinc-800 pr-2 ml-1">
+                    <button
+                      onClick={() => setCategoryGridSize("small")}
+                      className={`p-2 rounded-md transition-colors ${categoryGridSize === "small" ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400" : "text-zinc-500 hover:text-zinc-900"}`}
+                      title="أقسام صغيرة"
+                    >
+                      <Folder className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => setCategoryGridSize("large")}
+                      className={`p-2 rounded-md transition-colors ${categoryGridSize === "large" ? "bg-white dark:bg-zinc-800 shadow-sm text-indigo-600 dark:text-indigo-400" : "text-zinc-500 hover:text-zinc-900"}`}
+                      title="أقسام كبيرة"
+                    >
+                      <FolderOpen className="w-5 h-5" />
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
-          <div className="flex-1 overflow-auto p-4 pb-24 lg:pb-4 custom-scrollbar">
-            {/* Maintenance Quick View - Collapsible */}
-            <div className="mb-6 bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 shrink-0 overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Maintenance Quick View - Fixed above products but inside the main panel */}
+            <div className="mx-4 mt-4 bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 shrink-0 overflow-hidden">
               <button
                 onClick={() => setIsMaintenanceExpanded(!isMaintenanceExpanded)}
                 className="w-full flex items-center justify-between p-3 px-4 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors"
@@ -309,9 +344,9 @@ export default function POS() {
                         </button>
                       </div>
 
-                      <div className="overflow-x-auto">
+                      <div className="overflow-x-auto max-h-[300px] custom-scrollbar">
                         <table className="w-full text-right text-xs">
-                          <thead>
+                          <thead className="sticky top-0 bg-white dark:bg-zinc-950 z-10">
                             <tr className="text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800">
                               <th className="pb-2 font-medium">العميل</th>
                               <th className="pb-2 font-medium">الجهاز</th>
@@ -320,7 +355,7 @@ export default function POS() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                            {maintenanceJobs.slice(0, 3).map((job) => (
+                            {maintenanceJobs.slice(0, 5).map((job) => (
                               <tr key={job.id} className="text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50/50 dark:hover:bg-zinc-900/10">
                                 <td className="py-2.5">{job.customerName}</td>
                                 <td className="py-2.5">{job.device}</td>
@@ -350,135 +385,141 @@ export default function POS() {
               </AnimatePresence>
             </div>
 
-            {/* If NO search term, and NO category selected -> show Categories as Folders */}
-            {!searchTerm && !selectedCategoryId && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {categories.filter(c => c.isActive).map((category) => (
-                  <motion.button
-                    key={category.id}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setSelectedCategoryId(category.id)}
-                    className={`flex flex-col items-center justify-center p-6 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 border border-indigo-100 dark:border-indigo-800 rounded-2xl transition-all gap-3 ${settings.masterTheme === "ios-glass" ? "glass-card liquid-morph" : ""}`}
+            <div className="flex-1 overflow-auto p-4 pb-24 lg:pb-4 custom-scrollbar">
+
+              {!searchTerm && !selectedCategoryId && (
+                <div className={`grid gap-4 ${categoryGridSize === "small"
+                  ? "grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8"
+                  : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"}`}>
+                  {categories.filter(c => c.isActive).map((category) => (
+                    <motion.button
+                      key={category.id}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setSelectedCategoryId(category.id)}
+                      className={`flex flex-col items-center justify-center bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 border border-indigo-100 dark:border-indigo-800 rounded-2xl transition-all gap-2 ${categoryGridSize === "small" ? "p-3" : "p-6"} ${settings.masterTheme === "ios-glass" ? "glass-card liquid-morph" : ""}`}
+                    >
+                      <Folder className={`${categoryGridSize === "small" ? "w-8 h-8" : "w-12 h-12"} text-indigo-500 dark:text-indigo-400`} fill="currentColor" fillOpacity={0.2} />
+                      <span className={`font-bold text-zinc-900 dark:text-white text-center line-clamp-1 ${categoryGridSize === "small" ? "text-xs" : "text-sm"}`}>
+                        {category.name}
+                      </span>
+                      {categoryGridSize === "large" && (
+                        <span className={`text-[10px] text-indigo-600 dark:text-indigo-400 bg-white dark:bg-zinc-950 px-2 py-0.5 rounded-full shadow-sm ${settings.masterTheme === "ios-glass" ? "bg-white/50 backdrop-blur-md" : ""}`}>
+                          {products.filter(p => (p.categoryId === category.id || p.category === category.name) && p.isActive !== false).length}  صنف
+                        </span>
+                      )}
+                    </motion.button>
+                  ))}
+                </div>
+              )}
+
+              {/* Category Breadcrumb/Back button if selected */}
+              {(selectedCategoryId || searchTerm) && (
+                <div className="flex items-center gap-2 mb-4 p-2 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-xl border border-indigo-100/50 dark:border-indigo-800/20">
+                  <button
+                    onClick={() => {
+                      setSelectedCategoryId(null);
+                      setSearchTerm("");
+                    }}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 rounded-lg text-sm font-bold shadow-sm hover:bg-indigo-50 dark:hover:bg-zinc-700 transition-all border border-indigo-100 dark:border-zinc-700"
                   >
-                    <Folder className="w-12 h-12 text-indigo-500 dark:text-indigo-400" fill="currentColor" fillOpacity={0.2} />
-                    <span className="font-bold text-zinc-900 dark:text-white text-center line-clamp-2">
-                      {category.name}
-                    </span>
-                    <span className={`text-xs text-indigo-600 dark:text-indigo-400 bg-white dark:bg-zinc-950 px-2 py-1 rounded-full shadow-sm ${settings.masterTheme === "ios-glass" ? "bg-white/50 backdrop-blur-md" : ""}`}>
-                      {products.filter(p => (p.categoryId === category.id || p.category === category.name) && p.isActive !== false).length}  صنف
-                    </span>
-                  </motion.button>
-                ))}
-              </div>
-            )}
-
-            {/* Category Breadcrumb/Back button if selected */}
-            {(selectedCategoryId || searchTerm) && (
-              <div className="flex items-center gap-2 mb-4 p-2 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-xl border border-indigo-100/50 dark:border-indigo-800/20">
-                <button
-                  onClick={() => {
-                    setSelectedCategoryId(null);
-                    setSearchTerm("");
-                  }}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 rounded-lg text-sm font-bold shadow-sm hover:bg-indigo-50 dark:hover:bg-zinc-700 transition-all border border-indigo-100 dark:border-zinc-700"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                  كل الأقسام
-                </button>
-                {selectedCategoryId && (
-                  <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 text-sm font-medium">
-                    <ChevronLeft className="w-4 h-4 opacity-30" />
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-lg shadow-md shadow-indigo-600/20">
-                      <FolderOpen className="w-4 h-4" />
-                      {categories.find(c => c.id === selectedCategoryId)?.name}
+                    <ChevronRight className="w-4 h-4" />
+                    كل الأقسام
+                  </button>
+                  {selectedCategoryId && (
+                    <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 text-sm font-medium">
+                      <ChevronLeft className="w-4 h-4 opacity-30" />
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-lg shadow-md shadow-indigo-600/20">
+                        <FolderOpen className="w-4 h-4" />
+                        {categories.find(c => c.id === selectedCategoryId)?.name}
+                      </div>
                     </div>
-                  </div>
-                )}
-                {searchTerm && (
-                  <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 text-sm font-medium">
-                    <ChevronLeft className="w-4 h-4 opacity-30" />
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 rounded-lg">
-                      <Search className="w-4 h-4" />
-                      "{searchTerm}"
+                  )}
+                  {searchTerm && (
+                    <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 text-sm font-medium">
+                      <ChevronLeft className="w-4 h-4 opacity-30" />
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 rounded-lg">
+                        <Search className="w-4 h-4" />
+                        "{searchTerm}"
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
 
-            {/* Render Products Grid */}
-            {(searchTerm || selectedCategoryId) && (
-              <div className={`grid gap-3 ${gridSize === "large"
-                ? "grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                : gridSize === "small"
-                  ? "grid-cols-3 md:grid-cols-4 xl:grid-cols-6"
-                  : "grid-cols-4 md:grid-cols-6 xl:grid-cols-8"
-                }`}>
-                {filteredProducts.map((product) => (
-                  <motion.div
-                    key={product.id}
-                    layout
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`
+              {/* Render Products Grid */}
+              {(searchTerm || selectedCategoryId) && (
+                <div className={`grid gap-3 ${gridSize === "large"
+                  ? "grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                  : gridSize === "small"
+                    ? "grid-cols-3 md:grid-cols-4 xl:grid-cols-6"
+                    : "grid-cols-4 md:grid-cols-6 xl:grid-cols-8"
+                  }`}>
+                  {filteredProducts.map((product) => (
+                    <motion.div
+                      key={product.id}
+                      layout
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`
                       relative flex flex-col items-center text-center p-3 rounded-2xl border transition-all cursor-pointer group
                       ${settings.masterTheme === "ios-glass" ? "glass-card hover:bg-white/40 dark:hover:bg-zinc-900/40" : "bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800"}
                       border-zinc-100 dark:border-zinc-800 hover:border-indigo-200 dark:hover:border-indigo-900 hover:shadow-xl hover:shadow-indigo-500/5
                       ${gridSize === "tiny" ? "p-2" : "p-3"}
                     `}
-                    onClick={() => {
-                      if (product.trackInventory !== false && product.stock === 0) {
-                        toast.error("هذا المنتج غير متوفر في المخزون");
-                      } else {
-                        addToCart(product);
-                      }
-                    }}
-                  >
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate("/products");
+                      onClick={() => {
+                        if (product.trackInventory !== false && product.stock === 0) {
+                          toast.error("هذا المنتج غير متوفر في المخزون");
+                        } else {
+                          addToCart(product);
+                        }
                       }}
-                      className="absolute top-2 right-2 p-1.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg transition-colors z-10 opacity-0 group-hover:opacity-100"
-                      title="الذهاب للمخزون"
                     >
-                      <Package className="w-4 h-4" />
-                    </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate("/products");
+                        }}
+                        className="absolute top-2 right-2 p-1.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg transition-colors z-10 opacity-0 group-hover:opacity-100"
+                        title="الذهاب للمخزون"
+                      >
+                        <Package className="w-4 h-4" />
+                      </button>
 
-                    {gridSize !== "tiny" && (
-                      <div className="w-full aspect-square mb-3 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 relative">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                        {product.trackInventory !== false && product.stock === 0 && (
-                          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center text-white text-[10px] font-bold">
-                            نفذت الكمية
-                          </div>
+                      {gridSize !== "tiny" && (
+                        <div className="w-full aspect-square mb-3 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 relative">
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                          {product.trackInventory !== false && product.stock === 0 && (
+                            <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center text-white text-[10px] font-bold">
+                              نفذت الكمية
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      <h3 className={`font-bold text-zinc-900 dark:text-white line-clamp-2 mb-1 ${gridSize === "tiny" ? "text-[11px]" : "text-sm"}`}>
+                        {product.name}
+                      </h3>
+
+                      <div className="mt-auto flex flex-col items-center">
+                        <p className={`text-indigo-600 dark:text-indigo-400 font-black ${gridSize === "tiny" ? "text-xs" : "text-base"}`}>
+                          {product.price} <span className="text-[10px] font-normal">{settings.currency}</span>
+                        </p>
+                        {gridSize !== "tiny" && (
+                          <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1">
+                            {product.trackInventory === false ? "∞" : `مخزون: ${product.stock}`}
+                          </p>
                         )}
                       </div>
-                    )}
-
-                    <h3 className={`font-bold text-zinc-900 dark:text-white line-clamp-2 mb-1 ${gridSize === "tiny" ? "text-[11px]" : "text-sm"}`}>
-                      {product.name}
-                    </h3>
-
-                    <div className="mt-auto flex flex-col items-center">
-                      <p className={`text-indigo-600 dark:text-indigo-400 font-black ${gridSize === "tiny" ? "text-xs" : "text-base"}`}>
-                        {product.price} <span className="text-[10px] font-normal">{settings.currency}</span>
-                      </p>
-                      {gridSize !== "tiny" && (
-                        <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1">
-                          {product.trackInventory === false ? "∞" : `مخزون: ${product.stock}`}
-                        </p>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </motion.div>
 
@@ -497,14 +538,14 @@ export default function POS() {
         <AnimatePresence>
           {isCartOpen && (
             <motion.div
-              initial={{ x: 400, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 400, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              initial={{ y: -100, x: 50, scale: 0.8, opacity: 0, filter: "blur(10px)" }}
+              animate={{ y: 0, x: 0, scale: 1, opacity: 1, filter: "blur(0px)" }}
+              exit={{ y: -100, x: 50, scale: 0.8, opacity: 0, filter: "blur(10px)" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
               className={`
                 w-full lg:w-[420px] flex flex-col bg-white dark:bg-zinc-950 shadow-2xl border-r lg:border-r-0 lg:border-l border-zinc-200 dark:border-zinc-800 shrink-0
                 fixed lg:relative lg:flex lg:rounded-2xl min-h-0 lg:max-h-full
-                bottom-0 left-0 right-0 z-50 lg:z-auto rounded-t-3xl lg:rounded-b-2xl
+                bottom-0 left-0 right-0 z-50 lg:z-auto rounded-t-3xl lg:rounded-b-2xl origin-top-left
                 ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""}
                 h-[85vh] lg:h-auto
               `}
@@ -629,27 +670,21 @@ export default function POS() {
                 )}
               </div>
 
+
               {/* Checkout Panel */}
               <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 space-y-4">
-                <div className="space-y-2 text-sm">
+                <div className="space-y-2 text-sm pb-2 border-b border-zinc-200 dark:border-zinc-800">
                   <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
                     <span>المجموع الفرعي</span>
-                    <span>
-                      {cartTotal.toFixed(2)} {settings.currency}
-                    </span>
+                    <span>{cartTotal.toFixed(2)} {settings.currency}</span>
                   </div>
                   {settings.enableTax && (
                     <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
                       <span>الضريبة ({settings.taxRate}%)</span>
-                      <span>
-                        {tax.toFixed(2)} {settings.currency}
-                      </span>
+                      <span>{tax.toFixed(2)} {settings.currency}</span>
                     </div>
                   )}
-
-
-
-                  <div className="flex justify-between text-lg font-bold text-zinc-900 dark:text-white pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                  <div className="flex justify-between text-lg font-bold text-zinc-900 dark:text-white pt-1">
                     <span>الإجمالي</span>
                     <span className="text-indigo-600 dark:text-indigo-400 privacy-blur">
                       {grandTotal.toFixed(2)} {settings.currency}
@@ -657,23 +692,41 @@ export default function POS() {
                   </div>
                 </div>
 
-                {/* Client and Options Toggle */}
-                <div className="flex items-center justify-between pt-2">
+                <div className="pt-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400">المبلغ المستلم:</span>
+                    <span className="text-[10px] text-zinc-400">انقر للإدخال السريع</span>
+                  </div>
+                  <div className="relative">
+                    <NumberInput
+                      value={amountPaid}
+                      onChange={(val) => setAmountPaid(val)}
+                      onFocus={() => setActiveKeypadInput("amountPaid")}
+                      className={`w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-900 border-2 rounded-2xl text-2xl font-black focus:outline-none transition-all ${activeKeypadInput === "amountPaid" && isKeypadOpen ? "border-indigo-500 ring-4 ring-indigo-500/10" : "border-zinc-200 dark:border-zinc-800 focus:border-indigo-500"} dark:text-white mb-2`}
+                      placeholder={paymentMethod === "debt" ? "اختياري..." : "0.00"}
+                      min="0"
+                      step="0.01"
+                      allowDecimal
+                    />
+                    {amountPaid && (
+                      <button
+                        onClick={() => setAmountPaid("")}
+                        className="absolute left-4 top-[24px] -translate-y-1/2 p-2 bg-white dark:bg-zinc-800 rounded-xl text-zinc-400 shadow-sm border border-zinc-100 dark:border-zinc-700"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+
                   <button
                     onClick={() => setIsShowMoreOptions(!isShowMoreOptions)}
-                    className="flex items-center gap-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                    className="w-full flex items-center justify-between p-3 bg-zinc-100 dark:bg-zinc-800/50 rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors border border-dashed border-zinc-300 dark:border-zinc-700"
                   >
-                    {isShowMoreOptions ? (
-                      <>
-                        <ChevronUp className="w-3 h-3" />
-                        خيارات أقل
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="w-3 h-3" />
-                        المزيد من الخيارات (العميل، الدفع...)
-                      </>
-                    )}
+                    <span className="flex items-center gap-2">
+                      <Settings2 className="w-4 h-4" />
+                      خيارات الدفع والعميل
+                    </span>
+                    {isShowMoreOptions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
                 </div>
 
@@ -683,9 +736,28 @@ export default function POS() {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      className="space-y-3 overflow-hidden"
+                      className="space-y-3 overflow-hidden pt-2"
                     >
-                      <div className="flex flex-col gap-2 pt-2">
+                      <div className="grid grid-cols-4 gap-2">
+                        {(["cash", "card", "debt", "split"] as const).map((method) => (
+                          <button
+                            key={method}
+                            onClick={() => setPaymentMethod(method)}
+                            className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-[10px] font-bold transition-all ${paymentMethod === method
+                              ? (method === "debt" ? "bg-amber-500 border-amber-500" : method === "split" ? "bg-purple-600 border-purple-600" : "bg-indigo-600 border-indigo-600") + " text-white shadow-md"
+                              : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                              }`}
+                          >
+                            {method === "cash" && <Banknote className="w-4 h-4" />}
+                            {method === "card" && <CreditCard className="w-4 h-4" />}
+                            {method === "debt" && <ShieldAlert className="w-4 h-4" />}
+                            {method === "split" && <div className="flex -space-x-1"><Banknote className="w-3 h-3 z-10" /><CreditCard className="w-3 h-3" /></div>}
+                            {method === "cash" ? "كاش" : method === "card" ? "شبكة" : method === "debt" ? "آجل" : "مقسم"}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2">
                           <select
                             className="flex-1 px-4 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-colors"
@@ -707,170 +779,58 @@ export default function POS() {
                           <button
                             onClick={() => setIsAddCustomerModalOpen(true)}
                             className="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-xl transition-colors shrink-0 border border-indigo-100 dark:border-indigo-800"
-                            title="إضافة عميل جديد"
                           >
                             <UserPlus className="w-5 h-5" />
                           </button>
                         </div>
-
-                        <div className="relative">
-                          <input
-                            type="text"
-                            placeholder="أو ادخل اسم عميل جديد..."
-                            className="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-colors"
-                            value={customerName}
-                            onChange={(e) => setCustomerName(e.target.value)}
-                            disabled={!!selectedCustomerId}
-                          />
-                          {customerName && !selectedCustomerId && (
-                            <button
-                              onClick={() => setCustomerName("")}
-                              className="absolute left-3 top-1/2 -translate-y-1/2 p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-500 dark:text-zinc-400 transition-colors"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-4 gap-2">
-                        <button
-                          onClick={() => setPaymentMethod("cash")}
-                          className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-[10px] font-bold transition-all ${paymentMethod === "cash"
-                            ? "bg-indigo-600 text-white border-indigo-600 shadow-md"
-                            : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
-                            } `}
-                        >
-                          <Banknote className="w-4 h-4" />
-                          كاش
-                        </button>
-                        <button
-                          onClick={() => setPaymentMethod("card")}
-                          className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-[10px] font-bold transition-all ${paymentMethod === "card"
-                            ? "bg-indigo-600 text-white border-indigo-600 shadow-md"
-                            : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
-                            } `}
-                        >
-                          <CreditCard className="w-4 h-4" />
-                          شبكة
-                        </button>
-                        <button
-                          onClick={() => setPaymentMethod("debt")}
-                          className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-[10px] font-bold transition-all ${paymentMethod === "debt"
-                            ? "bg-amber-500 text-white border-amber-500 shadow-md"
-                            : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
-                            } `}
-                        >
-                          <ShieldAlert className="w-4 h-4" />
-                          آجل
-                        </button>
-                        <button
-                          onClick={() => setPaymentMethod("split")}
-                          className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-[10px] font-bold transition-all ${paymentMethod === "split"
-                            ? "bg-purple-600 text-white border-purple-600 shadow-md"
-                            : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
-                            } `}
-                        >
-                          <div className="flex -space-x-1">
-                            <Banknote className="w-3 h-3 z-10" />
-                            <CreditCard className="w-3 h-3" />
-                          </div>
-                          مقسم
-                        </button>
+                        <input
+                          type="text"
+                          placeholder="أو ادخل اسم عميل جديد..."
+                          className="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-colors"
+                          value={customerName}
+                          onChange={(e) => setCustomerName(e.target.value)}
+                          disabled={!!selectedCustomerId}
+                        />
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
 
-                {(paymentMethod === "cash" || paymentMethod === "debt") && (
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <NumberInput
-                        value={amountPaid}
-                        onChange={(val) => setAmountPaid(val)}
-                        onFocus={() => setActiveKeypadInput("amountPaid")}
-                        className={`w-full px-4 py-2 bg-white dark:bg-zinc-950 border rounded-xl text-sm focus:outline-none transition-colors ${activeKeypadInput === "amountPaid" && isKeypadOpen ? "border-indigo-500 ring-2 ring-indigo-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-indigo-500"} dark:text-white`}
-                        placeholder={
-                          paymentMethod === "debt"
-                            ? "المبلغ المدفوع مقدماً (وع مقدماً (اختياري)"
-                            : "المبلغ المستلم"
-                        }
-                        min="0"
-                        step="0.01"
-                        allowDecimal
-                      />
-                    </div>
-                    {paymentMethod === "cash" &&
-                      amountPaid &&
-                      Number(amountPaid) >= grandTotal && (
-                        <div className="flex justify-between text-sm p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-lg">
-                          <span>الباقي للعميل:</span>
-                          <span className="font-bold">
-                            {change.toFixed(2)} {settings.currency}
-                          </span>
-                        </div>
-                      )}
-                    {paymentMethod === "debt" && (
-                      <div className="flex justify-between text-sm p-2 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-lg">
-                        <span>المبلغ المتبقي كدين:</span>
-                        <span className="font-bold">
-                          {(grandTotal - (Number(amountPaid) || 0)).toFixed(2)}{" "}
-                          {settings.currency}
-                        </span>
-                      </div>
-                    )}
+                {paymentMethod === "split" && (
+                  <div className="grid grid-cols-2 gap-2 pt-2">
+                    <NumberInput
+                      value={splitCash}
+                      onChange={(val) => setSplitCash(val)}
+                      onFocus={() => setActiveKeypadInput("splitCash")}
+                      className={`w-full px-4 py-2 bg-white dark:bg-zinc-950 border rounded-xl text-sm ${activeKeypadInput === "splitCash" && isKeypadOpen ? "border-purple-500 ring-2 ring-purple-500/20" : ""}`}
+                      placeholder="الكاش"
+                      allowDecimal
+                    />
+                    <NumberInput
+                      value={splitCard}
+                      onChange={(val) => setSplitCard(val)}
+                      onFocus={() => setActiveKeypadInput("splitCard")}
+                      className={`w-full px-4 py-2 bg-white dark:bg-zinc-950 border rounded-xl text-sm ${activeKeypadInput === "splitCard" && isKeypadOpen ? "border-purple-500 ring-2 ring-purple-500/20" : ""}`}
+                      placeholder="الشبكة"
+                      allowDecimal
+                    />
                   </div>
                 )}
 
-                {paymentMethod === "split" && (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <NumberInput
-                        value={splitCash}
-                        onChange={(val) => setSplitCash(val)}
-                        onFocus={() => setActiveKeypadInput("splitCash")}
-                        className={`w-full px-4 py-2 bg-white dark:bg-zinc-950 border rounded-xl text-sm focus:outline-none transition-colors ${activeKeypadInput === "splitCash" && isKeypadOpen ? "border-purple-500 ring-2 ring-purple-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-purple-500"} dark:text-white`}
-                        placeholder="مبلغ الكاش"
-                        min="0"
-                        step="0.01"
-                        allowDecimal
-                      />
-                      <NumberInput
-                        value={splitCard}
-                        onChange={(val) => setSplitCard(val)}
-                        onFocus={() => setActiveKeypadInput("splitCard")}
-                        className={`w-full px-4 py-2 bg-white dark:bg-zinc-950 border rounded-xl text-sm focus:outline-none transition-colors ${activeKeypadInput === "splitCard" && isKeypadOpen ? "border-purple-500 ring-2 ring-purple-500/20" : "border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-purple-500"} dark:text-white`}
-                        placeholder="مبلغ الشبكة"
-                        min="0"
-                        step="0.01"
-                        allowDecimal
-                      />
+                <div className="space-y-2">
+                  {paymentMethod === "cash" && amountPaid && Number(amountPaid) >= grandTotal && (
+                    <div className="flex justify-between text-sm p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-lg">
+                      <span>الباقي:</span>
+                      <span className="font-bold">{change.toFixed(2)} {settings.currency}</span>
                     </div>
-                    {Number(splitCash) + Number(splitCard) < grandTotal && (
-                      <p className="text-xs text-red-500">
-                        مجموع المبلغ أقل من الإجمالي (
-                        {(
-                          grandTotal -
-                          (Number(splitCash) + Number(splitCard))
-                        ).toFixed(2)}{" "}
-                        متبقي)
-                      </p>
-                    )}
-                    {Number(splitCash) + Number(splitCard) >= grandTotal && (
-                      <div className="flex justify-between text-sm p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-lg">
-                        <span>الباقي للعميل (لعميل (كاش):</span>
-                        <span className="font-bold">
-                          {(
-                            Number(splitCash) +
-                            Number(splitCard) -
-                            grandTotal
-                          ).toFixed(2)}{" "}
-                          {settings.currency}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
+                  )}
+                  {paymentMethod === "debt" && (
+                    <div className="flex justify-between text-sm p-2 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-lg">
+                      <span>المتبقي كدين:</span>
+                      <span className="font-bold">{(grandTotal - (Number(amountPaid) || 0)).toFixed(2)} {settings.currency}</span>
+                    </div>
+                  )}
+                </div>
 
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -878,12 +838,9 @@ export default function POS() {
                   onClick={handleCheckout}
                   disabled={
                     cart.length === 0 ||
-                    (paymentMethod === "cash" &&
-                      amountPaid !== "" &&
-                      Number(amountPaid) < grandTotal) ||
+                    (paymentMethod === "cash" && amountPaid !== "" && Number(amountPaid) < grandTotal) ||
                     (paymentMethod === "debt" && !selectedCustomerId) ||
-                    (paymentMethod === "split" &&
-                      Number(splitCash) + Number(splitCard) < grandTotal)
+                    (paymentMethod === "split" && Number(splitCash) + Number(splitCard) < grandTotal)
                   }
                   className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg flex items-center justify-center gap-2 ${cart.length === 0 ||
                     (paymentMethod === "cash" && amountPaid !== "" && Number(amountPaid) < grandTotal) ||
@@ -893,17 +850,15 @@ export default function POS() {
                     : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20"
                     } ${settings.masterTheme === "ios-glass" ? "liquid-morph" : ""}`}
                 >
-                  {paymentMethod === "debt"
-                    ? "إتمام البيع الآجل"
-                    : paymentMethod === "split"
-                      ? "دفع مقسم وإصدار"
-                      : "دفع وإصدار الفاتورة"}
+                  {paymentMethod === "debt" ? "إتمام البيع الآجل" : paymentMethod === "split" ? "دفع مقسم وإصدار" : "دفع وإصدار الفاتورة"}
                 </motion.button>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+
 
       {/* Mobile Cart Toggle Floating Button */}
       {
@@ -1023,6 +978,6 @@ export default function POS() {
         title={activeKeypadInput === 'amountPaid' ? 'المبلغ المستلم' : activeKeypadInput === 'splitCash' ? 'مبلغ الكاش' : 'مبلغ الشبكة'}
         value={activeKeypadInput === 'amountPaid' ? amountPaid : activeKeypadInput === 'splitCash' ? splitCash : splitCard}
       />
-    </div>
+    </div >
   );
 }

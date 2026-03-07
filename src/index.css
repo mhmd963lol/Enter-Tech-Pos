@@ -191,6 +191,55 @@ input[type=number] {
   -moz-appearance: textfield;
 }
 
+/* Custom Hover-only Scrollbars */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  /* zinc-400 with opacity */
+}
+
+.custom-scrollbar:hover::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.5);
+}
+
+.dark .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: rgba(63, 63, 70, 0.5);
+  /* zinc-800 with opacity */
+}
+
+/* Sidebar Border Glow */
+@keyframes border-glow {
+
+  0%,
+  100% {
+    border-color: rgba(79, 70, 229, 0.3);
+    box-shadow: 0 0 15px rgba(79, 70, 229, 0.1);
+  }
+
+  50% {
+    border-color: rgba(79, 70, 229, 0.8);
+    box-shadow: 0 0 25px rgba(79, 70, 229, 0.2);
+  }
+}
+
+.sidebar-glow {
+  animation: border-glow 4s ease-in-out infinite;
+}
+
 .privacy-mode .privacy-blur,
 .privacy-mode .blur-in-privacy,
 .privacy-mode td:nth-child(n+3):nth-last-child(n+2) {

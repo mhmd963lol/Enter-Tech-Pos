@@ -14,13 +14,72 @@ import {
   Download,
   Upload,
   Database,
+  User, Shield, Key, Mail, Phone, Link, Unlink,
+  Eye, EyeOff, ChevronDown, ChevronUp, AlertTriangle
 } from "lucide-react";
+import { auth } from "../lib/firebase";
+import {
+  updatePassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updateProfile,
+  verifyBeforeUpdateEmail,
+  GoogleAuthProvider,
+  linkWithPopup,
+  unlink,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  PhoneAuthProvider,
+  linkWithCredential,
+  reload,
+} from "firebase/auth";
 import { motion, AnimatePresence } from "motion/react";
 import NumberInput from "../components/NumberInput";
 import toast from "react-hot-toast";
 
+// Helper: get current providers
+const getProviders = () => {
+  const user = auth.currentUser;
+  if (!user) return [];
+  return user.providerData.map((p) => p.providerId);
+};
+
+const PROVIDER_LABELS: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+  "google.com": {
+    label: "Google", color: "bg-blue-50 text-blue-700 border-blue-200", icon: (
+      <svg className="w-4 h-4" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
+    )
+  },
+  "password": { label: "البريد الإلكتروني", color: "bg-purple-50 text-purple-700 border-purple-200", icon: <Mail className="w-4 h-4" /> },
+  "phone": { label: "رقم الهاتف", color: "bg-green-50 text-green-700 border-green-200", icon: <Phone className="w-4 h-4" /> },
+};
+
+// ── Section wrapper ──
+const Section = ({ title, icon, children, defaultOpen = false }: { title: string; icon: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean }) => {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden mb-4">
+      <button type="button" onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between p-5 text-right hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+        <div className="flex items-center gap-3">
+          <div className="text-indigo-600 dark:text-indigo-400">{icon}</div>
+          <h3 className="font-bold text-zinc-900 dark:text-white">{title}</h3>
+        </div>
+        {open ? <ChevronUp className="w-5 h-5 text-zinc-400" /> : <ChevronDown className="w-5 h-5 text-zinc-400" />}
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden">
+            <div className="p-5 pt-0 border-t border-zinc-100 dark:border-zinc-800">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 export default function SettingsPage() {
-  const { settings, updateSettings, isPro, resetApp, logout } = useAppContext();
+  const { user, settings, updateSettings, isPro, resetApp, logout } = useAppContext();
   const [localSettings, setLocalSettings] = useState(settings);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -28,6 +87,149 @@ export default function SettingsPage() {
   const [resetConfirmationText, setResetConfirmationText] = useState("");
   const [activeTab, setActiveTab] = useState("general");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Account States
+  const [providers, setProviders] = useState<string[]>([]);
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const recaptchaRef = useRef<any>(null);
+  const [pwForm, setPwForm] = useState({ current: "", newPw: "", confirm: "" });
+  const [emailForm, setEmailForm] = useState({ newEmail: "", currentPw: "" });
+  const [phoneStep, setPhoneStep] = useState<"input" | "otp">("input");
+  const [phoneForm, setPhoneForm] = useState({ newPhone: "", countryCode: "+966", otp: "" });
+  const [phoneConfirmResult, setPhoneConfirmResult] = useState<any>(null);
+  const [name, setName] = useState(user?.name || "");
+
+  useEffect(() => {
+    const load = async () => {
+      if (auth.currentUser) {
+        await reload(auth.currentUser);
+        setProviders(getProviders());
+      }
+    };
+    load();
+  }, []);
+
+  const refreshProviders = async () => {
+    if (auth.currentUser) { await reload(auth.currentUser); setProviders(getProviders()); }
+  };
+
+  const handleUpdateName = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) { toast.error("الاسم لا يمكن أن يكون فارغاً"); return; }
+    setLoading(true);
+    try {
+      await updateProfile(auth.currentUser!, { displayName: name });
+      toast.success("تم تحديث الاسم بنجاح");
+    } catch { toast.error("حدث خطأ أثناء تحديث الاسم"); }
+    finally { setLoading(false); }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cu = auth.currentUser;
+    if (!cu || !cu.email) { toast.error("يجب تسجيل الدخول بالبريد الإلكتروني لتغيير كلمة المرور"); return; }
+    if (pwForm.newPw !== pwForm.confirm) { toast.error("كلمتا المرور غير متطابقتين"); return; }
+    if (pwForm.newPw.length < 6) { toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل"); return; }
+    setLoading(true);
+    try {
+      const cred = EmailAuthProvider.credential(cu.email, pwForm.current);
+      await reauthenticateWithCredential(cu, cred);
+      await updatePassword(cu, pwForm.newPw);
+      setPwForm({ current: "", newPw: "", confirm: "" });
+      toast.success("تم تغيير كلمة المرور بنجاح");
+    } catch (err: any) {
+      if (err.code === "auth/invalid-credential") toast.error("كلمة المرور الحالية غير صحيحة");
+      else if (err.code === "auth/weak-password") toast.error("كلمة المرور الجديدة ضعيفة جداً");
+      else toast.error("حدث خطأ، حاول مجدداً");
+    } finally { setLoading(false); }
+  };
+
+  const handleChangeEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cu = auth.currentUser;
+    if (!cu || !cu.email) { toast.error("هذا الحساب لا يستخدم البريد الإلكتروني"); return; }
+    setLoading(true);
+    try {
+      const cred = EmailAuthProvider.credential(cu.email, emailForm.currentPw);
+      await reauthenticateWithCredential(cu, cred);
+      await verifyBeforeUpdateEmail(cu, emailForm.newEmail);
+      setEmailForm({ newEmail: "", currentPw: "" });
+      toast.success("تم إرسال رابط تأكيد للبريد الجديد. تحقق منه للإتمام.");
+    } catch (err: any) {
+      if (err.code === "auth/invalid-credential") toast.error("كلمة المرور الحالية غير صحيحة");
+      else if (err.code === "auth/email-already-in-use") toast.error("هذا البريد مستخدم بالفعل");
+      else toast.error("حدث خطأ، تأكد من البريد الجديد وكلمة المرور");
+    } finally { setLoading(false); }
+  };
+
+  const setupRecaptcha = () => {
+    if (!recaptchaRef.current) {
+      recaptchaRef.current = new RecaptchaVerifier(auth, "recaptcha-settings", { size: "invisible", callback: () => { } });
+    }
+    return recaptchaRef.current;
+  };
+
+  const handleSendPhoneOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const fullPhone = `${phoneForm.countryCode}${phoneForm.newPhone}`;
+    try {
+      const verifier = setupRecaptcha();
+      const result = await signInWithPhoneNumber(auth, fullPhone, verifier);
+      setPhoneConfirmResult(result);
+      setPhoneStep("otp");
+      toast.success("تم إرسال رمز التحقق إلى رقمك الجديد");
+    } catch (err: any) {
+      toast.error(err.message || "حدث خطأ في إرسال الرمز");
+      recaptchaRef.current = null;
+    } finally { setLoading(false); }
+  };
+
+  const handleConfirmPhoneOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!phoneConfirmResult) return;
+    setLoading(true);
+    try {
+      const phoneCredential = PhoneAuthProvider.credential(phoneConfirmResult.verificationId, phoneForm.otp);
+      await linkWithCredential(auth.currentUser!, phoneCredential);
+      await refreshProviders();
+      setPhoneForm({ newPhone: "", countryCode: "+966", otp: "" });
+      setPhoneStep("input");
+      toast.success("تم ربط رقم الهاتف الجديد بنجاح");
+    } catch (err: any) {
+      if (err.code === "auth/provider-already-linked") toast.error("رقم الهاتف هذا مرتبط بحساب آخر");
+      else toast.error("رمز التحقق غير صحيح");
+    } finally { setLoading(false); }
+  };
+
+  const handleLinkGoogle = async () => {
+    setLoading(true);
+    try {
+      await linkWithPopup(auth.currentUser!, new GoogleAuthProvider());
+      await refreshProviders();
+      toast.success("تم ربط حساب Google بنجاح");
+    } catch (err: any) {
+      if (err.code === "auth/provider-already-linked") toast.error("Google مرتبط بالفعل");
+      else if (err.code === "auth/credential-already-in-use") toast.error("هذا الحساب مرتبط بحساب آخر");
+      else toast.error("حدث خطأ أثناء الربط");
+    } finally { setLoading(false); }
+  };
+
+  const handleUnlink = async (providerId: string) => {
+    if (providers.length <= 1) {
+      toast.error("لا يمكنك فك ربط الطريقة الوحيدة لتسجيل الدخول — أضف طريقة أخرى أولاً");
+      return;
+    }
+    setLoading(true);
+    try {
+      await unlink(auth.currentUser!, providerId);
+      await refreshProviders();
+      toast.success("تم فك الربط بنجاح");
+    } catch { toast.error("حدث خطأ أثناء فك الربط"); }
+    finally { setLoading(false); }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -121,8 +323,9 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: "general", label: "عام والفواتير", icon: Store },
-    { id: "appearance", label: "المظهر والألوان", icon: Moon },
-    { id: "finance", label: "المالية والأمان", icon: DollarSign },
+    { id: "account", label: "حسابي والأمان", icon: User },
+    { id: "appearance", label: "المظهر والأصوات", icon: Moon },
+    { id: "finance", label: "المالية والضرائب", icon: DollarSign },
     { id: "advanced", label: "بيانات متقدمة", icon: ShieldAlert },
   ];
 
@@ -158,7 +361,132 @@ export default function SettingsPage() {
 
       {/* Tab Content */}
       <div className="bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden min-h-[400px]">
+        <div id="recaptcha-settings" />
         <AnimatePresence mode="wait">
+          {/* Account Tab */}
+          {activeTab === "account" && (
+            <motion.div
+              key="account"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="p-6 space-y-6"
+            >
+              <div className="flex items-center gap-4 mb-2 p-4 bg-indigo-50 dark:bg-zinc-900 rounded-2xl border border-indigo-100 dark:border-zinc-800">
+                <div className="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-indigo-500/20">
+                  {name.charAt(0) || user?.name?.charAt(0) || "U"}
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-zinc-900 dark:text-white leading-tight">{name || user?.name}</h3>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">{auth.currentUser?.email || auth.currentUser?.phoneNumber || "لا يوجد بريد مرتبط"}</p>
+                  <span className="inline-block mt-1 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold rounded-lg uppercase tracking-wider">
+                    {user?.role === "admin" ? "مدير النظام" : "كاشير"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Name */}
+              <Section title="تعديل الاسم الشخصي" icon={<User className="w-5 h-5" />} defaultOpen>
+                <form onSubmit={handleUpdateName} className="flex gap-3 items-end">
+                  <div className="flex-1">
+                    <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+                      placeholder="الاسم الكامل" className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-sm" />
+                  </div>
+                  <button type="submit" disabled={loading || name === user?.name} className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-colors text-sm disabled:opacity-60">
+                    <Save className="w-4 h-4" /> حفظ
+                  </button>
+                </form>
+              </Section>
+
+              {/* Password */}
+              <Section title="تغيير كلمة المرور" icon={<Key className="w-5 h-5" />}>
+                {!providers.includes("password") ? (
+                  <p className="text-xs text-zinc-500 pt-2 bg-zinc-50 dark:bg-zinc-900/50 p-3 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800">حسابك لا يستخدم كلمة مرور (تسجيل دخول عبر Google أو هاتفك). يمكنك ربط بريد إلكتروني في قسم الحسابات المرتبطة.</p>
+                ) : (
+                  <form onSubmit={handleChangePassword} className="space-y-3">
+                    <div className="relative">
+                      <input type={showCurrentPw ? "text" : "password"} required placeholder="كلمة المرور الحالية"
+                        value={pwForm.current} onChange={(e) => setPwForm({ ...pwForm, current: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-sm pl-10" dir="ltr" />
+                      <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
+                        {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <input type={showNewPw ? "text" : "password"} required placeholder="كلمة المرور الجديدة (6+ أحرف)"
+                        value={pwForm.newPw} onChange={(e) => setPwForm({ ...pwForm, newPw: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-sm pl-10" dir="ltr" />
+                      <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
+                        {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <input type="password" required placeholder="تأكيد كلمة المرور الجديدة"
+                      value={pwForm.confirm} onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-sm" dir="ltr" />
+                    <div className="flex justify-end pt-2">
+                      <button type="submit" disabled={loading} className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-colors text-sm">
+                        {loading ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><Check className="w-4 h-4" /> تحديث كلمة المرور</>}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </Section>
+
+              {/* Email */}
+              <Section title="تغيير البريد الإلكتروني" icon={<Mail className="w-5 h-5" />}>
+                {!providers.includes("password") ? (
+                  <p className="text-xs text-zinc-500 pt-2">حسابك لا يستخدم بريداً إلكترونياً مباشراً.</p>
+                ) : (
+                  <form onSubmit={handleChangeEmail} className="space-y-3">
+                    <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 p-3 rounded-xl flex items-start gap-3">
+                      <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">سنرسل لك رابط تأكيد إلى بريدك الإلكتروني الجديد. يجب النقر عليه لتفعيل التغيير.</p>
+                    </div>
+                    <input type="email" required placeholder="البريد الإلكتروني الجديد"
+                      value={emailForm.newEmail} onChange={(e) => setEmailForm({ ...emailForm, newEmail: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-sm" dir="ltr" />
+                    <input type="password" required placeholder="كلمة المرور الحالية للأمان"
+                      value={emailForm.currentPw} onChange={(e) => setEmailForm({ ...emailForm, currentPw: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-sm" dir="ltr" />
+                    <div className="flex justify-end">
+                      <button type="submit" disabled={loading} className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-colors text-sm">
+                        {loading ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><Mail className="w-4 h-4" /> إرسال رابط التأكيد</>}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </Section>
+
+              {/* Linked Accounts */}
+              <Section title="الحسابات المرتبطة" icon={<Link className="w-5 h-5" />}>
+                <div className="space-y-3">
+                  {providers.map((pId) => {
+                    const info = PROVIDER_LABELS[pId];
+                    if (!info) return null;
+                    return (
+                      <div key={pId} className={`flex items-center justify-between px-4 py-3 rounded-xl border ${info.color}`}>
+                        <div className="flex items-center gap-3 font-bold text-sm">
+                          {info.icon} {info.label}
+                          <span className="text-[10px] bg-green-500/10 text-green-600 rounded-lg px-2 py-0.5 mr-1 border border-green-500/20">نشط</span>
+                        </div>
+                        <button type="button" onClick={() => handleUnlink(pId)} disabled={loading || providers.length <= 1}
+                          className="flex items-center gap-1 text-[10px] text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 px-2 py-1.5 rounded-lg border border-red-100 dark:border-red-900/30 transition-all font-bold">
+                          <Unlink className="w-3 h-3" /> فك الارتباط
+                        </button>
+                      </div>
+                    );
+                  })}
+                  {!providers.includes("google.com") && (
+                    <button type="button" onClick={handleLinkGoogle} disabled={loading}
+                      className="w-full flex items-center justify-center gap-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 py-3 rounded-xl text-sm font-bold text-zinc-700 dark:text-zinc-200 shadow-sm transition-all">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
+                      ربط حساب Google
+                    </button>
+                  )}
+                </div>
+              </Section>
+            </motion.div>
+          )}
 
           {/* GENERAL TAB */}
           {activeTab === "general" && (
@@ -658,6 +986,6 @@ export default function SettingsPage() {
           </div>
         )}
       </AnimatePresence>
-    </div>
+    </div >
   );
 }

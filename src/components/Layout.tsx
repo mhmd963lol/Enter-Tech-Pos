@@ -101,8 +101,7 @@ const navItems: NavItem[] = [
     label: "الإعدادات",
     roles: ["admin"],
     subItems: [
-      { label: "إعدادات عامة", to: "/settings" },
-      { label: "إعدادات الحساب", to: "/settings/account" },
+      { label: "جميع الإعدادات", to: "/settings" },
     ],
   },
   {
@@ -123,8 +122,9 @@ const SidebarItem: React.FC<{
   closeMobile: () => void;
 }> = ({ item, isMobile, isCollapsed, closeMobile }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const location = useLocation();
-  const { user } = useAppContext();
+  const { user, settings } = useAppContext();
 
   if (item.roles && user && !item.roles.includes(user.role)) {
     return null;
@@ -134,57 +134,94 @@ const SidebarItem: React.FC<{
     ? location.pathname === item.to
     : item.subItems?.some((sub) => location.pathname === sub.to);
 
+  // If handle sub-items
   if (item.subItems) {
     return (
-      <div className="mb-1 relative group/item">
+      <div
+        className="mb-1 relative group/item"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => {
+          setIsHovered(false);
+          if (isCollapsed) setIsOpen(false);
+        }}
+      >
         <button
           onClick={() => !isCollapsed && setIsOpen(!isOpen)}
           className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 ${isActive || isOpen
-            ? "bg-indigo-50/50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
+            ? "bg-indigo-50/50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 border-r-4 border-indigo-600 dark:border-indigo-400"
             : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
-            } ${isCollapsed ? "justify-center px-0 h-12 w-12 mx-auto" : ""}`}
+            } ${isCollapsed ? "justify-center px-0 h-12 w-12 mx-auto relative group" : ""}`}
         >
           <div className="flex items-center gap-3">
-            <item.icon
-              className={`w-5 h-5 transition-transform duration-300 ${isCollapsed ? "scale-110" : ""} ${isActive || isOpen ? "text-indigo-600 dark:text-indigo-400" : "text-zinc-400 dark:text-zinc-500"}`}
-            />
+            <div className={`relative ${isActive || isOpen ? "text-indigo-600 dark:text-indigo-400" : "text-zinc-400 dark:text-zinc-500"}`}>
+              <item.icon
+                className={`w-5 h-5 transition-all duration-300 ${isCollapsed ? "scale-110" : ""}`}
+              />
+              {isActive && isCollapsed && (
+                <motion.div
+                  layoutId="active-dot"
+                  className="absolute -right-1 -top-1 w-2 h-2 bg-indigo-600 rounded-full shadow-[0_0_8px_rgba(79,70,229,0.8)]"
+                />
+              )}
+            </div>
             {!isCollapsed && <span className="font-medium whitespace-nowrap overflow-hidden">{item.label}</span>}
           </div>
           {!isCollapsed && (
-            isOpen ? (
-              <ChevronUp className="w-4 h-4" />
-            ) : (
+            <motion.div
+              animate={{ rotate: isOpen ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
+            >
               <ChevronDown className="w-4 h-4" />
-            )
+            </motion.div>
           )}
         </button>
 
+        {/* Floating Label / Tooltip when collapsed */}
         {isCollapsed && (
-          <div className="absolute right-full mr-2 top-0 py-2 px-3 bg-zinc-900 text-white text-xs rounded-lg opacity-0 group-hover/item:opacity-100 pointer-events-none transition-opacity z-[100] whitespace-nowrap shadow-xl">
+          <div className="fixed right-[88px] transform px-3 py-1.5 bg-zinc-900 dark:bg-zinc-800 text-white text-xs rounded-lg opacity-0 group-hover/item:opacity-100 pointer-events-none transition-all duration-300 translate-x-2 group-hover/item:translate-x-0 z-[100] whitespace-nowrap shadow-xl border border-zinc-700/50">
             {item.label}
+            <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-zinc-900 dark:bg-zinc-800 rotate-45 border-r border-t border-zinc-700/50" />
           </div>
         )}
 
-        {isOpen && !isCollapsed && (
-          <div className="mt-1 ml-4 pr-8 space-y-1 border-r-2 border-zinc-100 dark:border-zinc-800">
-            {item.subItems.map((subItem) => (
-              <NavLink
-                key={subItem.label}
-                to={subItem.to}
-                onClick={isMobile ? closeMobile : undefined}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive
-                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20 font-medium"
-                    : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-200"
-                  }`
-                }
-              >
-                <FileText className="w-4 h-4 opacity-50" />
-                {subItem.label}
-              </NavLink>
-            ))}
-          </div>
-        )}
+        {/* Sub Items - Collapsed Mode (under icon variant) or Expanded Mode */}
+        <AnimatePresence>
+          {(isOpen || (isCollapsed && isHovered)) && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className={`overflow-hidden ${isCollapsed
+                ? "flex flex-col items-center gap-1.5 py-1.5"
+                : "mt-1 ml-4 pr-6 space-y-1 border-r-2 border-dashed border-zinc-200 dark:border-zinc-800"
+                }`}
+            >
+              {item.subItems.map((subItem) => (
+                <NavLink
+                  key={subItem.label}
+                  to={subItem.to}
+                  onClick={isMobile ? closeMobile : undefined}
+                  className={({ isActive }) =>
+                    `flex items-center transition-all duration-300 group/sub ${isCollapsed
+                      ? `h-10 w-10 justify-center rounded-lg ${isActive ? "bg-indigo-600 text-white shadow-lg" : "bg-zinc-100 dark:bg-zinc-900 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800"}`
+                      : `gap-3 px-4 py-2.5 rounded-xl ${isActive ? "text-indigo-600 dark:bg-indigo-50/50 dark:bg-indigo-900/10 font-medium" : "text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"}`
+                    }`
+                  }
+                >
+                  <FileText className={`w-4 h-4 transition-transform group-hover/sub:scale-110 ${isCollapsed ? "" : "opacity-50"}`} />
+                  {!isCollapsed && <span className="text-sm">{subItem.label}</span>}
+
+                  {isCollapsed && (
+                    <div className="fixed right-[88px] px-3 py-1.5 bg-zinc-800 text-white text-[10px] rounded-md opacity-0 group-hover/sub:opacity-100 pointer-events-none transition-opacity z-[110] whitespace-nowrap shadow-lg">
+                      {subItem.label}
+                    </div>
+                  )}
+                </NavLink>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   }
@@ -196,17 +233,26 @@ const SidebarItem: React.FC<{
         onClick={isMobile ? closeMobile : undefined}
         className={({ isActive }) =>
           `flex items-center gap-3 px-4 py-3 rounded-xl transition-all mb-1 ${isActive
-            ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium"
+            ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-bold border-r-4 border-indigo-600 dark:border-indigo-400 shadow-sm"
             : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-200"
           } ${isCollapsed ? "justify-center px-0 h-12 w-12 mx-auto" : ""}`
         }
       >
-        <item.icon className={`w-5 h-5 ${isCollapsed ? "scale-110" : ""}`} />
+        <div className="relative">
+          <item.icon className={`w-5 h-5 transition-transform duration-300 ${isCollapsed ? "scale-110" : "group-hover/item:scale-110"}`} />
+          {location.pathname === item.to && isCollapsed && (
+            <motion.div
+              layoutId="active-dot"
+              className="absolute -right-1 -top-1 w-2 h-2 bg-indigo-600 rounded-full shadow-[0_0_8px_rgba(79,70,229,0.8)]"
+            />
+          )}
+        </div>
         {!isCollapsed && <span className="whitespace-nowrap overflow-hidden">{item.label}</span>}
       </NavLink>
       {isCollapsed && (
-        <div className="absolute right-full mr-2 top-0 py-2 px-3 bg-zinc-900 text-white text-xs rounded-lg opacity-0 group-hover/item:opacity-100 pointer-events-none transition-opacity z-[100] whitespace-nowrap shadow-xl">
+        <div className="fixed right-[88px] transform px-3 py-1.5 bg-zinc-900 dark:bg-zinc-800 text-white text-xs rounded-lg opacity-0 group-hover/item:opacity-100 pointer-events-none transition-all duration-300 translate-x-2 group-hover/item:translate-x-0 z-[100] whitespace-nowrap shadow-xl border border-zinc-700/50">
           {item.label}
+          <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-zinc-900 dark:bg-zinc-800 rotate-45 border-r border-t border-zinc-700/50" />
         </div>
       )}
     </div>
@@ -300,22 +346,33 @@ export default function Layout() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 right-0 z-50 bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 transition-all duration-500 ease-in-out flex flex-col overflow-hidden ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""} ${isSidebarCollapsed ? "w-20" : "w-72"} ${isMobileMenuOpen
-          ? "translate-x-0 w-72"
-          : "translate-x-full lg:translate-x-0"
+        className={`fixed lg:static inset-y-0 right-0 z-50 bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 transition-all duration-500 ease-in-out flex flex-col overflow-hidden shadow-2xl lg:shadow-none ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""
+          } ${isSidebarCollapsed ? "w-20 sidebar-glow" : "w-72"} ${isMobileMenuOpen ? "translate-x-0 w-72" : "translate-x-full lg:translate-x-0"
           }`}
       >
         <div className={`p-4 flex items-center transition-all duration-300 border-b border-zinc-100 dark:border-zinc-800 ${isSidebarCollapsed ? "justify-center" : "justify-between"}`}>
-          <div className="flex items-center gap-3">
-            <CashierTechLogo showText={false} className="w-10 h-10 shrink-0" />
-            {!isSidebarCollapsed && (
-              <div>
-                <h1 className="text-xl font-bold text-zinc-900 dark:text-white truncate">
-                  {settings.storeName}
-                </h1>
-                <p className="text-[10px] text-zinc-500 truncate">نظام إدارة المبيعات</p>
-              </div>
-            )}
+          <div className="flex items-center gap-3 overflow-hidden">
+            <motion.div
+              whileHover={{ scale: 1.05, rotate: 5 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
+              <CashierTechLogo showText={false} className="w-10 h-10 shrink-0" />
+            </motion.div>
+            <AnimatePresence>
+              {!isSidebarCollapsed && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  className="whitespace-nowrap"
+                >
+                  <h1 className="text-xl font-bold text-zinc-900 dark:text-white truncate">
+                    {settings.storeName}
+                  </h1>
+                  <p className="text-[10px] text-zinc-500 truncate">نظام إدارة المبيعات الذكي</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
           {!isSidebarCollapsed && (
             <button
@@ -360,10 +417,11 @@ export default function Layout() {
       <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
         <StatusBar />
         {/* Top Header */}
-        <header className={`h-16 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 lg:px-8 shrink-0 ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""}`}>
+        <header className={`h-16 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 lg:px-8 shrink-0 z-30 sticky top-0 ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""}`}>
           <div className="flex items-center gap-4">
-            <button
-              className="p-2 text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              className="p-2 text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors shadow-sm bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
               onClick={() => {
                 playSound("click");
                 if (window.innerWidth < 1024) {
@@ -373,8 +431,8 @@ export default function Layout() {
                 }
               }}
             >
-              <Menu className="w-6 h-6" />
-            </button>
+              <Menu className="w-5 h-5" />
+            </motion.button>
 
             {/* Hidden original username text */}
             <div className="hidden items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">

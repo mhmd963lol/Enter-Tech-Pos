@@ -28,7 +28,6 @@ import Expenses from "./pages/Expenses";
 import Income from "./pages/Income";
 import PaymentsCenter from "./pages/PaymentsCenter";
 import Inbox from "./pages/Inbox";
-import AccountSettings from "./pages/AccountSettings";
 import StaticPages from "./pages/StaticPages";
 import { Download } from "lucide-react";
 import CashierTechLogo from "./components/CashierTechLogo";
@@ -206,7 +205,7 @@ function AppContent() {
           <Route path="payments" element={<PaymentsCenter />} />
           <Route path="inbox" element={<Inbox />} />
           <Route path="tools/barcode" element={<BarcodeGenerator />} />
-          <Route path="settings/account" element={<AccountSettings />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
         {/* Public Static Pages (Moved outside for Google Verification) */}
         <Route path="/support" element={<StaticPages />} />
