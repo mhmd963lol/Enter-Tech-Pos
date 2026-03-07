@@ -107,6 +107,7 @@ export default function Login() {
 
   // Handle Google Redirect result on mount
   useEffect(() => {
+    setLoading(true);
     getRedirectResult(auth)
       .then(async (result) => {
         if (result?.user) {
@@ -116,11 +117,17 @@ export default function Login() {
         }
       })
       .catch((err) => {
+        console.error("Google Auth Error:", err);
         if (err.code && err.code !== "auth/no-current-user") {
           playSound("error");
-          toast.error("خطأ في تسجيل الدخول بـ Google");
+          if (err.code === "auth/unauthorized-domain") {
+            toast.error("هذا النطاق غير مصرح به في Firebase. يرجى إضافته في الإعدادات.");
+          } else {
+            toast.error("خطأ في تسجيل الدخول بـ Google: " + (err.message || "حدث خطأ غير معروف"));
+          }
         }
-      });
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const clearForms = () => {
@@ -291,7 +298,16 @@ export default function Login() {
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const phoneNum = mode === "login" ? loginData.phone : `${registerData.countryCode}${registerData.phone}`;
+
+    // Clean phone number: remove spaces and leading zeros if country code is present
+    let rawPhone = mode === "login" ? loginData.phone : registerData.phone;
+    rawPhone = rawPhone.replace(/\s+/g, '');
+    if (rawPhone.startsWith('0')) {
+      rawPhone = rawPhone.substring(1);
+    }
+
+    const phoneNum = `${registerData.countryCode}${rawPhone}`;
+
     try {
       const appVerifier = setupRecaptcha();
       const result = await signInWithPhoneNumber(auth, phoneNum, appVerifier);
@@ -299,8 +315,17 @@ export default function Login() {
       setPhoneStep("otp");
       toast.success("تم إرسال رمز التحقق عبر الرسائل القصيرة");
     } catch (err: any) {
-      toast.error(err.message || "حدث خطأ في إرسال الرمز");
-      recaptchaRef.current = null;
+      console.error("SMS Error:", err);
+      let errorMsg = "حدث خطأ في إرسال الرمز";
+      if (err.code === "auth/invalid-phone-number") errorMsg = "رقم الهاتف غير صالح";
+      if (err.code === "auth/too-many-requests") errorMsg = "تم إرسال طلبات كثيرة جداً. حاول لاحقاً.";
+      if (err.code === "auth/captcha-check-failed") errorMsg = "فشل التحقق من الكابتشا";
+
+      toast.error(errorMsg);
+      if (recaptchaRef.current) {
+        try { recaptchaRef.current.clear(); } catch { }
+        recaptchaRef.current = null;
+      }
     } finally {
       setLoading(false);
     }
@@ -498,9 +523,9 @@ export default function Login() {
               <>
                 {phoneStep === "number" ? (
                   <form onSubmit={handleSendOtp} className="space-y-4">
-                    <div className="flex border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl overflow-hidden focus-within:border-[#00E676] transition-colors">
+                    <div className="flex border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl overflow-hidden focus-within:border-[#00E676] transition-colors" dir="ltr">
                       <select value={registerData.countryCode} onChange={(e) => setRegisterData({ ...registerData, countryCode: e.target.value })}
-                        className="bg-gray-50 dark:bg-zinc-800 text-gray-700 dark:text-white px-3 py-3 text-sm font-bold outline-none border-l border-gray-300" dir="ltr">
+                        className="bg-gray-50 dark:bg-zinc-800 text-gray-700 dark:text-white px-3 py-3 text-sm font-bold outline-none border-r border-gray-300" dir="ltr">
                         <option value="+966">🇸🇦 +966</option>
                         <option value="+971">🇦🇪 +971</option>
                         <option value="+20">🇪🇬 +20</option>
@@ -607,9 +632,9 @@ export default function Login() {
                     <input type="text" required placeholder="الاسم الكامل" value={registerData.name}
                       onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
                       className="w-full px-4 py-3 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 dark:text-white font-bold" />
-                    <div className="flex border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl overflow-hidden focus-within:border-[#00E676] transition-colors">
+                    <div className="flex border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl overflow-hidden focus-within:border-[#00E676] transition-colors" dir="ltr">
                       <select value={registerData.countryCode} onChange={(e) => setRegisterData({ ...registerData, countryCode: e.target.value })}
-                        className="bg-gray-50 dark:bg-zinc-800 text-gray-700 dark:text-white px-3 py-3 text-sm font-bold outline-none border-l border-gray-300" dir="ltr">
+                        className="bg-gray-50 dark:bg-zinc-800 text-gray-700 dark:text-white px-3 py-3 text-sm font-bold outline-none border-r border-gray-300" dir="ltr">
                         <option value="+966">🇸🇦 +966</option>
                         <option value="+971">🇦🇪 +971</option>
                         <option value="+20">🇪🇬 +20</option>
@@ -618,7 +643,7 @@ export default function Login() {
                       </select>
                       <input type="tel" required placeholder="5XXXXXXXX" value={registerData.phone}
                         onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
-                        className="flex-1 pl-4 pr-3 py-3 text-gray-700 dark:text-white font-bold outline-none text-left" dir="ltr" />
+                        className="flex-1 pl-4 pr-3 py-3 font-bold text-gray-700 dark:text-white outline-none text-left" dir="ltr" />
                     </div>
                     <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
                       className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] dark:text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
