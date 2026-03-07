@@ -16,7 +16,7 @@ export default function ReturnModal({
   onClose,
   order,
 }: ReturnModalProps) {
-  const { addReturn, updateOrderStatus, addNotification } = useAppContext();
+  const { addReturn, updateOrderStatus, addNotification, adjustCustomerBalance, addTransaction } = useAppContext();
   const [returnItems, setReturnItems] = useState<
     { id: string; quantity: number }[]
   >([]);
@@ -78,35 +78,54 @@ export default function ReturnModal({
       return;
     }
 
+    let totalRefundAmount = 0;
+
+    // Process individual returns
+    itemsToReturn.forEach((retItem) => {
+      const originalItem = order.items.find((i) => i.id === retItem.id);
+      if (originalItem) {
+        const itemRefund = (originalItem.customPrice ?? originalItem.price) * retItem.quantity;
+        totalRefundAmount += itemRefund;
+
+        addReturn({
+          orderId: order.id,
+          productId: originalItem.id,
+          quantity: retItem.quantity,
+          date: new Date().toISOString(),
+          type: returnType,
+          status: returnType === "inventory" ? "returned" : "pending_replacement",
+          refundAmount: itemRefund,
+        });
+      }
+    });
+
     if (isFullReturn()) {
-      // Full return - update status to returned
+      // Full return - update status to returned (adjustCustomerBalance handles debt inside AppContext)
       updateOrderStatus(order.id, "returned");
     } else {
-      // Process individual returns
-      itemsToReturn.forEach((retItem) => {
-        const originalItem = order.items.find((i) => i.id === retItem.id);
-        if (originalItem) {
-          addReturn({
-            orderId: order.id,
-            productId: originalItem.id,
-            quantity: retItem.quantity,
-            date: new Date().toISOString(),
-            type: returnType,
-            status:
-              returnType === "inventory" ? "returned" : "pending_replacement",
-            refundAmount:
-              (originalItem.customPrice ?? originalItem.price) *
-              retItem.quantity,
-          });
-        }
-      });
-
-      // We don't change the order status for partial returns, but ideally we'd mark it "partially_returned".
-      // For now, we add notification.
+      // Partial return
       addNotification({
         title: "تم الاسترجاع",
         message: `تم استرجاع جزئي للفاتورة رقم ${order.id}`,
         type: "success",
+      });
+
+      // Adjust customer balance for partial returns if debt
+      if (order.paymentMethod === "debt" && order.customerId) {
+        adjustCustomerBalance(order.customerId, -totalRefundAmount);
+      }
+    }
+
+    // Hand back money (log expense out) for non-debt refunds (Cash/Digital)
+    if (order.paymentMethod !== "debt") {
+      addTransaction({
+        type: "payment_out",
+        amount: totalRefundAmount,
+        date: new Date().toISOString(),
+        description: `استرجاع نقدي للطلب رقم ${order.id}`,
+        referenceId: order.id,
+        entityId: order.customerId,
+        entityName: order.customerName || "عميل عام",
       });
     }
 

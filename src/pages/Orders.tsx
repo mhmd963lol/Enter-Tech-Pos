@@ -242,7 +242,6 @@ export default function Orders() {
                         <option value="shipped">مشحون</option>
                         <option value="completed">مكتمل</option>
                         <option value="cancelled">ملغي</option>
-                        <option value="returned">مسترجع</option>
                       </select>
                       <div className="mt-2">{getStatusBadge(order.status)}</div>
                     </td>

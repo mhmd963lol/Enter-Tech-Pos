@@ -25,6 +25,7 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetConfirmationText, setResetConfirmationText] = useState("");
   const [activeTab, setActiveTab] = useState("general");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -55,9 +56,11 @@ export default function SettingsPage() {
   };
 
   const confirmReset = () => {
+    if (resetConfirmationText !== "مسح") return;
     resetApp();
     logout();
     setShowResetConfirm(false);
+    setResetConfirmationText("");
   };
 
   const handleExportBackup = () => {
@@ -604,19 +607,35 @@ export default function SettingsPage() {
                 <Trash2 className="w-10 h-10" />
               </div>
               <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">تأكيد المسح النهائي</h3>
-              <p className="text-zinc-500 dark:text-zinc-400 mb-8 leading-relaxed">
+              <p className="text-zinc-500 dark:text-zinc-400 mb-6 leading-relaxed">
                 هل أنت متأكد من مسح جميع بيانات التطبيق من هذا الجهاز؟ سيتم إرجاعك لصفحة تسجيل الدخول.
               </p>
+
+              <div className="mb-6">
+                <p className="text-sm font-bold text-red-600 dark:text-red-400 mb-2">للعملية التي لا رجعة فيها، اكتب "مسح" بالأسفل</p>
+                <input
+                  type="text"
+                  placeholder="مسح"
+                  value={resetConfirmationText}
+                  onChange={(e) => setResetConfirmationText(e.target.value)}
+                  className="w-full px-4 py-3 bg-red-50 dark:bg-red-900/10 border-2 border-red-200 dark:border-red-900/50 rounded-xl text-center focus:outline-none focus:border-red-500 text-red-600 dark:text-red-400 font-bold dark:placeholder-red-800 transition-colors"
+                />
+              </div>
+
               <div className="flex gap-3">
                 <button
-                  onClick={() => setShowResetConfirm(false)}
+                  onClick={() => {
+                    setShowResetConfirm(false);
+                    setResetConfirmationText("");
+                  }}
                   className="flex-1 px-4 py-3.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-bold transition-colors"
                 >
                   تراجع
                 </button>
                 <button
                   onClick={confirmReset}
-                  className="flex-1 px-4 py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-colors shadow-lg shadow-red-500/30"
+                  disabled={resetConfirmationText !== "مسح"}
+                  className="flex-1 px-4 py-3.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold transition-all shadow-lg shadow-red-500/30"
                 >
                   نعم، امسح كل شيء
                 </button>

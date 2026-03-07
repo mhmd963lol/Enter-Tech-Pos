@@ -823,9 +823,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // If order is being cancelled or returned, and it wasn't already, restore stock
+    // If order is being cancelled, restore stock
     if (
-      (status === "cancelled" || status === "returned") &&
+      status === "cancelled" &&
       order.status !== "cancelled" &&
       order.status !== "returned"
     ) {
@@ -839,9 +839,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }),
       );
     }
-    // If order was cancelled/returned and is now being restored, deduct stock
+    // If order was cancelled and is now being restored, deduct stock
     else if (
-      (order.status === "cancelled" || order.status === "returned") &&
+      order.status === "cancelled" &&
       status !== "cancelled" &&
       status !== "returned"
     ) {
