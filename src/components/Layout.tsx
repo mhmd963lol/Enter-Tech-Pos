@@ -142,10 +142,14 @@ const SidebarItem: React.FC<{
     return (
       <div
         className="mb-1 relative group/item"
-        onMouseEnter={() => setIsHovered(true)}
+        onMouseEnter={() => {
+          setIsHovered(true);
+          if (!isCollapsed) setIsOpen(true);
+        }}
         onMouseLeave={() => {
           setIsHovered(false);
           if (isCollapsed) setIsOpen(false);
+          else setIsOpen(false); // Close on leave for expanded too as per user request "without clicking"
         }}
       >
         <button
@@ -181,21 +185,21 @@ const SidebarItem: React.FC<{
 
         {/* Tooltip الاحترافي - اسم القسم */}
         {isCollapsed && (
-          <div className="premium-tooltip group-hover/item:opacity-100 group-hover/item:translate-x-0 mr-2">
+          <div className="premium-tooltip group-hover/item:opacity-100 group-hover/item:translate-x-0 !transition-none">
             <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
             <span className="font-bold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{item.label}</span>
             <div className="premium-tooltip-arrow" />
           </div>
         )}
 
-        {/* Sub Items - Collapsed Mode (under icon variant) or Expanded Mode */}
+        {/* Sub Items */}
         <AnimatePresence>
           {(isOpen || (isCollapsed && isHovered)) && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
               className={`overflow-hidden ${isCollapsed
                 ? "flex flex-col items-center gap-1.5 py-1.5"
                 : "mt-1 ml-4 pr-6 space-y-1 border-r-2 border-dashed border-zinc-200 dark:border-zinc-800"
@@ -207,7 +211,7 @@ const SidebarItem: React.FC<{
                   to={subItem.to}
                   onClick={isMobile ? closeMobile : undefined}
                   className={({ isActive }) =>
-                    `flex items-center transition-all duration-300 group/sub ${isCollapsed
+                    `flex items-center transition-all duration-200 group/sub ${isCollapsed
                       ? `h-10 w-10 justify-center rounded-lg ${isActive ? "bg-indigo-600 text-white shadow-lg" : "bg-zinc-100 dark:bg-zinc-900 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800"}`
                       : `gap-3 px-4 py-2.5 rounded-xl ${isActive ? "text-indigo-600 dark:bg-indigo-50/50 dark:bg-indigo-900/10 font-medium" : "text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"}`
                     }`
@@ -217,7 +221,7 @@ const SidebarItem: React.FC<{
                   {!isCollapsed && <span className="text-sm">{subItem.label}</span>}
 
                   {isCollapsed && (
-                    <div className="absolute right-full mr-2 px-3 py-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold rounded-lg opacity-0 group-hover/sub:opacity-100 pointer-events-none transition-opacity duration-75 translate-x-1 group-hover/sub:translate-x-0 z-[60] shadow-xl whitespace-nowrap">
+                    <div className="absolute right-full mr-2 px-3 py-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold rounded-lg opacity-0 group-hover/sub:opacity-100 pointer-events-none transition-all duration-75 translate-x-1 group-hover/sub:translate-x-0 z-[60] shadow-xl whitespace-nowrap">
                       {subItem.label}
                       <div className="absolute top-1/2 -right-1 -translate-y-1/2 border-y-4 border-y-transparent border-l-[6px] border-l-zinc-900 dark:border-l-white" />
                     </div>
