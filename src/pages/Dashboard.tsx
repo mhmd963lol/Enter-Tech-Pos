@@ -9,15 +9,38 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { DollarSign, ShoppingBag, Package, TrendingUp } from "lucide-react";
+import {
+  DollarSign,
+  ShoppingBag,
+  Package,
+  TrendingUp,
+  CreditCard,
+  Wallet,
+  Users,
+  CheckCircle2,
+  Clock,
+  Truck,
+  RotateCcw,
+  XCircle,
+} from "lucide-react";
 import { motion } from "motion/react";
 
 const Dashboard = () => {
-  const { orders, products, settings, logs } = useAppContext();
+  const { orders, products, settings, logs, transactions } = useAppContext();
 
-  const totalSales = useMemo(() => orders
-    .filter((order) => order.status === "completed")
-    .reduce((sum, order) => sum + order.total, 0), [orders]);
+  const totalSales = useMemo(() => {
+    // Total income = (Orders amountPaid) + (Payment In Transactions)
+    const salesInOrders = orders
+      .filter((order) => order.status === "completed")
+      .reduce((sum, order) => sum + order.amountPaid, 0);
+
+    const collections = transactions
+      .filter(t => t.type === "payment_in")
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    return salesInOrders + collections;
+  }, [orders, transactions]);
+
   const totalOrders = useMemo(() => orders.filter(
     (order) => order.status === "completed",
   ).length, [orders]);
@@ -38,13 +61,16 @@ const Dashboard = () => {
       const dateString = date.toISOString().split("T")[0];
       const dailySales = orders
         .filter((o) => o.status === "completed" && o.date.startsWith(dateString))
-        .reduce((sum, o) => sum + o.total, 0);
+        .reduce((sum, o) => sum + o.amountPaid, 0);
+
+      const collections = transactions
+        .filter(t => t.type === "payment_in" && t.date.startsWith(dateString))
+        .reduce((sum, t) => sum + t.amount, 0);
 
       const dayName = date.toLocaleDateString("ar-SA", { weekday: "long" });
-      // Remove "يوم " prefix if present in some locales, keep it clean
-      return { name: dayName.replace("يوم ", ""), sales: dailySales };
+      return { name: dayName.replace("يوم ", ""), sales: dailySales + collections };
     });
-  }, [orders]);
+  }, [orders, transactions]);
 
   const stats = [
     {
@@ -161,6 +187,7 @@ const Dashboard = () => {
               <thead>
                 <tr className="text-sm text-zinc-500 border-b border-zinc-100 dark:border-zinc-800">
                   <th className="pb-4 font-medium">الطلب</th>
+                  <th className="pb-4 font-medium">الأصناف</th>
                   <th className="pb-4 font-medium">الموظف</th>
                   <th className="pb-4 font-medium text-left">الإجمالي</th>
                   <th className="pb-4 font-medium text-left">الربح</th>
@@ -182,8 +209,12 @@ const Dashboard = () => {
                     <tr key={order.id} className="text-sm group hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
                       <td className="py-4">
                         <p className="font-bold text-zinc-900 dark:text-white">#{order.dailyNumber || order.id.slice(-4)}</p>
-                        <p className="text-xs text-zinc-400 max-w-[200px] truncate" title={itemsSummary}>{itemsSummary}</p>
                         <p className="text-[10px] text-zinc-500">{new Date(order.date).toLocaleTimeString("ar-SA")}</p>
+                      </td>
+                      <td className="py-4">
+                        <p className="text-xs text-zinc-600 dark:text-zinc-400 max-w-[250px] leading-relaxed break-words" title={itemsSummary}>
+                          {itemsSummary}
+                        </p>
                       </td>
                       <td className="py-4">
                         <p className="text-zinc-600 dark:text-zinc-400">{order.cashierName || "غير معروف"}</p>
@@ -195,12 +226,33 @@ const Dashboard = () => {
                         {profit.toFixed(2)}
                       </td>
                       <td className="py-4 text-center">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${order.status === "completed" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
-                          order.status === "cancelled" ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" :
-                            "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
-                          }`}>
-                          {order.status === "completed" ? "مكتمل" : order.status === "cancelled" ? "ملغي" : order.status}
-                        </span>
+                        <div className="flex flex-col items-center gap-1">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-black flex items-center gap-1.5 shadow-sm border ${order.status === "completed" ? "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800" :
+                            order.status === "cancelled" ? "bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-800" :
+                              "bg-zinc-50 text-zinc-700 border-zinc-100 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
+                            }`}>
+                            {order.status === "completed" ? <CheckCircle2 size={12} className="shrink-0" /> :
+                              order.status === "cancelled" ? <XCircle size={12} className="shrink-0" /> :
+                                order.status === "shipped" ? <Truck size={12} className="shrink-0" /> :
+                                  order.status === "returned" ? <RotateCcw size={12} className="shrink-0" /> :
+                                    <Clock size={12} className="shrink-0" />}
+                            <span>
+                              {order.status === "completed" ? "مكتمل" :
+                                order.status === "cancelled" ? "ملغي" :
+                                  order.status === "pending" ? "انتظار" :
+                                    order.status === "processing" ? "تجهيز" :
+                                      order.status === "shipped" ? "شحن" :
+                                        order.status === "returned" ? "مرجع" : order.status}
+                            </span>
+                          </span>
+
+                          <div className="flex items-center gap-1.5 text-[9px] font-black text-zinc-500 uppercase">
+                            {order.paymentMethod === 'cash' ? <div className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-100 dark:border-emerald-900"><Wallet size={10} className="text-emerald-500" /> كاش</div> :
+                              order.paymentMethod === 'card' ? <div className="flex items-center gap-1 bg-blue-50 dark:bg-blue-950 px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-900"><CreditCard size={10} className="text-blue-500" /> بطاقة</div> :
+                                order.paymentMethod === 'debt' ? <div className="flex items-center gap-1 bg-rose-50 dark:bg-rose-950 px-1.5 py-0.5 rounded border border-rose-100 dark:border-rose-900"><Users size={10} className="text-rose-500" /> آجل</div> :
+                                  <div className="flex items-center gap-1 bg-zinc-50 dark:bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-100 dark:border-zinc-800"> {order.paymentMethod}</div>}
+                          </div>
+                        </div>
                       </td>
                     </tr>
                   );

@@ -120,6 +120,7 @@ interface AppContextType {
   setIsCartOpen: (open: boolean) => void;
   isSidebarCollapsed: boolean;
   setIsSidebarCollapsed: (collapsed: boolean) => void;
+  collectDebt: (customerId: string, amount: number, paymentMethod: "cash" | "card") => void;
 }
 
 const defaultSettings: Settings = {
@@ -826,6 +827,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
     clearCart();
   };
 
+  const collectDebt = (customerId: string, amount: number, paymentMethod: "cash" | "card") => {
+    const customer = customers.find(c => c.id === customerId);
+    if (!customer || amount <= 0) return;
+
+    adjustCustomerBalance(customerId, -amount);
+
+    // Create a virtual order or transaction for this payment to reflect in Ghalla
+    const transactionId = `PAY-${Date.now()}`;
+    const newTransaction: Transaction = {
+      id: transactionId,
+      type: "payment_in",
+      amount: amount,
+      date: new Date().toISOString(),
+      description: `تحصيل دين من العميل: ${customer.name}`,
+      entityId: customerId,
+      entityName: customer.name
+    };
+
+    addTransaction(newTransaction);
+
+    addLog({
+      action: "تحصيل دين",
+      details: `تم تحصيل مبلغ ${amount} من ${customer.name} عبر ${paymentMethod === 'cash' ? 'نقدي' : 'بطاقة'}`,
+      type: "sale"
+    });
+
+    addNotification({
+      title: "تم التحصيل",
+      message: `تم استلام ${amount} من العميل ${customer.name}`,
+      type: "success"
+    });
+
+    playSound("success");
+  };
+
   const addProduct = (product: Omit<Product, "id">) => {
     const newProduct: Product = {
       ...product,
@@ -1356,6 +1392,47 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIncomes((prev) => prev.filter((i) => i.id !== id));
   };
 
+  // Debt Reminder System
+  useEffect(() => {
+    const checkDebtReminders = () => {
+      const now = new Date();
+      const currentHour = now.getHours();
+
+      // Remind at 1:00 PM (13) and 8:00 PM (20)
+      const isReminderTime = currentHour === 13 || currentHour === 20;
+
+      if (isReminderTime) {
+        customers.forEach(customer => {
+          if (customer.balance > 0) {
+            const todayStr = now.toISOString().split('T')[0];
+            const nextReminderStr = customer.nextReminderDate ? customer.nextReminderDate.split('T')[0] : null;
+
+            // If nextReminderDate is set and it's in the future, skip
+            if (nextReminderStr && nextReminderStr > todayStr) return;
+
+            const nowSlotStr = todayStr + "-" + currentHour;
+            // Check if we already reminded for this specific hour slot
+            if (customer.lastReminderSlot !== nowSlotStr) {
+              addNotification({
+                title: "تذكير بمستحقات",
+                message: `العميل ${customer.name} لديه ديون مستحقة بقيمة ${customer.balance} ${settings.currency}`,
+                type: "warning",
+              });
+
+              updateCustomer(customer.id, { lastReminderSlot: nowSlotStr });
+            }
+          }
+        });
+      }
+    };
+
+    // Run every hour to check the time
+    const interval = setInterval(checkDebtReminders, 3600000);
+    checkDebtReminders(); // Initial check
+
+    return () => clearInterval(interval);
+  }, [customers, settings.currency]);
+
   return (
     <AppContext.Provider
       value={{
@@ -1432,6 +1509,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setIsCartOpen,
         isSidebarCollapsed,
         setIsSidebarCollapsed,
+        collectDebt,
+        logs,
+        addLog,
       }}
     >
       {children}

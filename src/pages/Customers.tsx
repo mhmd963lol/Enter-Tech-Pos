@@ -13,12 +13,14 @@ import {
   DollarSign,
   ArrowUpRight,
   ArrowDownLeft,
+  Bell,
+  Calendar,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Customer } from "../types";
 
 export default function Customers() {
-  const { customers, addCustomer, updateCustomer, deleteCustomer, settings } =
+  const { customers, addCustomer, updateCustomer, deleteCustomer, settings, collectDebt, addNotification } =
     useAppContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -213,13 +215,12 @@ export default function Customers() {
                     </td>
                     <td className="px-6 py-4">
                       <div
-                        className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold ${
-                          customer.balance > 0
-                            ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                            : customer.balance < 0
-                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                              : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-                        }`}
+                        className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold ${customer.balance > 0
+                          ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                          : customer.balance < 0
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                            : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                          }`}
                       >
                         <DollarSign className="w-4 h-4" />
                         {Math.abs(customer.balance).toFixed(2)}{" "}
@@ -235,6 +236,39 @@ export default function Customers() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
+                        {customer.balance > 0 && (
+                          <>
+                            <button
+                              onClick={() => {
+                                const amount = window.prompt(`أدخل المبلغ المحصل من ${customer.name}:`, customer.balance.toString());
+                                if (amount && !isNaN(parseFloat(amount))) {
+                                  collectDebt(customer.id, parseFloat(amount), "cash");
+                                }
+                              }}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-lg text-xs font-bold hover:bg-emerald-200 transition-colors"
+                            >
+                              <DollarSign className="w-3 h-3" />
+                              تحصيل
+                            </button>
+                            <button
+                              onClick={() => {
+                                const date = window.prompt(`تحديد موعد تذكير لـ ${customer.name} (Y-M-D):`, new Date().toISOString().split('T')[0]);
+                                if (date) {
+                                  updateCustomer(customer.id, { nextReminderDate: new Date(date).toISOString() });
+                                  addNotification({
+                                    title: "تم تحديد موعد",
+                                    message: `سيتم تذكيرك بمطالبة ${customer.name} بتاريخ ${date}`,
+                                    type: "info"
+                                  });
+                                }
+                              }}
+                              className="p-2 text-zinc-400 hover:text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-lg transition-all"
+                              title="تحديد موعد تذكير"
+                            >
+                              <Bell className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                         <button
                           onClick={() => handleOpenModal(customer)}
                           className="p-2 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"

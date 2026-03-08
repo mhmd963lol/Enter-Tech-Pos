@@ -130,6 +130,9 @@ export interface Customer {
   email?: string;
   address?: string;
   balance: number; // Positive means they owe us (debtor), negative means we owe them (creditor)
+  nextReminderDate?: string; // Next date to remind about debt
+  lastReminderSlot?: string;
+  reminderInterval?: "daily" | "weekly" | "monthly" | "fixed";
 }
 
 export interface DashboardStats {

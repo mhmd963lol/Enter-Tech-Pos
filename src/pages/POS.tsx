@@ -11,6 +11,7 @@ import {
   X,
   Package,
   ShieldAlert,
+  Users,
   Wrench,
   AlertTriangle,
   XCircle,
@@ -810,7 +811,7 @@ export default function POS() {
                           >
                             {method === "cash" && <Banknote className="w-4 h-4" />}
                             {method === "card" && <CreditCard className="w-4 h-4" />}
-                            {method === "debt" && <ShieldAlert className="w-4 h-4" />}
+                            {method === "debt" && <Users className="w-4 h-4" />}
                             {method === "split" && <div className="flex -space-x-1"><Banknote className="w-3 h-3 z-10" /><CreditCard className="w-3 h-3" /></div>}
                             {method === "cash" ? "كاش" : method === "card" ? "شبكة" : method === "debt" ? "آجل" : "مقسم"}
                           </button>
