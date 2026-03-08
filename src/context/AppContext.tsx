@@ -22,6 +22,7 @@ import {
   PurchaseInvoice,
   Employee,
   Transaction,
+  SystemLog,
 } from "../types";
 import { mockProducts, mockOrders } from "../data/mockData";
 import { useLocalStorage } from "../hooks/useLocalStorage";
@@ -111,6 +112,8 @@ interface AppContextType {
   addIncome: (income: Omit<Income, "id">) => void;
   deleteIncome: (id: string) => void;
   addTransaction: (transaction: Omit<Transaction, "id">) => void;
+  logs: SystemLog[];
+  addLog: (log: Omit<SystemLog, "id" | "date" | "userId" | "userName">) => void;
   deferredPrompt: any;
   setDeferredPrompt: (prompt: any) => void;
   isCartOpen: boolean;
@@ -231,6 +234,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     "app_transactions",
     [],
   );
+  const [logs, setLogs] = useLocalStorage<SystemLog[]>("app_logs", []);
 
   // Capture PWA Install Prompt
   useEffect(() => {
@@ -272,6 +276,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             if (data.purchases) setPurchases(data.purchases);
             if (data.employees) setEmployees(data.employees);
             if (data.transactions) setTransactions(data.transactions);
+            if (data.logs) setLogs(data.logs);
           }
         } catch (error) {
           console.error("Error fetching user data from Firestore", error);
@@ -303,7 +308,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           suppliers,
           purchases,
           employees,
-          transactions
+          transactions,
+          logs
         }, { merge: true });
       } catch (error) {
         console.error("Error syncing data to Firestore", error);
@@ -746,12 +752,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const actualAmountPaid =
       amountPaid ?? (paymentMethod === "debt" ? 0 : total);
 
+    const profit = cart.reduce((sum, item) => sum + ((item.customPrice ?? item.price) - item.costPrice) * item.quantity, 0);
+    const today = new Date().toISOString().split('T')[0];
+    const dailyNumber = orders.filter(o => o.date.startsWith(today)).length + 1;
+
     const newOrder: Order = {
       id: `ORD-${Math.floor(Math.random() * 10000) + 1000}`,
+      dailyNumber,
       date: new Date().toISOString(),
       subtotal,
       tax,
       total,
+      profit,
       status: "completed",
       items: [...cart],
       paymentMethod,
@@ -760,9 +772,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       customerId,
       amountPaid: actualAmountPaid,
       cashierId: user?.id,
+      cashierName: user?.name,
     };
 
     setOrders((prev) => [newOrder, ...prev]);
+    addLog({
+      action: "بيع طلب",
+      details: `إتمام عملية بيع برقم ${newOrder.id} - الإجمالي: ${total} - الربح: ${profit}`,
+      type: "sale"
+    });
     playSound("success");
 
     // Update customer balance if order is completed
@@ -814,16 +832,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
       id: Math.random().toString(36).substring(7),
     };
     setProducts((prev) => [...prev, newProduct]);
+    addLog({
+      action: "إضافة صنف",
+      details: `تم إضافة صنف جديد: ${newProduct.name} - السعر: ${newProduct.price}`,
+      type: "inventory"
+    });
   };
 
   const updateProduct = (id: string, updatedFields: Partial<Product>) => {
     setProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, ...updatedFields } : p)),
     );
+    const product = products.find(p => p.id === id);
+    if (product) {
+      addLog({
+        action: "تعديل صنف",
+        details: `تعديل بيانات الصنف: ${product.name}`,
+        type: "inventory"
+      });
+    }
   };
 
   const deleteProduct = (id: string) => {
+    const product = products.find(p => p.id === id);
     setProducts((prev) => prev.filter((p) => p.id !== id));
+    if (product) {
+      addLog({
+        action: "حذف صنف",
+        details: `تم حذف الصنف: ${product.name}`,
+        type: "inventory"
+      });
+    }
   };
 
   const addCategory = (category: Omit<Category, "id">) => {
@@ -1096,6 +1135,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } else {
       playSound("success");
     }
+  };
+
+  const addLog = (logData: Omit<SystemLog, "id" | "date" | "userId" | "userName">) => {
+    const newLog: SystemLog = {
+      ...logData,
+      id: `LOG-${Math.random().toString(36).substring(7)}`,
+      date: new Date().toISOString(),
+      userId: user?.id || "system",
+      userName: user?.name || "النظام",
+    };
+    setLogs((prev) => [newLog, ...prev]);
   };
 
   const markNotificationAsRead = (id: string) => {

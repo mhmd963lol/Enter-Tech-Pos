@@ -45,10 +45,12 @@ export interface User {
 
 export interface Order {
   id: string;
+  dailyNumber?: number; // Daily sequence number (e.g. 1, 2, 3...)
   date: string;
   total: number;
   subtotal: number;
   tax: number;
+  profit?: number;
   status:
   | "pending"
   | "processing"
@@ -64,8 +66,19 @@ export interface Order {
   paymentMethod: "cash" | "card" | "online" | "debt" | "split";
   splitDetails?: { cash: number; card: number };
   cashierId?: string;
+  cashierName?: string; // New field for transparency
   isReturn?: boolean;
   returnReason?: string;
+}
+
+export interface SystemLog {
+  id: string;
+  date: string;
+  action: string; // e.g., "بيع طلب", "إلغاء طلب", "تعديل مخزون"
+  details: string;
+  userId: string;
+  userName: string;
+  type: "sale" | "inventory" | "security" | "system";
 }
 
 export interface ReturnItem {
