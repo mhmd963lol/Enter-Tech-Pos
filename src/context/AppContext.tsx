@@ -291,8 +291,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const unsubscribeSnapshot = onSnapshot(doc(db, "users", firebaseUser.uid), (snapshot) => {
           if (snapshot.exists()) {
             const data = snapshot.data();
-            // Only update if not coming from local changes (to avoid loops) or use meta properly
-            // Firestore handles local latency compensation automatically
             if (data.products) setProducts(data.products);
             if (data.categories) setCategories(data.categories);
             if (data.orders) setOrders(data.orders);
@@ -311,9 +309,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
             if (data.logs) setLogs(data.logs);
             setSyncStatus('synced');
           }
+          setIsAuthLoading(false); // <--- Important: loading state must end
         }, (error) => {
           console.error("Firestore snapshot error:", error);
           setSyncStatus('error');
+          setIsAuthLoading(false); // <--- Also end loading on error
         });
 
         return () => unsubscribeSnapshot();
