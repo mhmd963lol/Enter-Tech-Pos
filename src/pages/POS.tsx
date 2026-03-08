@@ -104,7 +104,7 @@ export default function POS() {
     newPrice: number;
   } | null>(null);
 
-  // Auto-open cart on mount only on Desktop (>= 1024px)
+  // Auto-open cart on mount only on Desktop (>= 1024px) - Run only once
   useEffect(() => {
     if (window.innerWidth >= 1024) {
       const timer = setTimeout(() => {
@@ -113,7 +113,8 @@ export default function POS() {
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [setIsCartOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Global Keydown listener for focusing search input
   useEffect(() => {
@@ -638,7 +639,7 @@ export default function POS() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsCartOpen(false)}
-              className="lg:hidden fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
+              className="lg:hidden fixed inset-0 bg-black/60 z-50 backdrop-blur-sm"
             />
           )
         }
@@ -654,7 +655,7 @@ export default function POS() {
               className={`
                  w-[calc(100%-2rem)] max-w-[480px] lg:w-[420px] flex flex-col bg-white dark:bg-zinc-950 shadow-2xl border-r lg:border-r-0 lg:border-l border-zinc-200 dark:border-zinc-800 shrink-0
                  fixed lg:relative lg:flex lg:rounded-2xl min-h-0 lg:max-h-full
-                 bottom-4 left-4 right-4 lg:bottom-0 lg:left-0 lg:right-0 z-[70] lg:z-auto rounded-3xl lg:rounded-b-2xl origin-bottom
+                 bottom-4 left-4 right-4 lg:bottom-0 lg:left-0 lg:right-0 z-[60] lg:z-auto rounded-3xl lg:rounded-b-2xl origin-bottom
                  ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""}
                  h-[85vh] lg:h-auto
                `}

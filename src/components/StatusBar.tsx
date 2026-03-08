@@ -61,7 +61,7 @@ export default function StatusBar() {
     };
 
     return (
-        <div className="bg-gradient-to-l from-indigo-900 via-indigo-800 to-indigo-950 text-indigo-50 text-xs sm:text-sm py-1.5 px-4 flex flex-wrap items-center justify-between shrink-0 shadow-inner z-40 w-full relative">
+        <div className="bg-gradient-to-l from-indigo-900 via-indigo-800 to-indigo-950 text-indigo-50 text-xs sm:text-sm py-1.5 px-4 flex flex-wrap items-center justify-between shrink-0 shadow-inner z-[100] w-full relative">
 
             {/* Right side: Time and Date */}
             <div className="flex items-center gap-4 sm:gap-6">
@@ -241,9 +241,9 @@ export default function StatusBar() {
 
                 {/* Connection & Sync Status Indicator */}
                 <div className={`flex items-center gap-2 px-2.5 py-0.5 rounded-md border transition-all duration-300 ${!isOnline ? "bg-red-500/20 border-red-500/30 text-red-200" :
-                        syncStatus === 'syncing' ? "bg-amber-500/20 border-amber-500/30 text-amber-200" :
-                            syncStatus === 'error' ? "bg-rose-500/30 border-rose-500/50 text-rose-100" :
-                                "bg-emerald-500/20 border-emerald-500/30 text-emerald-200"
+                    syncStatus === 'syncing' ? "bg-amber-500/20 border-amber-500/30 text-amber-200" :
+                        syncStatus === 'error' ? "bg-rose-500/30 border-rose-500/50 text-rose-100" :
+                            "bg-emerald-500/20 border-emerald-500/30 text-emerald-200"
                     }`} title={
                         !isOnline ? "أنت تعمل بدون اتصال - سيتم الحفظ محلياً" :
                             syncStatus === 'syncing' ? "جاري مزامنة البيانات..." :

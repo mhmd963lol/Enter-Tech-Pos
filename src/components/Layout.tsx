@@ -384,9 +384,9 @@ export default function Layout() {
             {isMobileMenuOpen ? (
               <X className="w-5 h-5" />
             ) : isSidebarCollapsed ? (
-              <ChevronLeft className={`w-5 h-5 transition-transform duration-500 ${isSidebarCollapsed ? "rotate-180" : ""}`} />
+              <ChevronLeft className={`w-5 h-5 transition-transform duration-500`} />
             ) : (
-              <ChevronRight className={`w-5 h-5 transition-transform duration-500 ${isSidebarCollapsed ? "rotate-180" : ""}`} />
+              <ChevronRight className={`w-5 h-5 transition-transform duration-500`} />
             )}
           </button>
         </div>
