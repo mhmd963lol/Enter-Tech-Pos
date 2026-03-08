@@ -3,6 +3,7 @@ import { useAppContext } from "../context/AppContext";
 import { Eye, EyeOff, Mail, Lock, Phone, Check, ArrowRight, RefreshCw, LogIn, Moon, Sun } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import CashierTechLogo from "../components/CashierTechLogo";
+import { APP_VERSION } from "../version";
 import { auth, db } from "../lib/firebase";
 import {
   signInWithEmailAndPassword,
@@ -676,6 +677,11 @@ export default function Login() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Version display */}
+      <div className="absolute bottom-6 right-6 text-gray-400 dark:text-zinc-600 text-xs font-bold bg-white/50 dark:bg-zinc-900/50 px-3 py-1 rounded-full backdrop-blur-sm border border-gray-100 dark:border-zinc-800">
+        {APP_VERSION}
+      </div>
     </div>
   );
 }

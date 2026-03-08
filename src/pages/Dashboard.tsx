@@ -169,7 +169,9 @@ const Dashboard = () => {
               </thead>
               <tbody className="divide-y divide-zinc-50 dark:divide-zinc-900">
                 {orders.slice(0, 10).map((order) => {
-                  const profit = order.profit ?? 0;
+                  const profit = order.profit ?? order.items.reduce((sum, item) => sum + ((item.customPrice ?? item.price) - item.costPrice) * item.quantity, 0);
+                  const itemsSummary = order.items.map(i => i.name).join('، ');
+
                   const profitColor = profit > 0
                     ? "text-emerald-600 dark:text-emerald-400"
                     : profit < 0
@@ -180,7 +182,8 @@ const Dashboard = () => {
                     <tr key={order.id} className="text-sm group hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
                       <td className="py-4">
                         <p className="font-bold text-zinc-900 dark:text-white">#{order.dailyNumber || order.id.slice(-4)}</p>
-                        <p className="text-xs text-zinc-500">{new Date(order.date).toLocaleTimeString("ar-SA")}</p>
+                        <p className="text-xs text-zinc-400 max-w-[200px] truncate" title={itemsSummary}>{itemsSummary}</p>
+                        <p className="text-[10px] text-zinc-500">{new Date(order.date).toLocaleTimeString("ar-SA")}</p>
                       </td>
                       <td className="py-4">
                         <p className="text-zinc-600 dark:text-zinc-400">{order.cashierName || "غير معروف"}</p>

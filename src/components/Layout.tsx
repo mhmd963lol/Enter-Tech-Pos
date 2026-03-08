@@ -214,9 +214,9 @@ const SidebarItem: React.FC<{
                   {!isCollapsed && <span className="text-sm">{subItem.label}</span>}
 
                   {isCollapsed && (
-                    <div className="premium-tooltip group-hover/sub:opacity-100 group-hover/sub:translate-x-0 mr-2 text-[10px] py-1">
+                    <div className="absolute right-full mr-2 px-3 py-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold rounded-lg opacity-0 group-hover/sub:opacity-100 pointer-events-none transition-all duration-200 translate-x-1 group-hover/sub:translate-x-0 z-[60] shadow-xl whitespace-nowrap">
                       {subItem.label}
-                      <div className="premium-tooltip-arrow" />
+                      <div className="absolute top-1/2 -right-1 -translate-y-1/2 border-y-4 border-y-transparent border-l-[6px] border-l-zinc-900 dark:border-l-white" />
                     </div>
                   )}
                 </NavLink>
@@ -262,27 +262,25 @@ const SidebarItem: React.FC<{
 };
 
 export default function Layout() {
-  const location = useLocation();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement>(null);
-
   const {
-    settings,
-    updateSettings,
     user,
+    settings,
     logout,
+    playSound,
+    isPrivacyMode,
+    updateSettings,
     notifications,
     orders,
-    isPrivacyMode,
     togglePrivacyMode,
-    playSound,
     deferredPrompt,
-    setDeferredPrompt,
-    isSidebarCollapsed,
-    setIsSidebarCollapsed,
+    setDeferredPrompt
   } = useAppContext();
+
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
+  const location = useLocation();
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   const unreadNotificationsCount = notifications.filter((n) => !n.read).length;
 
@@ -300,18 +298,18 @@ export default function Layout() {
     }
   };
 
-  // Click outside listener for user menu
+  // Click outside listener for mobile sidebar
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-        setIsUserMenuOpen(false);
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node) && isMobileMenuOpen) {
+        setIsMobileMenuOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [userMenuRef]);
+  }, [isMobileMenuOpen]);
 
   const handleInstallApp = async () => {
     if (deferredPrompt) {
@@ -326,65 +324,46 @@ export default function Layout() {
     }
   };
 
-  // Calculate today's stats
-  const today = new Date().toISOString().split("T")[0];
-  const todaysOrders = orders.filter((o) => o.date.startsWith(today));
-  const todaysSales = todaysOrders
-    .filter((o) => o.status === "completed")
-    .reduce((sum, o) => sum + o.total, 0);
-
   return (
-    <div
-      className={`flex h-screen bg-zinc-50 dark:bg-zinc-900 transition-colors theme-master-${settings.masterTheme} ${isPrivacyMode ? "privacy-mode" : ""}`}
-      dir="rtl"
-    >
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
+    <div className={`flex h-screen bg-[#F8F9FA] dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-100 overflow-hidden theme-master-${settings.masterTheme} ${isPrivacyMode ? "privacy-mode" : ""}`} dir="rtl">
+      {/* Mobile Backdrop */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 lg:hidden"
+          />
+        )}
+      </AnimatePresence>
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 right-0 z-50 bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] flex flex-col overflow-hidden shadow-2xl lg:shadow-none ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""
-          } ${isSidebarCollapsed ? "w-20 sidebar-glow" : "w-72"} ${isMobileMenuOpen ? "translate-x-0 w-72" : "translate-x-full lg:translate-x-0"
-          } ${settings.masterTheme === "carbon" ? "carbon-texture" : ""} ${settings.masterTheme === "gaming" ? "scanning-line" : ""}`}
-        style={{ willChange: "width, transform" }}
+        ref={sidebarRef}
+        className={`${isSidebarCollapsed ? "w-20" : "w-64"
+          } bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 transition-all duration-300 ease-in-out flex flex-col z-[51] fixed inset-y-0 right-0 lg:relative lg:translate-x-0 ${isMobileMenuOpen ? "translate-x-0 shadow-2xl" : "translate-x-full"
+          }`}
       >
-        <div className={`p-4 flex items-center transition-all duration-300 border-b border-zinc-100 dark:border-zinc-800 ${isSidebarCollapsed ? "justify-center" : "justify-between"}`}>
-          <div className="flex items-center gap-3 overflow-hidden">
-            <motion.div
-              whileHover={{ scale: 1.05, rotate: 5 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              <CashierTechLogo showText={false} className="w-10 h-10 shrink-0" />
-            </motion.div>
-            <AnimatePresence>
-              {!isSidebarCollapsed && (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  className="whitespace-nowrap"
-                >
-                  <h1 className="text-xl font-bold text-zinc-900 dark:text-white truncate">
-                    {settings.storeName}
-                  </h1>
-                  <p className="text-[10px] text-zinc-500 truncate">نظام إدارة المبيعات الذكي</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+        <div className="p-4 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 h-16 shrink-0">
           {!isSidebarCollapsed && (
-            <button
-              className="lg:hidden p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-3 overflow-hidden">
+              <CashierTechLogo className="w-8 h-8 shrink-0" showText={false} />
+              <div className="flex flex-col">
+                <span className="font-black text-lg text-zinc-900 dark:text-white truncate">كاشير تك</span>
+                <span className="text-[10px] text-zinc-500 truncate -mt-1">{settings.storeName}</span>
+              </div>
+            </motion.div>
           )}
+          {isSidebarCollapsed && <CashierTechLogo className="w-8 h-8 mx-auto" showText={false} />}
+
+          <button
+            onClick={() => isMobileMenuOpen ? setIsMobileMenuOpen(false) : setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-zinc-500 transition-colors"
+          >
+            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
 
         <nav className="flex-1 overflow-y-auto p-2 custom-scrollbar space-y-2">
@@ -392,7 +371,7 @@ export default function Layout() {
             <SidebarItem
               key={item.label}
               item={item}
-              isMobile={false}
+              isMobile={window.innerWidth < 1024}
               isCollapsed={isSidebarCollapsed}
               closeMobile={() => setIsMobileMenuOpen(false)}
             />
@@ -403,7 +382,7 @@ export default function Layout() {
           {deferredPrompt && (
             <button
               onClick={handleInstallApp}
-              className={`w-full flex items-center gap-3 p-3 mb-4 rounded-xl transition-all font-bold group shadow-sm bg-gradient-to-r from-[#00E676] to-[#00C853] text-indigo-950 hover:shadow-[#00E676]/20 bg-[length:200%_auto] hover:bg-right ${isSidebarCollapsed ? "justify-center px-0 h-12 w-12 mx-auto" : ""
+              className={`w-full flex items-center gap-3 p-3 mb-4 rounded-xl transition-all font-bold group shadow-sm bg-gradient-to-r from-emerald-400 to-emerald-600 text-white hover:shadow-emerald-500/20 ${isSidebarCollapsed ? "justify-center px-0 h-12 w-12 mx-auto" : ""
                 }`}
             >
               <Download className="w-5 h-5 shrink-0" />
@@ -417,87 +396,64 @@ export default function Layout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden relative">
         <StatusBar />
-        {/* Top Header */}
-        <header className={`h-16 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 lg:px-8 shrink-0 z-30 sticky top-0 ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""}`}>
-          <div className="flex items-center gap-4">
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              className="p-2 text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors shadow-sm bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
-              onClick={() => {
-                playSound("click");
-                if (window.innerWidth < 1024) {
-                  setIsMobileMenuOpen(true);
-                } else {
-                  setIsSidebarCollapsed(!isSidebarCollapsed);
-                }
-              }}
+
+        {/* Mobile Header Toggle (Only visible and needed on mobile if StatusBar is not enough) */}
+        <header className="h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 lg:hidden shrink-0">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="p-2 text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
             >
               <Menu className="w-5 h-5" />
-            </motion.button>
-
-            {/* Hidden original username text */}
-            <div className="hidden items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-              <span className="font-medium text-zinc-900 dark:text-white">
-                {user?.name}
-              </span>
-              <span className="px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded text-xs">
-                {user?.role === "admin" ? "مدير" : "كاشير"}
-              </span>
-            </div>
-
+            </button>
+            <span className="font-bold text-sm">لوحة التحكم</span>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-4">
-            <button
-              onClick={togglePrivacyMode}
-              className={`p-2 rounded-full transition-colors ${isPrivacyMode ? "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
-              title={isPrivacyMode ? "إظهار الأرقام" : "إخفاء الأرقام"}
-            >
-              {isPrivacyMode ? (
-                <EyeOff className="w-5 h-5" />
-              ) : (
-                <Eye className="w-5 h-5" />
-              )}
-            </button>
-            <button
-              onClick={toggleFullscreen}
-              className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
-              title="ملء الشاشة"
-            >
-              <Maximize className="w-5 h-5" />
-            </button>
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setIsNotificationPanelOpen(true)}
-              className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors relative"
+              className="p-2 text-zinc-400 relative"
             >
               <Bell className="w-5 h-5" />
               {unreadNotificationsCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-zinc-950"></span>
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-zinc-900"></span>
               )}
             </button>
-            <button
-              onClick={toggleTheme}
-              className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
-            >
-              {settings.theme === "dark" ? (
-                <Sun className="w-5 h-5" />
-              ) : (
-                <Moon className="w-5 h-5" />
-              )}
+            <button onClick={toggleTheme} className="p-2 text-zinc-400">
+              {settings.theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
-
           </div>
         </header>
 
-        {/* Page Content */}
-        <div className="flex-1 overflow-auto p-4 lg:p-8 min-h-0">
-          <div className="mx-auto h-full">
-            <ThemePageTransition>
-              <Outlet />
-            </ThemePageTransition>
-          </div>
+        {/* Desktop Controls (Top Bar) */}
+        <div className="hidden lg:flex h-14 items-center justify-end px-8 gap-4 border-b border-zinc-100 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-sm">
+          <button
+            onClick={togglePrivacyMode}
+            className={`p-2 rounded-full transition-colors ${isPrivacyMode ? "bg-red-50 text-red-600 dark:bg-red-900/20" : "text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
+            title={isPrivacyMode ? "إظهار الأرقام" : "إخفاء الأرقام"}
+          >
+            {isPrivacyMode ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+          <button onClick={toggleFullscreen} className="p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full" title="ملء الشاشة">
+            <Maximize size={18} />
+          </button>
+          <button onClick={() => setIsNotificationPanelOpen(true)} className="p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full relative">
+            <Bell size={18} />
+            {unreadNotificationsCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-zinc-950"></span>
+            )}
+          </button>
+          <button onClick={toggleTheme} className="p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full">
+            {settings.theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-auto p-4 lg:p-8 min-h-0 bg-transparent">
+          <ThemePageTransition>
+            <Outlet />
+          </ThemePageTransition>
         </div>
       </main>
 
@@ -505,6 +461,6 @@ export default function Layout() {
         isOpen={isNotificationPanelOpen}
         onClose={() => setIsNotificationPanelOpen(false)}
       />
-    </div >
+    </div>
   );
 }

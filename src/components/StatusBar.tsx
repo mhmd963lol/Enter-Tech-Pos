@@ -4,6 +4,7 @@ import { useAppContext } from "../context/AppContext";
 import { useNavigate, NavLink } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { useRef } from "react";
+import { APP_VERSION } from "../version";
 
 export default function StatusBar() {
     const { settings, orders, isPrivacyMode, playSound, user, logout, exchangeRate, cart, isCartOpen, setIsCartOpen } = useAppContext();
@@ -234,6 +235,13 @@ export default function StatusBar() {
                             </motion.div>
                         )}
                     </AnimatePresence>
+                </div>
+
+                <div className="w-px h-4 bg-indigo-700/50 mx-1 hidden lg:block"></div>
+
+                {/* Version Display */}
+                <div className="flex items-center text-[10px] font-bold text-indigo-100 bg-indigo-500/30 px-2 py-0.5 rounded border border-indigo-400/30">
+                    {APP_VERSION}
                 </div>
 
             </div>
