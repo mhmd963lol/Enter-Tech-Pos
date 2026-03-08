@@ -43,10 +43,10 @@ function loadFromCache(): CacheEntry | null {
 async function fetchFromTCMB(): Promise<number> {
     // TCMB blocks direct browser requests, so we use a public CORS proxy.
     const url =
-        "https://corsproxy.io/?" +
+        "https://api.allorigins.win/raw?url=" +
         encodeURIComponent("https://www.tcmb.gov.tr/kurlar/today.xml");
 
-    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) throw new Error(`TCMB HTTP ${res.status}`);
 
     const text = await res.text();
@@ -68,7 +68,7 @@ async function fetchFromTCMB(): Promise<number> {
 // ─── Source 2: ExchangeRate-API (open.er-api.com) ────────────────────
 async function fetchFromExchangeRateAPI(): Promise<number> {
     const res = await fetch("https://open.er-api.com/v6/latest/USD", {
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) throw new Error(`ExchangeRate-API HTTP ${res.status}`);
     const data = await res.json();
@@ -80,7 +80,7 @@ async function fetchFromExchangeRateAPI(): Promise<number> {
 // ─── Source 3: Frankfurter API ───────────────────────────────────────
 async function fetchFromFrankfurter(): Promise<number> {
     const res = await fetch("https://api.frankfurter.app/latest?from=USD&to=TRY", {
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) throw new Error(`Frankfurter HTTP ${res.status}`);
     const data = await res.json();
@@ -104,10 +104,12 @@ export async function getUsdTryRate(): Promise<ExchangeRateResult> {
     for (const source of sources) {
         try {
             const rate = await source.fn();
-            saveToCache(rate);
-            return { rate, isLive: true, source: source.name, timestamp: Date.now() };
+            if (rate && !isNaN(rate) && rate > 0) {
+                saveToCache(rate);
+                return { rate, isLive: true, source: source.name, timestamp: Date.now() };
+            }
         } catch (err) {
-            console.warn(`[ExchangeRate] ${source.name} failed:`, err);
+            console.error(`[ExchangeRate] ${source.name} critical failure:`, err instanceof Error ? err.message : err);
         }
     }
 
