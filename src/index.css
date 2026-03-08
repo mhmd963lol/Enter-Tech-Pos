@@ -13,6 +13,14 @@
   --custom-bg: #f9fafb;
 }
 
+.no-animations *,
+.no-animations *::before,
+.no-animations *::after {
+  animation-duration: 0s !important;
+  transition-duration: 0s !important;
+  animation-iteration-count: 1 !important;
+}
+
 /* ========================================= 
    COLOR THEMES (accent overrides)
    ========================================= */

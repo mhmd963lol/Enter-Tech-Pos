@@ -171,6 +171,7 @@ export interface Settings {
   preventBelowCost: boolean;
   adminPin: string; // 4-digit PIN for overrides
   fontFamily?: string; // CSS font-family string
+  disableAnimations?: boolean; // New: Option to turn off animations
 }
 
 export interface Supplier {

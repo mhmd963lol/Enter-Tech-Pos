@@ -215,7 +215,7 @@ const SidebarItem: React.FC<{
                   {!isCollapsed && <span className="text-sm">{subItem.label}</span>}
 
                   {isCollapsed && (
-                    <div className="absolute right-full mr-2 px-3 py-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold rounded-lg opacity-0 group-hover/sub:opacity-100 pointer-events-none transition-all duration-200 translate-x-1 group-hover/sub:translate-x-0 z-[60] shadow-xl whitespace-nowrap">
+                    <div className="absolute right-full mr-2 px-3 py-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold rounded-lg opacity-0 group-hover/sub:opacity-100 pointer-events-none transition-opacity duration-75 translate-x-1 group-hover/sub:translate-x-0 z-[60] shadow-xl whitespace-nowrap">
                       {subItem.label}
                       <div className="absolute top-1/2 -right-1 -translate-y-1/2 border-y-4 border-y-transparent border-l-[6px] border-l-zinc-900 dark:border-l-white" />
                     </div>
@@ -253,7 +253,7 @@ const SidebarItem: React.FC<{
         {!isCollapsed && <span className="whitespace-nowrap overflow-hidden">{item.label}</span>}
       </NavLink>
       {isCollapsed && (
-        <div className="premium-tooltip group-hover/item:opacity-100 group-hover/item:translate-x-0 mr-2">
+        <div className="premium-tooltip group-hover/item:opacity-100 group-hover/item:translate-x-0 mr-2 !transition-none">
           <span className="font-bold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{item.label}</span>
           <div className="premium-tooltip-arrow" />
         </div>

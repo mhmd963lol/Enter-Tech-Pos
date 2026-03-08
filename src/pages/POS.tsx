@@ -80,6 +80,7 @@ export default function POS() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [gridSize, setGridSize] = useState<"large" | "small" | "tiny">("small");
   const [categoryGridSize, setCategoryGridSize] = useState<"large" | "small">("small");
+  const [isCategorySidebarOpen, setIsCategorySidebarOpen] = useState(true);
   const [isShowMoreOptions, setIsShowMoreOptions] = useState(false);
 
   // Keypad State
@@ -288,23 +289,32 @@ export default function POS() {
           className={`flex-1 flex flex-col bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""}`}
         >
           <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="ابحث باسم المنتج أو الباركود..."
-                className="w-full pl-10 pr-10 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all dark:text-white"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm("")}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-full text-zinc-500 dark:text-zinc-400 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsCategorySidebarOpen(!isCategorySidebarOpen)}
+                className={`p-3 rounded-xl transition-all border ${isCategorySidebarOpen ? "bg-indigo-50 border-indigo-200 text-indigo-600 shadow-inner" : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
+                title={isCategorySidebarOpen ? "إغلاق لوحة الأقسام" : "فتح لوحة الأقسام"}
+              >
+                {isCategorySidebarOpen ? <FolderOpen className="w-5 h-5" /> : <Folder className="w-5 h-5" />}
+              </button>
+              <div className="relative flex-1 min-w-[200px] lg:min-w-[300px]">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="ابحث باسم المنتج أو الباركود..."
+                  className="w-full pl-10 pr-10 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all dark:text-white"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-full text-zinc-500 dark:text-zinc-400 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
             {!searchTerm && (
               <div className="flex items-center gap-2 shrink-0">
@@ -443,32 +453,40 @@ export default function POS() {
             </AnimatePresence>
 
             <div className="flex-1 overflow-auto p-4 pb-24 lg:pb-4 custom-scrollbar">
-
-              {!searchTerm && !selectedCategoryId && (
-                <div className={`grid gap-4 ${categoryGridSize === "small"
-                  ? "grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-8"
-                  : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"}`}>
-                  {categories.filter(c => c.isActive).map((category) => (
-                    <motion.button
-                      key={category.id}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setSelectedCategoryId(category.id)}
-                      className={`group flex flex-col items-center justify-center bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 border border-indigo-100 dark:border-indigo-800 rounded-2xl transition-all gap-2 category-item-hover ${categoryGridSize === "small" ? "p-3" : "p-6"} ${settings.masterTheme === "ios-glass" ? "glass-card liquid-morph" : ""}`}
-                    >
-                      <Folder className={`${categoryGridSize === "small" ? "w-8 h-8" : "w-12 h-12"} text-indigo-500 dark:text-indigo-400`} fill="currentColor" fillOpacity={0.2} />
-                      <span className={`font-bold text-zinc-900 dark:text-white text-center line-clamp-1 ${categoryGridSize === "small" ? "text-xs" : "text-sm"}`}>
-                        {category.name}
-                      </span>
-                      {categoryGridSize === "large" && (
-                        <span className={`text-[10px] text-indigo-600 dark:text-indigo-400 bg-white dark:bg-zinc-950 px-2 py-0.5 rounded-full shadow-sm ${settings.masterTheme === "ios-glass" ? "bg-white/50 backdrop-blur-md" : ""}`}>
-                          {products.filter(p => (p.categoryId === category.id || p.category === category.name) && p.isActive !== false).length}  صنف
+              <AnimatePresence>
+                {!searchTerm && !selectedCategoryId && isCategorySidebarOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className={`grid gap-4 mb-6 ${categoryGridSize === "small"
+                      ? "grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-8"
+                      : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"}`}
+                  >
+                    {categories.filter(c => c.isActive).map((category) => (
+                      <motion.button
+                        key={category.id}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ duration: 0.1 }}
+                        onClick={() => setSelectedCategoryId(category.id)}
+                        className={`group flex flex-col items-center justify-center bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 border border-indigo-100 dark:border-indigo-800 rounded-2xl transition-all gap-2 category-item-hover ${categoryGridSize === "small" ? "p-3" : "p-6"} ${settings.masterTheme === "ios-glass" ? "glass-card liquid-morph" : ""}`}
+                      >
+                        <Folder className={`${categoryGridSize === "small" ? "w-8 h-8" : "w-12 h-12"} text-indigo-500 dark:text-indigo-400`} fill="currentColor" fillOpacity={0.2} />
+                        <span className={`font-bold text-zinc-900 dark:text-white text-center line-clamp-1 ${categoryGridSize === "small" ? "text-xs" : "text-sm"}`}>
+                          {category.name}
                         </span>
-                      )}
-                    </motion.button>
-                  ))}
-                </div>
-              )}
+                        {categoryGridSize === "large" && (
+                          <span className={`text-[10px] text-indigo-600 dark:text-indigo-400 bg-white dark:bg-zinc-950 px-2 py-0.5 rounded-full shadow-sm ${settings.masterTheme === "ios-glass" ? "bg-white/50 backdrop-blur-md" : ""}`}>
+                            {products.filter(p => (p.categoryId === category.id || p.category === category.name) && p.isActive !== false).length}  صنف
+                          </span>
+                        )}
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Category Breadcrumb/Back button if selected */}
               {(selectedCategoryId || searchTerm) && (
@@ -515,13 +533,15 @@ export default function POS() {
                     <motion.div
                       key={product.id}
                       layout
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      transition={{ duration: 0.1 }}
                       className={`
-                      relative flex flex-col items-center text-center p-3 rounded-2xl border transition-all cursor-pointer group product-card-hover
-                      ${settings.masterTheme === "ios-glass" ? "glass-card hover:bg-white/40 dark:hover:bg-zinc-900/40" : "bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800"}
+                      relative flex flex-col items-center text-center p-3 rounded-2xl border cursor-pointer group product-card-hover
+                      ${settings.masterTheme === "ios-glass" ? "glass-panel hover:bg-white/40 dark:hover:bg-zinc-900/40" : "bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800"}
                       border-zinc-100 dark:border-zinc-800 hover:border-indigo-200 dark:hover:border-indigo-900 hover:shadow-xl hover:shadow-indigo-500/5
                       ${gridSize === "tiny" ? "p-2" : "p-3"}
+                      transition-colors duration-100 ease-out
                     `}
                       onClick={() => {
                         if (product.trackInventory !== false && product.stock === 0) {

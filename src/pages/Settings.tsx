@@ -771,6 +771,7 @@ export default function SettingsPage() {
                                     primaryColor: t.color,
                                     sidebarColor: t.color,
                                     navbarColor: t.color,
+                                    backgroundColor: t.id === "gaming" ? "#050110" : t.id === "carbon" ? "#0d0d0d" : t.id === "luxury" ? "#0a0a0a" : "#f9fafb"
                                   })
                                 }
                                 className={`w-10 h-10 rounded-xl transition-all shadow-sm ${localSettings.primaryColor === t.color ? "ring-4 ring-indigo-500/30 scale-110" : "hover:scale-105"}`}
@@ -829,11 +830,19 @@ export default function SettingsPage() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-black text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
-                            <Zap className="w-4 h-4 text-amber-500" />
-                            سرعة الحركات (Animations)
+                          <label className="block text-sm font-black text-zinc-900 dark:text-white mb-4 flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <Zap className="w-4 h-4 text-amber-500" />
+                              سرعة الحركات (Animations)
+                            </div>
+                            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setLocalSettings({ ...localSettings, disableAnimations: !localSettings.disableAnimations })}>
+                              <span className="text-[10px] text-zinc-500 font-bold">{localSettings.disableAnimations ? "موقفة" : "تعمل"}</span>
+                              <div className={`w-8 h-4 rounded-full relative transition-colors ${localSettings.disableAnimations ? 'bg-zinc-300 dark:bg-zinc-700' : 'bg-indigo-500'}`}>
+                                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${localSettings.disableAnimations ? 'left-0.5' : 'left-4.5'}`} />
+                              </div>
+                            </div>
                           </label>
-                          <div className="grid grid-cols-3 gap-2">
+                          <div className={`grid grid-cols-3 gap-2 ${localSettings.disableAnimations ? 'opacity-40 pointer-events-none' : ''}`}>
                             {["slow", "normal", "fast"].map((speed) => (
                               <button
                                 key={speed}

@@ -150,6 +150,7 @@ const defaultSettings: Settings = {
   enableSounds: true,
   preventBelowCost: true,
   adminPin: "0000",
+  disableAnimations: false,
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -412,7 +413,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (settings.animationSpeed) {
       const durationMap = { slow: "0.6s", normal: "0.3s", fast: "0.15s" };
-      root.style.setProperty("--anim-duration", durationMap[settings.animationSpeed]);
+      root.style.setProperty("--anim-duration", settings.disableAnimations ? "0s" : durationMap[settings.animationSpeed]);
+    }
+
+    if (settings.disableAnimations) {
+      body.classList.add('no-animations');
+    } else {
+      body.classList.remove('no-animations');
     }
 
     // Apply shape theme
