@@ -325,6 +325,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => unsubscribeAuth();
   }, []);
 
+  // Utility to remove undefined values for Firestore (which doesn't support them)
+  const deepClean = (obj: any): any => {
+    if (obj === null || typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map(deepClean);
+    return Object.fromEntries(
+      Object.entries(obj)
+        .filter(([_, v]) => v !== undefined)
+        .map(([k, v]) => [k, deepClean(v)])
+    );
+  };
+
   // Debounced Sync to Firestore
   useEffect(() => {
     if (!user?.id) return;
@@ -332,7 +343,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSyncStatus('syncing');
     const timeoutId = setTimeout(async () => {
       try {
-        await setDoc(doc(db, "users", user.id), {
+        await setDoc(doc(db, "users", user.id), deepClean({
           products,
           categories,
           orders,
@@ -348,8 +359,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           purchases,
           employees,
           transactions,
-          logs
-        }, { merge: true });
+          logs: logs || []
+        }), { merge: true });
         setSyncStatus('synced');
       } catch (error) {
         console.error("Error syncing data to Firestore", error);
