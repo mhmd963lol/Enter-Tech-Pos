@@ -54,11 +54,10 @@ export default function POS() {
     refreshExchangeRate,
     isCartOpen,
     setIsCartOpen,
+    addNotification,
   } = useAppContext();
   const [searchTerm, setSearchTerm] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<
-    "cash" | "card" | "debt" | "split"
-  >("cash");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "debt" | "split">("cash");
   const [customerName, setCustomerName] = useState("");
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [amountPaid, setAmountPaid] = useState("");
@@ -86,13 +85,20 @@ export default function POS() {
   const [isKeypadOpen, setIsKeypadOpen] = useState(false);
   const [activeKeypadInput, setActiveKeypadInput] = useState<"amountPaid" | "splitCash" | "splitCard" | null>("amountPaid");
 
-  // PIN Modal State
+  // PIN states for Sell-at-Loss at checkout
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState("");
+  const [pendingCheckout, setPendingCheckout] = useState<{
+    paymentMethod: "cash" | "card" | "debt" | "split";
+    customerName?: string;
+    customerId?: string;
+    amountPaid?: number;
+    splitDetails?: { cash: number; card: number };
+  } | null>(null);
   const [pendingPriceUpdate, setPendingPriceUpdate] = useState<{
-    id: string;
-    price: number;
+    productId: string;
+    newPrice: number;
   } | null>(null);
 
   // Auto-open cart on mount
@@ -159,12 +165,43 @@ export default function POS() {
       splitDetails = { cash: Number(splitCash), card: Number(splitCard) };
     }
 
-    checkout(
+    const checkoutData = {
       paymentMethod,
       customerName,
-      selectedCustomerId,
-      finalAmountPaid,
+      customerId: selectedCustomerId,
+      amountPaid: finalAmountPaid,
       splitDetails,
+    };
+
+    // Global Sell-at-Loss validation: check all items in cart against cost
+    if (settings.preventBelowCost) {
+      const hasLoss = cart.some(item => (item.customPrice ?? item.price) < item.costPrice);
+      if (hasLoss) {
+        setPendingCheckout(checkoutData);
+        setShowPinModal(true);
+        setPinInput("");
+        setPinError("");
+        if (playSound) playSound("error");
+        return;
+      }
+    }
+
+    executeCheckout(checkoutData);
+  };
+
+  const executeCheckout = (data: {
+    paymentMethod: "cash" | "card" | "debt" | "split";
+    customerName?: string;
+    customerId?: string;
+    amountPaid?: number;
+    splitDetails?: { cash: number; card: number };
+  }) => {
+    checkout(
+      data.paymentMethod,
+      data.customerName,
+      data.customerId,
+      data.amountPaid,
+      data.splitDetails,
     );
     setCustomerName("");
     setSelectedCustomerId("");
@@ -172,6 +209,7 @@ export default function POS() {
     setSplitCash("");
     setSplitCard("");
     setPaymentMethod("cash");
+    setPendingCheckout(null);
   };
 
   const handlePriceChange = (id: string, newPrice: number) => {
@@ -183,7 +221,7 @@ export default function POS() {
       newPrice < item.costPrice &&
       user?.role !== "admin"
     ) {
-      setPendingPriceUpdate({ id, price: newPrice });
+      setPendingPriceUpdate({ productId: id, newPrice: newPrice });
       setShowPinModal(true);
       setPinError("");
       setPinInput("");
@@ -196,12 +234,31 @@ export default function POS() {
     e.preventDefault();
     if (pinInput === settings.adminPin) {
       if (pendingPriceUpdate) {
-        updateCartItemPrice(pendingPriceUpdate.id, pendingPriceUpdate.price);
+        updateCartItemPrice(
+          pendingPriceUpdate.productId,
+          pendingPriceUpdate.newPrice,
+        );
+        addNotification({
+          title: "تمت الموافقة",
+          message: "تم تحديث السعر بصلاحية المدير",
+          type: "success",
+        });
+        setPendingPriceUpdate(null);
+      } else if (pendingCheckout) {
+        executeCheckout(pendingCheckout);
+        addNotification({
+          title: "تمت الموافقة",
+          message: "تم إتمام عملية البيع بخسارة بصلاحية المدير",
+          type: "success",
+        });
       }
       setShowPinModal(false);
-      setPendingPriceUpdate(null);
+      setPinInput("");
+      setPinError("");
+      if (playSound) playSound("success");
     } else {
       setPinError("رمز PIN غير صحيح");
+      if (playSound) playSound("error");
     }
   };
 

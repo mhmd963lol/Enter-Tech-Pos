@@ -101,6 +101,14 @@ export default function SettingsPage() {
   const [phoneConfirmResult, setPhoneConfirmResult] = useState<any>(null);
   const [name, setName] = useState(user?.name || "");
 
+  // PIN Recovery & Protection
+  const [isPinVerified, setIsPinVerified] = useState(false);
+  const [showPinVerifyModal, setShowPinVerifyModal] = useState(false);
+  const [pinVerifyMethod, setPinVerifyMethod] = useState<"email" | "phone" | "google" | null>(null);
+  const [verificationError, setVerificationError] = useState("");
+  const [verifyPassword, setVerifyPassword] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+
   useEffect(() => {
     const load = async () => {
       if (auth.currentUser) {
@@ -229,6 +237,47 @@ export default function SettingsPage() {
       toast.success("تم فك الربط بنجاح");
     } catch { toast.error("حدث خطأ أثناء فك الربط"); }
     finally { setLoading(false); }
+  };
+
+  const handleStartPinVerification = () => {
+    const provs = getProviders();
+    if (provs.includes("google.com")) setPinVerifyMethod("google");
+    else if (provs.includes("phone")) setPinVerifyMethod("phone");
+    else if (provs.includes("password")) setPinVerifyMethod("email");
+    setShowPinVerifyModal(true);
+    setVerificationError("");
+  };
+
+  const handleVerifyForPin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const cu = auth.currentUser;
+    if (!cu) return;
+    setIsVerifying(true);
+    setVerificationError("");
+
+    try {
+      if (pinVerifyMethod === "google") {
+        await reauthenticateWithCredential(cu, GoogleAuthProvider.credentialFromResult(await linkWithPopup(cu, new GoogleAuthProvider())) as any);
+        setIsPinVerified(true);
+        setShowPinVerifyModal(false);
+        toast.success("تم التحقق بنجاح");
+      } else if (pinVerifyMethod === "email") {
+        const cred = EmailAuthProvider.credential(cu.email!, verifyPassword);
+        await reauthenticateWithCredential(cu, cred);
+        setIsPinVerified(true);
+        setShowPinVerifyModal(false);
+        toast.success("تم التحقق بنجاح");
+      } else if (pinVerifyMethod === "phone") {
+        // For simplicity, we'll assume they need to do the phone flow if they only have phone
+        // But since they are logged in, we might just use the phoneForm logic
+        toast.error("التحقق عبر الهاتف يتطلب إعادة إرسال رمز - يرجى استخدام البريد أو جوجل إذا أمكن");
+      }
+    } catch (err: any) {
+      setVerificationError("التحقق فشل. تأكد من البيانات وحاول مجدداً.");
+      console.error(err);
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   const handleChange = (
@@ -924,16 +973,33 @@ export default function SettingsPage() {
                     </label>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">رمز PIN للمدير (لتجاوز الصلاحيات)</label>
-                    <input
-                      type="password"
-                      name="adminPin"
-                      maxLength={4}
-                      value={localSettings.adminPin}
-                      onChange={handleChange}
-                      placeholder="****"
-                      className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white text-center tracking-widest text-xl transition-all"
-                    />
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">رمز PIN للمدير (لتجاوز الصلاحيات)</label>
+                      <button
+                        type="button"
+                        onClick={handleStartPinVerification}
+                        className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                      >
+                        {isPinVerified ? "تم التحقق (يمكنك التعديل)" : "تحقق لتغيير الرمز / نسيت الرمز؟"}
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type={isPinVerified ? "text" : "password"}
+                        name="adminPin"
+                        maxLength={4}
+                        value={localSettings.adminPin}
+                        onChange={handleChange}
+                        disabled={!isPinVerified}
+                        placeholder="****"
+                        className={`w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white text-center tracking-widest text-xl transition-all ${!isPinVerified ? "opacity-50 cursor-not-allowed" : ""}`}
+                      />
+                      {!isPinVerified && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <Key className="w-5 h-5 text-zinc-400" />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1057,6 +1123,64 @@ export default function SettingsPage() {
                   نعم، امسح كل شيء
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* PIN Verification Modal */}
+      <AnimatePresence>
+        {showPinVerifyModal && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm" dir="rtl">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-zinc-100 dark:border-zinc-800 p-8"
+            >
+              <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Shield className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2 text-center">تحقق من الهوية</h3>
+              <p className="text-zinc-500 dark:text-zinc-400 mb-6 text-center text-sm">
+                لتغيير رمز PIN أو استعادته، يجب التحقق من ملكيتك للحساب عبر {pinVerifyMethod === "google" ? "Google" : pinVerifyMethod === "phone" ? "رقم الهاتف" : "البريد الإلكتروني"}.
+              </p>
+
+              {pinVerifyMethod === "email" && (
+                <form onSubmit={handleVerifyForPin} className="space-y-4">
+                  <input
+                    type="password"
+                    required
+                    placeholder="كلمة مرور الحساب"
+                    value={verifyPassword}
+                    onChange={(e) => setVerifyPassword(e.target.value)}
+                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white"
+                  />
+                  {verificationError && <p className="text-red-500 text-xs text-center">{verificationError}</p>}
+                  <div className="flex gap-3">
+                    <button type="button" onClick={() => setShowPinVerifyModal(false)} className="flex-1 py-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-xl font-bold">إلغاء</button>
+                    <button type="submit" disabled={isVerifying} className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold flex items-center justify-center gap-2">
+                      {isVerifying ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "تحقق الآن"}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {pinVerifyMethod === "google" && (
+                <div className="space-y-4">
+                  <button onClick={() => handleVerifyForPin()} disabled={isVerifying} className="w-full py-3 bg-white dark:bg-zinc-900 border-2 border-indigo-500 text-indigo-600 dark:text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/10">
+                    {isVerifying ? <div className="w-4 h-4 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" /> : <><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/component/google.svg" className="w-5 h-5" /> التحقق عبر Google</>}
+                  </button>
+                  <button onClick={() => setShowPinVerifyModal(false)} className="w-full py-2 text-zinc-500 text-sm">إلغاء</button>
+                </div>
+              )}
+
+              {pinVerifyMethod === "phone" && (
+                <div className="space-y-4 text-center">
+                  <p className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/10 p-3 rounded-lg border border-amber-200 dark:border-amber-800">التحقق التلقائي عبر الهاتف مخصص حالياً لتسجيل الدخول. سيتم العمل عليه لاحقاً.</p>
+                  <button onClick={() => setShowPinVerifyModal(false)} className="w-full py-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-xl font-bold">حسناً</button>
+                </div>
+              )}
             </motion.div>
           </div>
         )}
