@@ -57,25 +57,18 @@ const PROVIDER_LABELS: Record<string, { label: string; icon: React.ReactNode; co
 };
 
 // ── Section wrapper ──
-const Section = ({ title, icon, children, defaultOpen = false }: { title: string; icon: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean }) => {
-  const [open, setOpen] = useState(defaultOpen);
+const Section = ({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) => {
   return (
     <div className="bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden mb-4">
-      <button type="button" onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between p-5 text-right hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+      <div className="w-full flex items-center justify-between p-5 text-right border-b border-zinc-50 dark:border-zinc-900">
         <div className="flex items-center gap-3">
           <div className="text-indigo-600 dark:text-indigo-400">{icon}</div>
           <h3 className="font-bold text-zinc-900 dark:text-white">{title}</h3>
         </div>
-        {open ? <ChevronUp className="w-5 h-5 text-zinc-400" /> : <ChevronDown className="w-5 h-5 text-zinc-400" />}
-      </button>
-      <AnimatePresence>
-        {open && (
-          <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden">
-            <div className="p-5 pt-0 border-t border-zinc-100 dark:border-zinc-800">{children}</div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </div>
+      <div className="p-5 dark:bg-zinc-950/50">
+        {children}
+      </div>
     </div>
   );
 };
@@ -458,7 +451,7 @@ export default function SettingsPage() {
               </div>
 
               {/* Name */}
-              <Section title="تعديل الاسم الشخصي" icon={<User className="w-5 h-5" />} defaultOpen>
+              <Section title="تعديل الاسم الشخصي" icon={<User className="w-5 h-5" />}>
                 <form onSubmit={handleUpdateName} className="flex gap-3 items-end">
                   <div className="flex-1">
                     <input type="text" value={name} onChange={(e) => setName(e.target.value)}

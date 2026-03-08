@@ -12,6 +12,8 @@ import {
   Users,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
+  ChevronLeft,
   Store,
   LogOut,
   Moon,
@@ -375,7 +377,13 @@ export default function Layout() {
             }}
             className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-zinc-500 transition-colors"
           >
-            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            {isMobileMenuOpen ? (
+              <X size={20} />
+            ) : isSidebarCollapsed ? (
+              <ChevronLeft size={20} />
+            ) : (
+              <ChevronRight size={20} />
+            )}
           </button>
         </div>
 
