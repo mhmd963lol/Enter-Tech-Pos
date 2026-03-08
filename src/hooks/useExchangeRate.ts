@@ -31,10 +31,12 @@ export function useExchangeRate(): UseExchangeRateReturn {
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const fetchRate = async () => {
-        setIsLoading(true);
+        // We don't want to block the entire app if exchange rate fails
         try {
             const data = await getUsdTryRate();
             setResult(data);
+        } catch (err) {
+            console.error("[ExchangeRate] Hook caught error:", err);
         } finally {
             setIsLoading(false);
         }

@@ -96,8 +96,8 @@ async function fetchFromFrankfurter(): Promise<number> {
  */
 export async function getUsdTryRate(): Promise<ExchangeRateResult> {
     const sources: Array<{ name: string; fn: () => Promise<number> }> = [
-        { name: "TCMB", fn: fetchFromTCMB },
         { name: "ExchangeRate-API", fn: fetchFromExchangeRateAPI },
+        { name: "TCMB", fn: fetchFromTCMB },
         { name: "Frankfurter", fn: fetchFromFrankfurter },
     ];
 
