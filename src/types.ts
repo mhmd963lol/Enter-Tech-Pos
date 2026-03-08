@@ -162,6 +162,11 @@ export interface Settings {
   cardStyle?: "flat" | "shadow" | "glass" | "default";
   borderRadius?: "none" | "default" | "full";
   primaryColor: string;
+  sidebarColor?: string; // New: Custom sidebar color
+  navbarColor?: string;  // New: Custom navbar color
+  backgroundColor?: string; // New: Custom background color
+  glassOpacity?: number;   // New: 0 to 1 for glass effects
+  animationSpeed?: "slow" | "normal" | "fast"; // New: UI animation speed
   enableSounds: boolean;
   preventBelowCost: boolean;
   adminPin: string; // 4-digit PIN for overrides

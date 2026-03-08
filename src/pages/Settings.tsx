@@ -14,6 +14,8 @@ import {
   Download,
   Upload,
   Database,
+  Layers,
+  Zap,
   User, Shield, Key, Mail, Phone, Link, Unlink,
   Eye, EyeOff, ChevronDown, ChevronUp, AlertTriangle
 } from "lucide-react";
@@ -741,112 +743,109 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  {/* Colors */}
-                  <div className="col-span-1 md:col-span-2 p-6 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden relative">
-                    <label className="block text-lg font-black text-zinc-900 dark:text-white mb-2">تخصيص ألوان الواجهة (Spectrum)</label>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">اختر لونك المفضل أو قم بتعيين لون مخصص تماماً ليناسب علامتك التجارية.</p>
+                  {/* Harmony & Custom Colors */}
+                  <div className="col-span-1 md:col-span-2 p-6 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                    <div className="flex flex-col lg:flex-row gap-8">
+                      {/* Left: Presets & Primary */}
+                      <div className="flex-1 space-y-6">
+                        <div>
+                          <label className="block text-lg font-black text-zinc-900 dark:text-white mb-2">تدرجات ألوان الواجهة</label>
+                          <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">اختر الطابع العام أو خصص كل جزء على حدة.</p>
 
-                    <div className="flex flex-col gap-6">
-                      {/* Presets Grid */}
-                      <div className="flex flex-wrap gap-4">
-                        {[
-                          { id: "indigo", color: "#4f46e5", bgClass: "bg-indigo-500", name: "نيلي" },
-                          { id: "emerald", color: "#10b981", bgClass: "bg-emerald-500", name: "زمردي" },
-                          { id: "rose", color: "#f43f5e", bgClass: "bg-rose-500", name: "وردي" },
-                          { id: "amber", color: "#f59e0b", bgClass: "bg-amber-500", name: "كهرماني" },
-                          { id: "cyan", color: "#06b6d4", bgClass: "bg-cyan-500", name: "سماوي" },
-                          { id: "violet", color: "#8b5cf6", bgClass: "bg-violet-500", name: "بنفسجي" },
-                          { id: "gaming", color: "#d946ef", bgClass: "bg-fuchsia-500", name: "جيمنج" },
-                          { id: "custom", color: localSettings.primaryColor || "#4f46e5", bgClass: "", name: "مخصص" },
-                        ].map((t) => (
-                          <button
-                            key={t.id}
-                            onClick={() =>
-                              setLocalSettings({
-                                ...localSettings,
-                                activeTheme: t.id as any,
-                                primaryColor: t.id === "custom" ? localSettings.primaryColor : t.color
-                              })
-                            }
-                            className={`group relative w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${localSettings.activeTheme === t.id
-                              ? "ring-4 ring-offset-2 ring-indigo-500/50 dark:ring-indigo-500/50 dark:ring-offset-zinc-900 scale-110"
-                              : "hover:scale-110"
-                              }`}
-                            style={t.id === "custom" ? { backgroundColor: localSettings.primaryColor } : {}}
-                          >
-                            <div className={`absolute inset-0 rounded-full ${t.bgClass}`} />
-                            <div className="relative z-10 flex flex-col items-center">
-                              {localSettings.activeTheme === t.id && <Check className="w-6 h-6 text-white drop-shadow-md" />}
-                              <span className="text-[8px] font-bold text-white drop-shadow-md">{t.name}</span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Custom Color Bar / Spectrum */}
-                      <div className="flex flex-col sm:flex-row items-center gap-6 p-4 bg-white dark:bg-zinc-950 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-inner">
-                        <div className="flex-1 w-full">
-                          <label className="block text-xs font-bold text-zinc-400 mb-3 text-right">خريط الألوان التفاعلية:</label>
-                          <div className="relative h-12 w-full rounded-2xl overflow-hidden shadow-inner border border-zinc-200 dark:border-zinc-800">
-                            <input
-                              type="range"
-                              min="0"
-                              max="360"
-                              step="1"
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                              onChange={(e) => {
-                                const h = e.target.value;
-                                const color = `hsl(${h}, 70%, 50%)`;
-                                setLocalSettings({
-                                  ...localSettings,
-                                  activeTheme: "custom",
-                                  primaryColor: color
-                                });
-                              }}
-                            />
-                            <div
-                              className="w-full h-full"
-                              style={{
-                                background: "linear-gradient(to left, #ff0000, #ff00ff, #0000ff, #00ffff, #00ff00, #ffff00, #ff0000)"
-                              }}
-                            />
-                            <div
-                              className="absolute top-0 bottom-0 w-2 bg-white shadow-xl pointer-events-none border-x border-black/10"
-                              style={{
-                                right: `${((localSettings.primaryColor?.match(/hsl\((\d+)/)?.[1] || 0) / 360) * 100}%`
-                              }}
-                            />
+                          <div className="flex flex-wrap gap-3 mb-6">
+                            {[
+                              { id: "indigo", color: "#4f46e5", name: "نيلي" },
+                              { id: "emerald", color: "#10b981", name: "زمردي" },
+                              { id: "rose", color: "#f43f5e", name: "وردي" },
+                              { id: "amber", color: "#f59e0b", name: "كهرماني" },
+                              { id: "cyan", color: "#06b6d4", name: "سماوي" },
+                              { id: "violet", color: "#8b5cf6", name: "بنفسجي" },
+                              { id: "gaming", color: "#d946ef", name: "جيمنج" },
+                            ].map((t) => (
+                              <button
+                                key={t.id}
+                                onClick={() =>
+                                  setLocalSettings({
+                                    ...localSettings,
+                                    activeTheme: t.id as any,
+                                    primaryColor: t.color,
+                                    sidebarColor: t.color,
+                                    navbarColor: t.color,
+                                  })
+                                }
+                                className={`w-10 h-10 rounded-xl transition-all shadow-sm ${localSettings.primaryColor === t.color ? "ring-4 ring-indigo-500/30 scale-110" : "hover:scale-105"}`}
+                                style={{ backgroundColor: t.color }}
+                                title={t.name}
+                              />
+                            ))}
                           </div>
                         </div>
 
-                        <div className="shrink-0 flex flex-col items-center">
-                          <label className="block text-xs font-bold text-zinc-400 mb-2">لون حر (HEX/HSL):</label>
-                          <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-900 p-1 rounded-2xl border-2 border-zinc-200 dark:border-zinc-800 focus-within:border-indigo-500 transition-colors">
-                            <input
-                              type="color"
-                              value={localSettings.primaryColor?.startsWith('hsl') ? '#4f46e5' : localSettings.primaryColor}
-                              onChange={(e) =>
-                                setLocalSettings({
-                                  ...localSettings,
-                                  activeTheme: "custom",
-                                  primaryColor: e.target.value,
-                                })
-                              }
-                              className="w-10 h-10 rounded-xl cursor-pointer bg-transparent border-none overflow-hidden"
-                            />
-                            <input
-                              type="text"
-                              value={localSettings.primaryColor}
-                              onChange={(e) =>
-                                setLocalSettings({
-                                  ...localSettings,
-                                  activeTheme: "custom",
-                                  primaryColor: e.target.value,
-                                })
-                              }
-                              className="w-28 bg-transparent border-none focus:ring-0 text-sm font-mono dark:text-white ltr"
-                              dir="ltr"
-                            />
+                        {/* Granular Color Controls */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {[
+                            { label: "اللون الأساسي", key: "primaryColor" },
+                            { label: "لون القائمة الجانبية", key: "sidebarColor" },
+                            { label: "لون الشريط العلوي", key: "navbarColor" },
+                            { label: "لون الخلفية العامة", key: "backgroundColor" },
+                          ].map((item) => (
+                            <div key={item.key} className="p-3 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                              <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">{item.label}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-mono text-zinc-400">{(localSettings as any)[item.key]}</span>
+                                <input
+                                  type="color"
+                                  value={(localSettings as any)[item.key] || "#4f46e5"}
+                                  onChange={(e) => setLocalSettings({ ...localSettings, [item.key]: e.target.value })}
+                                  className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Right: Glass & Speed */}
+                      <div className="w-full lg:w-72 space-y-6 pt-6 lg:pt-0 lg:border-r lg:pr-8 border-zinc-200 dark:border-zinc-800">
+                        <div>
+                          <label className="block text-sm font-black text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
+                            <Layers className="w-4 h-4 text-indigo-500" />
+                            شفافية الزجاج (Glass)
+                          </label>
+                          <input
+                            type="range"
+                            min="0.1"
+                            max="1"
+                            step="0.05"
+                            value={localSettings.glassOpacity || 0.8}
+                            onChange={(e) => setLocalSettings({ ...localSettings, glassOpacity: parseFloat(e.target.value) })}
+                            className="w-full h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                          />
+                          <div className="flex justify-between text-[10px] text-zinc-400 mt-2">
+                            <span>شفاف جداً</span>
+                            <span>{Math.round((localSettings.glassOpacity || 0.8) * 100)}%</span>
+                            <span>معتم</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-black text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
+                            <Zap className="w-4 h-4 text-amber-500" />
+                            سرعة الحركات (Animations)
+                          </label>
+                          <div className="grid grid-cols-3 gap-2">
+                            {["slow", "normal", "fast"].map((speed) => (
+                              <button
+                                key={speed}
+                                onClick={() => setLocalSettings({ ...localSettings, animationSpeed: speed as any })}
+                                className={`py-2 text-xs font-bold rounded-lg border transition-all ${localSettings.animationSpeed === speed
+                                  ? "bg-indigo-600 border-indigo-600 text-white shadow-lg"
+                                  : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:border-indigo-300"
+                                  }`}
+                              >
+                                {speed === "slow" ? "هادئ" : speed === "normal" ? "عادي" : "سريع"}
+                              </button>
+                            ))}
                           </div>
                         </div>
                       </div>

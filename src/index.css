@@ -6,6 +6,11 @@
 @theme {
   --font-sans: "Tajawal", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Global Dynamic Overrides */
+  --anim-duration: 0.3s;
+  --glass-opacity: 0.8;
+  --custom-bg: #f9fafb;
 }
 
 /* ========================================= 
@@ -144,6 +149,14 @@ th {
 table {
   table-layout: fixed;
   width: 100%;
+  min-width: 0;
+}
+
+/* Base body styles with custom background */
+body {
+  background-color: var(--custom-bg);
+  transition: background-color var(--anim-duration) ease, color var(--anim-duration) ease;
+  min-height: 100vh;
 }
 
 /* Utility for forced text wrapping */
@@ -155,7 +168,22 @@ table {
 
 /* Fluid typography and layout scaling utilities */
 html {
-  font-size: clamp(14px, 1vw + 0.5rem, 16px);
+  font-size: clamp(12px, 0.8vw + 0.5rem, 16px);
+  scroll-behavior: smooth;
+}
+
+/* 200% Zoom Protection & High Density Screens */
+@media (max-width: 640px) or (max-resolution: 150dpi) {
+  html {
+    font-size: 14px;
+  }
+}
+
+/* Ensure layout doesn't break at 200% zoom */
+@media screen and (min-width: 1200px) and (max-width: 1600px) {
+  .sidebar-expanded {
+    width: 260px !important;
+  }
 }
 
 .fluid-container {
@@ -255,7 +283,8 @@ input[type=number] {
 
 /* Premium Glass Tooltip */
 .premium-tooltip {
-  @apply fixed right-[80px] px-4 py-2 rounded-xl border border-white/20 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl shadow-2xl z-[100] pointer-events-none transition-all duration-300 opacity-0 -translate-x-4 scale-90 flex items-center gap-2;
+  @apply fixed right-[80px] px-4 py-2 rounded-xl border border-white/20 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-900/80 shadow-2xl z-[100] pointer-events-none transition-all duration-300 opacity-0 -translate-x-4 scale-90 flex items-center gap-2;
+  backdrop-filter: blur(12px) saturate(180%);
 }
 
 .group-hover\/item:hover .premium-tooltip {
@@ -263,7 +292,20 @@ input[type=number] {
 }
 
 .premium-tooltip-arrow {
-  @apply absolute top-1/2 -right-1 -translate-y-1/2 w-2 h-2 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rotate-45 border-r border-t border-white/20 dark:border-zinc-700/50;
+  @apply absolute top-1/2 -right-1 -translate-y-1/2 w-2 h-2 bg-white/80 dark:bg-zinc-900/80 rotate-45 border-r border-t border-white/20 dark:border-zinc-700/50;
+  backdrop-filter: blur(12px);
+}
+
+/* Enhanced Glass Class */
+.glass-effect {
+  background: rgba(255, 255, 255, calc(var(--glass-opacity) - 0.1));
+  backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass-effect {
+  background: rgba(15, 23, 42, var(--glass-opacity));
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Sidebar Smoothness Optimization */
@@ -343,6 +385,19 @@ html:not(.dark) body.theme-master-gaming .dark\:bg-zinc-900\/50 {
   background-color: rgba(255, 255, 255, 0.8) !important;
   border-color: rgba(180, 0, 255, 0.1) !important;
   box-shadow: 0 4px 15px rgba(139, 0, 255, 0.05) !important;
+  backdrop-filter: blur(10px);
+}
+
+/* Master Surprise: Gaming Scanline Effect */
+body.theme-master-gaming::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+  background-size: 100% 3px, 3px 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.2;
 }
 
 /* Text */
@@ -636,6 +691,28 @@ html:not(.dark) body.theme-master-luxury .bg-indigo-600 {
   background-color: rgba(180, 150, 40, 0.1) !important;
 }
 
+/* Master Surprise: Luxury Silk Shine */
+body.theme-master-luxury::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(125deg, transparent 40%, rgba(255, 215, 0, 0.05) 50%, transparent 60%);
+  background-size: 200% 200%;
+  animation: shine 8s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes shine {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 
 /* ========================
    4. CASHIER TECH THEME (Smart POS / Fintech)
@@ -776,8 +853,33 @@ html:not(.dark) body.theme-master-cashier-tech .text-indigo-600 {
   }
 }
 
-.dark body.theme-master-cashier-tech .rounded-2xl {
-  animation: cashier-tech-glow 4s ease-in-out infinite;
+/* Master Surprise: Cashier Tech Matrix Lite */
+.dark body.theme-master-cashier-tech::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100vh;
+  background: radial-gradient(circle at 50% 50%, rgba(0, 200, 83, 0.03) 0%, transparent 80%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes grid-move {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 50px 50px;
+  }
+}
+
+.dark body.theme-master-cashier-tech main {
+  background-image: linear-gradient(rgba(0, 200, 83, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 200, 83, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: grid-move 20s linear infinite;
 }
 
 
@@ -785,9 +887,13 @@ html:not(.dark) body.theme-master-cashier-tech .text-indigo-600 {
    GLOBAL INTERACTIVE MICRO-ANIMATIONS
    ========================================= */
 
-/* Item Card Hover Effects */
+/* Global Transition Override */
+* {
+  transition-duration: var(--anim-duration);
+}
+
 .product-card-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--anim-duration) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .product-card-hover:hover {
@@ -1057,6 +1163,45 @@ body.theme-master-carbon ::-webkit-scrollbar-thumb {
 body.theme-master-ios-glass .nav-item-active {
   background: rgba(0, 122, 255, 0.15) !important;
   color: #007aff !important;
+}
+
+/* Mobile & High Zoom Responsive Fixes */
+@media (max-width: 768px) {
+  .sidebar-collapsed {
+    width: 0 !important;
+    overflow: hidden;
+  }
+
+  main {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+/* Fix for overlapping elements at high zoom */
+.grid-auto-fit {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+}
+
+/* Animated Background Surprise for iOS-Glass */
+body.theme-master-ios-glass {
+  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab) !important;
+  background-size: 400% 400% !important;
+  animation: gradient-bg 15s ease infinite !important;
+}
+
+@keyframes gradient-bg {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 body.theme-master-gaming .nav-item-active {

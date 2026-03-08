@@ -142,6 +142,11 @@ const defaultSettings: Settings = {
   cardStyle: "default",
   borderRadius: "default",
   primaryColor: "#4f46e5",
+  sidebarColor: "#4f46e5",
+  navbarColor: "#4f46e5",
+  backgroundColor: "#f9fafb",
+  glassOpacity: 0.8,
+  animationSpeed: "normal",
   enableSounds: true,
   preventBelowCost: true,
   adminPin: "0000",
@@ -389,9 +394,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
       body.classList.add(`theme-${settings.activeTheme}`);
     }
 
-    // Apply Custom Primary Color
+    // Apply Custom Colors & Styles
     if (settings.primaryColor) {
-      document.documentElement.style.setProperty("--custom-primary", settings.primaryColor);
+      root.style.setProperty("--custom-primary", settings.primaryColor);
+    }
+    if (settings.sidebarColor) {
+      root.style.setProperty("--custom-sidebar", settings.sidebarColor);
+    }
+    if (settings.navbarColor) {
+      root.style.setProperty("--custom-navbar", settings.navbarColor);
+    }
+    if (settings.backgroundColor) {
+      root.style.setProperty("--custom-bg", settings.backgroundColor);
+    }
+    if (settings.glassOpacity !== undefined) {
+      root.style.setProperty("--glass-opacity", settings.glassOpacity.toString());
+    }
+    if (settings.animationSpeed) {
+      const durationMap = { slow: "0.6s", normal: "0.3s", fast: "0.15s" };
+      root.style.setProperty("--anim-duration", durationMap[settings.animationSpeed]);
     }
 
     // Apply shape theme
@@ -424,7 +445,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       body.style.fontFamily = "";
       document.documentElement.style.removeProperty("--font-sans");
     }
-  }, [settings.theme, settings.activeTheme, settings.borderRadius, settings.masterTheme, settings.fontFamily]);
+  }, [
+    settings.theme, settings.activeTheme, settings.borderRadius,
+    settings.masterTheme, settings.fontFamily, settings.primaryColor,
+    settings.sidebarColor, settings.navbarColor, settings.backgroundColor,
+    settings.glassOpacity, settings.animationSpeed
+  ]);
 
   const playSound = (type: "success" | "error" | "click" | "login_success" | "logout") => {
     if (!settings.enableSounds) return;
