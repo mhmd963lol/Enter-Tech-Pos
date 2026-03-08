@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Clock, Calendar, DollarSign, TrendingUp, ShoppingCart, LogOut, Users, Settings } from "lucide-react";
+import { Clock, Calendar, DollarSign, TrendingUp, ShoppingCart, LogOut, Users, Settings, Wifi, WifiOff, RefreshCcw, AlertCircle } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import { useNavigate, NavLink } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
@@ -7,7 +7,7 @@ import { useRef } from "react";
 import { APP_VERSION } from "../version";
 
 export default function StatusBar() {
-    const { settings, orders, isPrivacyMode, playSound, user, logout, exchangeRate, cart, isCartOpen, setIsCartOpen } = useAppContext();
+    const { settings, orders, isPrivacyMode, playSound, user, logout, exchangeRate, cart, isCartOpen, setIsCartOpen, isOnline, syncStatus } = useAppContext();
     const [time, setTime] = useState(new Date());
     const [isRateReversed, setIsRateReversed] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -239,9 +239,40 @@ export default function StatusBar() {
 
                 <div className="w-px h-4 bg-indigo-700/50 mx-1 hidden lg:block"></div>
 
-                {/* Version Display */}
-                <div className="flex items-center text-[10px] font-bold text-indigo-100 bg-indigo-500/30 px-2 py-0.5 rounded border border-indigo-400/30">
-                    {APP_VERSION}
+                {/* Connection & Sync Status Indicator */}
+                <div className={`flex items-center gap-2 px-2.5 py-0.5 rounded-md border transition-all duration-300 ${!isOnline ? "bg-red-500/20 border-red-500/30 text-red-200" :
+                        syncStatus === 'syncing' ? "bg-amber-500/20 border-amber-500/30 text-amber-200" :
+                            syncStatus === 'error' ? "bg-rose-500/30 border-rose-500/50 text-rose-100" :
+                                "bg-emerald-500/20 border-emerald-500/30 text-emerald-200"
+                    }`} title={
+                        !isOnline ? "أنت تعمل بدون اتصال - سيتم الحفظ محلياً" :
+                            syncStatus === 'syncing' ? "جاري مزامنة البيانات..." :
+                                syncStatus === 'error' ? "فشلت المزامنة - تحقق من الاتصال" :
+                                    "متصل ومزامن لحظياً"
+                    }>
+                    {syncStatus === 'syncing' ? (
+                        <RefreshCcw size={14} className="animate-spin text-amber-400" />
+                    ) : !isOnline ? (
+                        <WifiOff size={14} className="text-red-400" />
+                    ) : syncStatus === 'error' ? (
+                        <AlertCircle size={14} className="text-rose-400" />
+                    ) : (
+                        <Wifi size={14} className="text-emerald-400" />
+                    )}
+
+                    <span className="text-[10px] font-bold hidden sm:inline whitespace-nowrap">
+                        {!isOnline ? "أوفلاين" :
+                            syncStatus === 'syncing' ? "مزامنة..." :
+                                syncStatus === 'error' ? "خطأ مزامنة" :
+                                    "متصل"}
+                    </span>
+
+                    {isOnline && syncStatus === 'synced' && (
+                        <span className="relative flex h-1.5 w-1.5 ml-1">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                        </span>
+                    )}
                 </div>
 
             </div>

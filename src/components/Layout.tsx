@@ -33,6 +33,7 @@ import { useAppContext } from "../context/AppContext";
 import NotificationPanel from "./NotificationPanel";
 import ThemePageTransition from "./ThemePageTransition";
 import StatusBar from "./StatusBar";
+import { APP_VERSION } from "../version";
 
 interface NavItem {
   icon: React.ElementType;
@@ -353,10 +354,16 @@ export default function Layout() {
               <div className="flex flex-col">
                 <span className="font-black text-lg text-zinc-900 dark:text-white truncate">كاشير تك</span>
                 <span className="text-[10px] text-zinc-500 truncate -mt-1">{settings.storeName}</span>
+                <span className="text-[8px] text-indigo-500/80 font-mono tracking-tighter -mt-0.5">{APP_VERSION}</span>
               </div>
             </motion.div>
           )}
-          {isSidebarCollapsed && <CashierTechLogo className="w-8 h-8 mx-auto" showText={false} />}
+          {isSidebarCollapsed && (
+            <div className="flex flex-col items-center mx-auto gap-0.5">
+              <CashierTechLogo className="w-8 h-8 shrink-0" showText={false} />
+              <span className="text-[6px] text-indigo-500 font-mono tracking-tight">{APP_VERSION.replace('ver : ', '')}</span>
+            </div>
+          )}
 
           <button
             onClick={() => isMobileMenuOpen ? setIsMobileMenuOpen(false) : setIsSidebarCollapsed(!isSidebarCollapsed)}

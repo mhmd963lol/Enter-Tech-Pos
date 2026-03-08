@@ -28,8 +28,9 @@ import { mockProducts, mockOrders } from "../data/mockData";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { auth, db } from "../lib/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, onSnapshot, enableIndexedDbPersistence, collection } from "firebase/firestore";
 import { useExchangeRate } from "../hooks/useExchangeRate";
+import { Wifi, WifiOff, RefreshCcw } from "lucide-react";
 
 
 interface AppContextType {
@@ -121,6 +122,8 @@ interface AppContextType {
   isSidebarCollapsed: boolean;
   setIsSidebarCollapsed: (collapsed: boolean) => void;
   collectDebt: (customerId: string, amount: number, paymentMethod: "cash" | "card") => void;
+  isOnline: boolean;
+  syncStatus: 'synced' | 'syncing' | 'error';
 }
 
 const defaultSettings: Settings = {
@@ -175,6 +178,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isCartOpen, setIsCartOpen] = useLocalStorage<boolean>("app_cart_open", false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useLocalStorage<boolean>("app_sidebar_collapsed", false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'error'>('synced');
 
   // Exchange Rate (live)
   const {
@@ -237,31 +242,52 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
   const [logs, setLogs] = useLocalStorage<SystemLog[]>("app_logs", []);
 
-  // Capture PWA Install Prompt
   useEffect(() => {
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
     };
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
   }, []);
 
-  // Handle Authentication and restore data from Firestore
+  // Enable Offline Persistence
+  useEffect(() => {
+    if (db) {
+      enableIndexedDbPersistence(db).catch((err) => {
+        if (err.code === 'failed-precondition') {
+          console.warn("Multiple tabs open, persistence can only be enabled in one tab at a time.");
+        } else if (err.code === 'unimplemented') {
+          console.warn("The current browser does not support all of the features required to enable persistence.");
+        }
+      });
+    }
+  }, []);
+
+  // Handle Authentication and Real-time Snapshot listeners
   useEffect(() => {
     if (!auth) {
-      console.warn("Auth object is null, skipping auth state listener (Check Firebase config).");
       setIsAuthLoading(false);
       return;
     }
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        try {
-          const userDocRef = doc(db, "users", firebaseUser.uid);
-          const userDocSnap = await getDoc(userDocRef);
-
-          if (userDocSnap.exists()) {
-            const data = userDocSnap.data();
+        // Real-time listener for user data
+        const unsubscribeSnapshot = onSnapshot(doc(db, "users", firebaseUser.uid), (snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.data();
+            // Only update if not coming from local changes (to avoid loops) or use meta properly
+            // Firestore handles local latency compensation automatically
             if (data.products) setProducts(data.products);
             if (data.categories) setCategories(data.categories);
             if (data.orders) setOrders(data.orders);
@@ -278,20 +304,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
             if (data.employees) setEmployees(data.employees);
             if (data.transactions) setTransactions(data.transactions);
             if (data.logs) setLogs(data.logs);
+            setSyncStatus('synced');
           }
-        } catch (error) {
-          console.error("Error fetching user data from Firestore", error);
-        }
+        }, (error) => {
+          console.error("Firestore snapshot error:", error);
+          setSyncStatus('error');
+        });
+
+        return () => unsubscribeSnapshot();
+      } else {
+        setIsAuthLoading(false);
       }
-      setIsAuthLoading(false);
     });
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, []);
 
   // Debounced Sync to Firestore
   useEffect(() => {
     if (!user?.id) return;
 
+    setSyncStatus('syncing');
     const timeoutId = setTimeout(async () => {
       try {
         await setDoc(doc(db, "users", user.id), {
@@ -312,8 +344,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
           transactions,
           logs
         }, { merge: true });
+        setSyncStatus('synced');
       } catch (error) {
         console.error("Error syncing data to Firestore", error);
+        setSyncStatus('error');
       }
     }, 2000);
 
@@ -1512,6 +1546,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         collectDebt,
         logs,
         addLog,
+        isOnline,
+        syncStatus,
       }}
     >
       {children}
