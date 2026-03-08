@@ -388,7 +388,7 @@ export default function POS() {
 
               {!searchTerm && !selectedCategoryId && (
                 <div className={`grid gap-4 ${categoryGridSize === "small"
-                  ? "grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8"
+                  ? "grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-8"
                   : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"}`}>
                   {categories.filter(c => c.isActive).map((category) => (
                     <motion.button
@@ -446,13 +446,12 @@ export default function POS() {
                 </div>
               )}
 
-              {/* Render Products Grid */}
               {(searchTerm || selectedCategoryId) && (
-                <div className={`grid gap-3 ${gridSize === "large"
-                  ? "grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                <div className={`grid gap-2 sm:gap-3 ${gridSize === "large"
+                  ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                   : gridSize === "small"
-                    ? "grid-cols-3 md:grid-cols-4 xl:grid-cols-6"
-                    : "grid-cols-4 md:grid-cols-6 xl:grid-cols-8"
+                    ? "grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7"
+                    : "grid-cols-2 xs:grid-cols-4 md:grid-cols-6 xl:grid-cols-9"
                   }`}>
                   {filteredProducts.map((product) => (
                     <motion.div
@@ -546,9 +545,9 @@ export default function POS() {
               className={`
                 w-full lg:w-[420px] flex flex-col bg-white dark:bg-zinc-950 shadow-2xl border-r lg:border-r-0 lg:border-l border-zinc-200 dark:border-zinc-800 shrink-0
                 fixed lg:relative lg:flex lg:rounded-2xl min-h-0 lg:max-h-full
-                bottom-0 left-0 right-0 z-50 lg:z-auto rounded-t-3xl lg:rounded-b-2xl origin-top-left
+                bottom-0 left-0 right-0 z-50 lg:z-auto rounded-t-3xl lg:rounded-b-2xl origin-bottom
                 ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""}
-                h-[85vh] lg:h-auto
+                h-[90vh] lg:h-auto
               `}
             >
               <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-between gap-4">

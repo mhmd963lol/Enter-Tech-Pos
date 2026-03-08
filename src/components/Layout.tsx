@@ -176,11 +176,12 @@ const SidebarItem: React.FC<{
           )}
         </button>
 
-        {/* Floating Label / Tooltip when collapsed */}
+        {/* Tooltip الاحترافي - اسم القسم */}
         {isCollapsed && (
-          <div className="fixed right-[80px] px-3 py-1.5 bg-zinc-900 dark:bg-zinc-800 text-white text-xs rounded-lg opacity-0 group-hover/item:opacity-100 pointer-events-none transition-all duration-300 -translate-x-2 group-hover/item:translate-x-0 z-[100] whitespace-nowrap shadow-xl border border-zinc-700/50 mr-2">
-            {item.label}
-            <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-zinc-900 dark:bg-zinc-800 rotate-45 border-r border-t border-zinc-700/50" />
+          <div className="premium-tooltip group-hover/item:opacity-100 group-hover/item:translate-x-0 mr-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+            <span className="font-bold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{item.label}</span>
+            <div className="premium-tooltip-arrow" />
           </div>
         )}
 
@@ -213,8 +214,9 @@ const SidebarItem: React.FC<{
                   {!isCollapsed && <span className="text-sm">{subItem.label}</span>}
 
                   {isCollapsed && (
-                    <div className="fixed right-[80px] px-3 py-1.5 bg-zinc-800 text-white text-[10px] rounded-md opacity-0 group-hover/sub:opacity-100 pointer-events-none transition-opacity z-[110] whitespace-nowrap shadow-lg mr-2">
+                    <div className="premium-tooltip group-hover/sub:opacity-100 group-hover/sub:translate-x-0 mr-2 text-[10px] py-1">
                       {subItem.label}
+                      <div className="premium-tooltip-arrow" />
                     </div>
                   )}
                 </NavLink>
@@ -250,9 +252,9 @@ const SidebarItem: React.FC<{
         {!isCollapsed && <span className="whitespace-nowrap overflow-hidden">{item.label}</span>}
       </NavLink>
       {isCollapsed && (
-        <div className="fixed right-[80px] px-3 py-1.5 bg-zinc-900 dark:bg-zinc-800 text-white text-xs rounded-lg opacity-0 group-hover/item:opacity-100 pointer-events-none transition-all duration-300 -translate-x-2 group-hover/item:translate-x-0 z-[100] whitespace-nowrap shadow-xl border border-zinc-700/50 mr-2">
-          {item.label}
-          <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-zinc-900 dark:bg-zinc-800 rotate-45 border-r border-t border-zinc-700/50" />
+        <div className="premium-tooltip group-hover/item:opacity-100 group-hover/item:translate-x-0 mr-2">
+          <span className="font-bold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{item.label}</span>
+          <div className="premium-tooltip-arrow" />
         </div>
       )}
     </div>
@@ -346,7 +348,7 @@ export default function Layout() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 right-0 z-50 bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 transition-all duration-500 ease-in-out flex flex-col overflow-hidden shadow-2xl lg:shadow-none ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""
+        className={`fixed lg:static inset-y-0 right-0 z-50 bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] flex flex-col overflow-hidden shadow-2xl lg:shadow-none ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""
           } ${isSidebarCollapsed ? "w-20 sidebar-glow" : "w-72"} ${isMobileMenuOpen ? "translate-x-0 w-72" : "translate-x-full lg:translate-x-0"
           } ${settings.masterTheme === "carbon" ? "carbon-texture" : ""} ${settings.masterTheme === "gaming" ? "scanning-line" : ""}`}
         style={{ willChange: "width, transform" }}
