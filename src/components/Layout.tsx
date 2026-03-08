@@ -277,8 +277,8 @@ export default function Layout() {
     setDeferredPrompt
   } = useAppContext();
 
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isSidebarCollapsed, setIsSidebarCollapsed } = useAppContext();
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
   const location = useLocation();
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -366,7 +366,13 @@ export default function Layout() {
           )}
 
           <button
-            onClick={() => isMobileMenuOpen ? setIsMobileMenuOpen(false) : setIsSidebarCollapsed(!isSidebarCollapsed)}
+            onClick={() => {
+              if (window.innerWidth < 1024) {
+                setIsMobileMenuOpen(!isMobileMenuOpen);
+              } else {
+                setIsSidebarCollapsed(!isSidebarCollapsed);
+              }
+            }}
             className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-zinc-500 transition-colors"
           >
             {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
