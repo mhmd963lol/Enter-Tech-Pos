@@ -379,14 +379,14 @@ export default function Layout() {
                 setIsSidebarCollapsed(!isSidebarCollapsed);
               }
             }}
-            className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-zinc-500 transition-colors"
+            className="p-2.5 bg-indigo-600 dark:bg-zinc-800 text-white dark:text-zinc-300 rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 active:scale-95 border border-white/10"
           >
             {isMobileMenuOpen ? (
-              <X size={20} />
+              <X className="w-5 h-5" />
             ) : isSidebarCollapsed ? (
-              <ChevronLeft size={20} />
+              <ChevronLeft className={`w-5 h-5 transition-transform duration-500 ${isSidebarCollapsed ? "rotate-180" : ""}`} />
             ) : (
-              <ChevronRight size={20} />
+              <ChevronRight className={`w-5 h-5 transition-transform duration-500 ${isSidebarCollapsed ? "rotate-180" : ""}`} />
             )}
           </button>
         </div>
@@ -428,10 +428,10 @@ export default function Layout() {
         <header className="h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 lg:hidden shrink-0">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="p-2 text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden p-3 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all active:scale-90"
             >
-              <Menu className="w-5 h-5" />
+              <Menu className="w-6 h-6" />
             </button>
             <span className="font-bold text-sm">لوحة التحكم</span>
           </div>

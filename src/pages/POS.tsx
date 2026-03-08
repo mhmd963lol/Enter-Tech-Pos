@@ -104,13 +104,15 @@ export default function POS() {
     newPrice: number;
   } | null>(null);
 
-  // Auto-open cart on mount and focus search
+  // Auto-open cart on mount only on Desktop (>= 1024px)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsCartOpen(true);
-      searchInputRef.current?.focus();
-    }, 500);
-    return () => clearTimeout(timer);
+    if (window.innerWidth >= 1024) {
+      const timer = setTimeout(() => {
+        setIsCartOpen(true);
+        searchInputRef.current?.focus();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
   }, [setIsCartOpen]);
 
   // Global Keydown listener for focusing search input
@@ -565,11 +567,11 @@ export default function POS() {
                       whileTap={{ scale: 0.97 }}
                       transition={{ duration: 0.1 }}
                       className={`
-                      relative flex flex-col items-center text-center p-3 rounded-2xl border cursor-pointer group product-card-hover
+                      relative flex flex-col items-center text-center p-4 rounded-2xl border cursor-pointer group product-card-hover
                       ${settings.masterTheme === "ios-glass" ? "glass-panel hover:bg-white/40 dark:hover:bg-zinc-900/40" : "bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800"}
                       border-zinc-100 dark:border-zinc-800 hover:border-indigo-200 dark:hover:border-indigo-900 hover:shadow-xl hover:shadow-indigo-500/5
-                      ${gridSize === "tiny" ? "p-2" : "p-3"}
-                      transition-colors duration-100 ease-out
+                      ${gridSize === "tiny" ? "p-2" : "p-4 sm:p-5"}
+                      transition-colors duration-100 ease-out min-h-[140px]
                     `}
                       onClick={() => {
                         if (product.trackInventory !== false && product.stock === 0) {
@@ -628,14 +630,15 @@ export default function POS() {
         </motion.div>
 
         {/* Mobile Cart Overlay */}
+        {/* Mobile/Tablet Cart Overlay */}
         {
-          isCartOpen && window.innerWidth < 1024 && (
+          isCartOpen && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsCartOpen(false)}
-              className="lg:hidden fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+              className="lg:hidden fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
             />
           )
         }
@@ -649,12 +652,12 @@ export default function POS() {
               exit={{ y: -600, x: 200, scale: 0.5, opacity: 0, rotate: 10 }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
               className={`
-                w-full lg:w-[420px] flex flex-col bg-white dark:bg-zinc-950 shadow-2xl border-r lg:border-r-0 lg:border-l border-zinc-200 dark:border-zinc-800 shrink-0
-                fixed lg:relative lg:flex lg:rounded-2xl min-h-0 lg:max-h-full
-                bottom-0 left-0 right-0 z-50 lg:z-auto rounded-t-3xl lg:rounded-b-2xl origin-bottom
-                ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""}
-                h-[90vh] lg:h-auto
-              `}
+                 w-[calc(100%-2rem)] max-w-[480px] lg:w-[420px] flex flex-col bg-white dark:bg-zinc-950 shadow-2xl border-r lg:border-r-0 lg:border-l border-zinc-200 dark:border-zinc-800 shrink-0
+                 fixed lg:relative lg:flex lg:rounded-2xl min-h-0 lg:max-h-full
+                 bottom-4 left-4 right-4 lg:bottom-0 lg:left-0 lg:right-0 z-[70] lg:z-auto rounded-3xl lg:rounded-b-2xl origin-bottom
+                 ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""}
+                 h-[85vh] lg:h-auto
+               `}
             >
               <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
@@ -677,14 +680,15 @@ export default function POS() {
                     <Calculator className="w-5 h-5" />
                   </button>
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       if (playSound) playSound("click");
                       setIsCartOpen(false);
                     }}
-                    className="p-2 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded-xl transition-all active:scale-95 border border-rose-100 dark:border-rose-800"
+                    className="p-3 bg-rose-50 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 rounded-2xl transition-all active:scale-90 border border-rose-100 dark:border-rose-800 shadow-sm"
                     title="إغلاق السلة"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-6 h-6" />
                   </button>
                 </div>
               </div>
