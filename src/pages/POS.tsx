@@ -27,6 +27,7 @@ import {
   LayoutTemplate,
   FolderOpen,
   ChevronRight,
+  Check,
   ChevronLeft,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -99,6 +100,7 @@ export default function POS() {
     amountPaid?: number;
     splitDetails?: { cash: number; card: number };
   } | null>(null);
+  const [showSuccessCheck, setShowSuccessCheck] = useState(false);
   const [pendingPriceUpdate, setPendingPriceUpdate] = useState<{
     productId: string;
     newPrice: number;
@@ -109,36 +111,18 @@ export default function POS() {
     if (window.innerWidth >= 1024) {
       const timer = setTimeout(() => {
         setIsCartOpen(true);
-        searchInputRef.current?.focus();
       }, 500);
+
+      // Secondary timer for focus to ensure layout is ready
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 700);
+
       return () => clearTimeout(timer);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [setIsCartOpen]);
 
-  // Global Keydown listener for focusing search input
-  useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept if an input/textarea is already focused
-      if (
-        document.activeElement?.tagName === "INPUT" ||
-        document.activeElement?.tagName === "TEXTAREA"
-      ) {
-        return;
-      }
 
-      // Intercept alphanumeric keys and symbols that might be part of a barcode or search
-      if (
-        (e.key.length === 1 && e.key.match(/[a-zA-Z0-9\u0600-\u06FF]/)) ||
-        e.key === "Backspace"
-      ) {
-        searchInputRef.current?.focus();
-      }
-    };
-
-    window.addEventListener("keydown", handleGlobalKeyDown);
-    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
-  }, []);
 
   // Alert for pending cart on leave (simplified logic)
   useEffect(() => {
@@ -152,24 +136,7 @@ export default function POS() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [cart]);
 
-  const filteredProducts = products.filter((p) => {
-    const category =
-      categories.find((c) => c.id === p.categoryId) ||
-      categories.find((c) => c.name === p.category);
-    const isCategoryActive = category ? category.isActive : true;
 
-    if (p.isActive === false || !isCategoryActive) return false;
-
-    if (searchTerm) {
-      return p.name.includes(searchTerm) || p.barcode.includes(searchTerm);
-    }
-
-    if (selectedCategoryId) {
-      return category?.id === selectedCategoryId || p.categoryId === selectedCategoryId;
-    }
-
-    return false; // Show nothing if no search and no category is selected (we will render categories instead)
-  });
 
   const cartTotal = cart.reduce(
     (sum, item) => sum + (item.customPrice ?? item.price) * item.quantity,
@@ -243,6 +210,46 @@ export default function POS() {
     setPendingCheckout(null);
   };
 
+  // Global Keydown listener for focusing search input and ENTER for checkout
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept if an input/textarea is already focused
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
+
+      // Special case: ENTER for checkout (Finalize Sale)
+      if (e.key === "Enter") {
+        if (isCartOpen && cart.length > 0) {
+          // If we're in the Amount input or not in any input, process sale
+          // Use specific conditions for Enter to finalize sale
+          const canCheckout = cart.length > 0 &&
+            !(paymentMethod === "cash" && amountPaid !== "" && Number(amountPaid) < grandTotal) &&
+            !(paymentMethod === "debt" && !selectedCustomerId) &&
+            !(paymentMethod === "split" && (Number(splitCash) + Number(splitCard) < grandTotal));
+
+          if (canCheckout && (!isInput || target.id === "received-amount")) {
+            e.preventDefault();
+            handleCheckout();
+          }
+        }
+        return;
+      }
+
+      if (isInput) return;
+
+      // Intercept alphanumeric keys/symbols for Search Focus (Barcode Support)
+      if (
+        (e.key.length === 1 && e.key.match(/[a-zA-Z0-9\u0600-\u06FF]/)) ||
+        e.key === "Backspace"
+      ) {
+        searchInputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [isCartOpen, cart, handleCheckout, paymentMethod, amountPaid, grandTotal, selectedCustomerId, splitCash, splitCard]);
+
   const handlePriceChange = (id: string, newPrice: number) => {
     const item = cart.find((i) => i.id === id);
     if (!item) return;
@@ -292,6 +299,21 @@ export default function POS() {
       if (playSound) playSound("error");
     }
   };
+
+  // Robust filtering for categories and search
+  const filteredProducts = products.filter((p) => {
+    if (!p) return false;
+    const nameStr = p.name || "";
+    const barcodeStr = p.barcode || "";
+
+    const matchesSearch =
+      nameStr.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      barcodeStr.includes(searchTerm);
+
+    if (!selectedCategoryId) return matchesSearch;
+    // Check both ID and Name to be robust
+    return matchesSearch && (p.categoryId === selectedCategoryId || p.category === categories.find(c => c.id === selectedCategoryId)?.name);
+  });
 
   const handleKeypadPress = (key: string) => {
     if (!activeKeypadInput) return;
@@ -967,6 +989,29 @@ export default function POS() {
                   {paymentMethod === "debt" ? "إتمام البيع الآجل" : paymentMethod === "split" ? "دفع مقسم وإصدار" : "دفع وإصدار الفاتورة"}
                 </motion.button>
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Success Visual Overlay */}
+        <AnimatePresence>
+          {showSuccessCheck && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 1.2 }}
+              className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex flex-col items-center justify-center z-[100] pointer-events-none"
+            >
+              <div className="bg-emerald-500 text-white p-8 rounded-full shadow-[0_20px_50px_rgba(16,185,129,0.4)] border-4 border-white mb-4 liquid-morph">
+                <Check size={80} strokeWidth={4} />
+              </div>
+              <motion.span
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-3xl font-black text-emerald-600 dark:text-emerald-400 drop-shadow-md"
+              >
+                تم البيع بنجاح
+              </motion.span>
             </motion.div>
           )}
         </AnimatePresence>

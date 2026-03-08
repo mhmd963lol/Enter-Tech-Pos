@@ -199,7 +199,7 @@ const SidebarItem: React.FC<{
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
               className={`overflow-hidden ${isCollapsed
                 ? "flex flex-col items-center gap-1.5 py-1.5"
                 : "mt-1 ml-4 pr-6 space-y-1 border-r-2 border-dashed border-zinc-200 dark:border-zinc-800"
@@ -238,10 +238,10 @@ const SidebarItem: React.FC<{
   return (
     <div className="relative group/item">
       <NavLink
-        to={item.to!}
+        to={item.label === "الإعدادات" ? "/settings" : item.to!}
         onClick={isMobile ? closeMobile : undefined}
         className={({ isActive }) =>
-          `flex items-center gap-3 px-4 py-3 rounded-xl transition-all mb-1 ${isActive
+          `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 mb-1 ${isActive
             ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-bold border-r-4 border-indigo-600 dark:border-indigo-400 shadow-sm"
             : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-200"
           } ${isCollapsed ? "justify-center px-0 h-12 w-12 mx-auto" : ""}`
@@ -383,10 +383,10 @@ export default function Layout() {
           >
             {isMobileMenuOpen ? (
               <X className="w-5 h-5" />
-            ) : isSidebarCollapsed ? (
-              <ChevronLeft className={`w-5 h-5 transition-transform duration-500`} />
             ) : (
-              <ChevronRight className={`w-5 h-5 transition-transform duration-500`} />
+              <ChevronLeft
+                className={`w-5 h-5 transition-transform duration-300 ${isSidebarCollapsed ? "rotate-180" : ""}`}
+              />
             )}
           </button>
         </div>
@@ -475,7 +475,10 @@ export default function Layout() {
           </button>
         </div>
 
-        <div className="flex-1 overflow-auto p-4 lg:p-8 min-h-0 bg-transparent">
+        <div
+          key={location.pathname} // Hardware reflow trigger
+          className="flex-1 overflow-auto p-4 lg:p-8 min-h-0 bg-transparent"
+        >
           <ThemePageTransition>
             <Outlet />
           </ThemePageTransition>
