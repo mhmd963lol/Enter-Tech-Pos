@@ -28,7 +28,7 @@ import { mockProducts, mockOrders } from "../data/mockData";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { auth, db } from "../lib/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc, setDoc, onSnapshot, enableIndexedDbPersistence, collection } from "firebase/firestore";
+import { doc, getDoc, setDoc, onSnapshot, collection } from "firebase/firestore";
 import { useExchangeRate } from "../hooks/useExchangeRate";
 import { Wifi, WifiOff, RefreshCcw } from "lucide-react";
 
@@ -267,18 +267,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Enable Offline Persistence
-  useEffect(() => {
-    if (db) {
-      enableIndexedDbPersistence(db).catch((err) => {
-        if (err.code === 'failed-precondition') {
-          console.warn("Multiple tabs open, persistence can only be enabled in one tab at a time.");
-        } else if (err.code === 'unimplemented') {
-          console.warn("The current browser does not support all of the features required to enable persistence.");
-        }
-      });
-    }
-  }, []);
+
 
   // Handle Authentication and Real-time Snapshot listeners
   useEffect(() => {
