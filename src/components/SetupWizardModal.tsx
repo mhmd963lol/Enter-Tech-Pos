@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion"; // Changed to framer-motion as it's common or motion/react depending on project
+import { motion, AnimatePresence } from "motion/react"; // Changed to motion/react as it's what's in package.json
 import { useAppContext } from "../context/AppContext";
 import { Store, DollarSign, Package, CheckCircle, Database } from "lucide-react";
 import toast from "react-hot-toast";

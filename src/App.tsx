@@ -125,6 +125,38 @@ import { Toaster } from "react-hot-toast";
 import SetupWizardModal from "./components/SetupWizardModal";
 import { useLocation } from "react-router-dom";
 
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
+  public state = { hasError: false, error: null };
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '40px', background: '#fff1f1', color: '#c53030', fontFamily: 'monospace', minHeight: '100vh', overflow: 'auto' }}>
+          <h1 style={{ borderBottom: '2px solid #feb2b2', paddingBottom: '10px' }}>⚠️ Critical Application Error</h1>
+          <div style={{ marginTop: '20px' }}>
+            <strong>Message:</strong>
+            <pre style={{ background: '#fff', padding: '15px', borderRadius: '8px', border: '1px solid #fed7d7', marginTop: '10px', whiteSpace: 'pre-wrap' }}>
+              {this.state.error?.message}
+            </pre>
+          </div>
+          <div style={{ marginTop: '20px' }}>
+            <strong>Stack Trace:</strong>
+            <pre style={{ background: '#fff', padding: '15px', borderRadius: '8px', border: '1px solid #fed7d7', marginTop: '10px', fontSize: '12px', overflow: 'auto' }}>
+              {this.state.error?.stack}
+            </pre>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function AppContent() {
   const { user, isAuthLoading, settings, setIsCartOpen } = useAppContext();
   const location = useLocation();
@@ -174,7 +206,7 @@ function AppContent() {
           }
         >
           <Route index element={<Dashboard />} />
-          <Route path="pos" element={<POS />} />
+          {/* <Route path="pos" element={<POS />} /> */}
           <Route path="products" element={<Products />} />
           <Route path="categories" element={<Categories />} />
           <Route path="orders" element={<Orders />} />
@@ -218,10 +250,12 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AppProvider>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </AppProvider>
+    </ErrorBoundary>
   );
 }
