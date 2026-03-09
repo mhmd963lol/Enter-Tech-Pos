@@ -576,11 +576,11 @@ export default function POS() {
               )}
 
               {(searchTerm || selectedCategoryId) && (
-                <div className={`grid gap-2 sm:gap-3 ${gridSize === "large"
-                  ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                <div className={`grid gap-[clamp(0.25rem,1vw,1rem)] h-fit ${gridSize === "large"
+                  ? "grid-cols-[repeat(auto-fill,minmax(clamp(150px,25vw,350px),1fr))]"
                   : gridSize === "small"
-                    ? "grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7"
-                    : "grid-cols-2 xs:grid-cols-4 md:grid-cols-6 xl:grid-cols-9"
+                    ? "grid-cols-[repeat(auto-fill,minmax(clamp(110px,15vw,180px),1fr))]"
+                    : "grid-cols-[repeat(auto-fill,minmax(clamp(80px,10vw,120px),1fr))]"
                   }`}>
                   {filteredProducts.map((product) => (
                     <motion.div
@@ -673,13 +673,18 @@ export default function POS() {
               initial={{ y: -600, x: 200, scale: 0.5, opacity: 0, rotate: 10 }}
               animate={{ y: 0, x: 0, scale: 1, opacity: 1, rotate: 0 }}
               exit={{ y: -600, x: 200, scale: 0.5, opacity: 0, rotate: 10 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              transition={{
+                type: settings.disableAnimations ? "none" : "spring",
+                damping: 25,
+                stiffness: 200,
+                duration: settings.disableAnimations ? 0 : 0.3
+              }}
               className={`
                  w-[calc(100%-2rem)] max-w-[480px] lg:w-[420px] flex flex-col bg-white dark:bg-zinc-950 shadow-2xl border-r lg:border-r-0 lg:border-l border-zinc-200 dark:border-zinc-800 shrink-0
                  fixed lg:relative lg:flex lg:rounded-2xl min-h-0 lg:max-h-full
                  bottom-4 left-4 right-4 lg:bottom-0 lg:left-0 lg:right-0 z-[60] lg:z-auto rounded-3xl lg:rounded-b-2xl origin-bottom
                  ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""}
-                 h-[85vh] lg:h-auto
+                 h-[calc(100svh-2rem)] lg:h-full lg:max-h-[calc(100svh-4rem)]
                `}
             >
               <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-between gap-4">
@@ -708,10 +713,10 @@ export default function POS() {
                       if (playSound) playSound("click");
                       setIsCartOpen(false);
                     }}
-                    className="p-3 bg-rose-50 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 rounded-2xl transition-all active:scale-90 border border-rose-100 dark:border-rose-800 shadow-sm"
+                    className="p-4 sm:p-3 bg-rose-50 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 rounded-2xl transition-all active:scale-95 border border-rose-100 dark:border-rose-800 shadow-md flex items-center justify-center min-w-[56px] min-h-[56px]"
                     title="إغلاق السلة"
                   >
-                    <X className="w-6 h-6" />
+                    <X className="w-7 h-7 sm:w-6 sm:h-6" />
                   </button>
                 </div>
               </div>

@@ -5,18 +5,27 @@ import { useLocation } from 'react-router-dom';
 
 interface ThemePageTransitionProps {
     children: React.ReactNode;
+    disabled?: boolean;
 }
 
-export default function ThemePageTransition({ children }: ThemePageTransitionProps) {
+export default function ThemePageTransition({ children, disabled }: ThemePageTransitionProps) {
     const { settings } = useAppContext();
     const location = useLocation();
     const master = settings.masterTheme || 'default';
+    const isAnimationDisabled = disabled || settings.disableAnimations;
 
     // Optimized transitions: GPU-friendly, no blur, no layout-thrashing transforms
     let variants = {};
     let transition = {};
 
-    if (master === 'gaming') {
+    if (isAnimationDisabled) {
+        variants = {
+            initial: { opacity: 1 },
+            animate: { opacity: 1 },
+            exit: { opacity: 1 },
+        };
+        transition = { duration: 0 };
+    } else if (master === 'gaming') {
         // Cyberpunk: fast opacity + translateY only (no scaleX/skewX for performance)
         variants = {
             initial: { opacity: 0, y: 20 },
@@ -62,7 +71,7 @@ export default function ThemePageTransition({ children }: ThemePageTransitionPro
                 exit="exit"
                 variants={variants}
                 transition={transition}
-                style={{ willChange: 'opacity, transform' }}
+                style={{ willChange: isAnimationDisabled ? 'auto' : 'opacity, transform' }}
                 className="w-full h-full"
             >
                 {children}

@@ -428,9 +428,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     if (settings.disableAnimations) {
-      body.classList.add('no-animations');
+      body.classList.add('no-animations', 'performance-mode');
     } else {
-      body.classList.remove('no-animations');
+      body.classList.remove('no-animations', 'performance-mode');
     }
 
     // Apply shape theme
