@@ -248,10 +248,11 @@ export default function Categories() {
                             }
                             const url = await uploadImage(file, "categories");
                             setNewCategory({ ...newCategory, image: url });
-                          } catch (error) {
+                          } catch (error: any) {
+                            console.error("Image upload failed:", error);
                             addNotification({
                               title: "خطأ",
-                              message: "فشل رفع الصورة، يرجى المحاولة مرة أخرى",
+                              message: "فشل رفع الصورة: " + (error?.message || "يرجى المحاولة مرة أخرى"),
                               type: "error"
                             });
                           } finally {

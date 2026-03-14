@@ -553,11 +553,11 @@ export default function POS() {
                     stiffness: 300,
                     duration: settings.disableAnimations ? 0.12 : 0.4
                   }}
-                  style={{ height: 'calc(100svh - 4rem)' }}
+                  style={{ maxHeight: 'calc(100svh - 1rem)' }}
                   className={`
-                 w-[calc(100%-2rem)] max-w-[480px] lg:w-[420px] flex flex-col bg-white dark:bg-zinc-950 shadow-2xl border-r lg:border-r-0 lg:border-l border-zinc-200 dark:border-zinc-800 shrink-0
-                 fixed lg:sticky lg:top-0 lg:flex lg:rounded-2xl min-h-0
-                 bottom-4 left-4 right-4 lg:bottom-0 lg:left-0 lg:right-0 z-[60] lg:z-auto rounded-3xl lg:rounded-b-2xl origin-right
+                 w-[calc(100%-1rem)] max-w-[480px] lg:w-[420px] flex flex-col bg-white dark:bg-zinc-950 shadow-2xl border-r lg:border-r-0 lg:border-l border-zinc-200 dark:border-zinc-800 shrink-0
+                 fixed lg:sticky lg:top-0 lg:flex lg:rounded-2xl min-h-[50vh] h-auto lg:h-[calc(100svh-1rem)]
+                 bottom-2 left-2 right-2 lg:bottom-0 lg:left-0 lg:right-0 z-[60] lg:z-auto rounded-3xl lg:rounded-b-2xl origin-right
                  ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""}
                `}
                 >
@@ -687,8 +687,8 @@ export default function POS() {
 
 
                   {/* Fixed Checkout Panel */}
-                  <div className="mt-auto p-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 space-y-4 shrink-0 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] dark:shadow-[0_-4px_10px_rgba(0,0,0,0.1)]">
-                    <div className="space-y-2 text-sm pb-2 border-b border-zinc-200 dark:border-zinc-800">
+                  <div className="p-3 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 space-y-3 shrink-0 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] dark:shadow-[0_-4px_10px_rgba(0,0,0,0.1)]">
+                    <div className="space-y-1 text-sm pb-1 border-b border-zinc-200 dark:border-zinc-800">
                       <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
                         <span>المجموع الفرعي</span>
                         <span>{cartTotal.toFixed(2)} {settings.currency}</span>
@@ -735,11 +735,11 @@ export default function POS() {
 
                       <button
                         onClick={() => setIsShowMoreOptions(!isShowMoreOptions)}
-                        className="w-full flex items-center justify-between p-3 bg-zinc-100 dark:bg-zinc-800/50 rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors border border-dashed border-zinc-300 dark:border-zinc-700"
+                        className="w-full flex items-center justify-between p-2 mt-1 bg-zinc-100 dark:bg-zinc-800/50 rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors border border-dashed border-zinc-300 dark:border-zinc-700"
                       >
                         <span className="flex items-center gap-2">
                           <Settings2 className="w-4 h-4" />
-                          خيارات الدفع والعميل
+                          خيارات الدفع 
                         </span>
                         {isShowMoreOptions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </button>
@@ -751,7 +751,7 @@ export default function POS() {
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: "auto", opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          className="space-y-3 overflow-y-auto max-h-[30vh] custom-scrollbar pt-2"
+                          className="space-y-2 flex-shrink-1 overflow-y-auto max-h-[25vh] custom-scrollbar pt-1"
                         >
                           <div className="grid grid-cols-4 gap-2">
                             {(["cash", "card", "debt", "split"] as const).map((method) => (
