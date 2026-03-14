@@ -22,6 +22,7 @@ import {
   Truck,
   RotateCcw,
   XCircle,
+  ShieldAlert,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
@@ -122,6 +123,7 @@ const Dashboard = () => {
             color: "text-amber-600 dark:text-amber-400",
             bg: "bg-amber-100 dark:bg-amber-900/30",
             link: "/products",
+            sensitive: true,
           },
         ]
       : []),
@@ -154,7 +156,7 @@ const Dashboard = () => {
               <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
                 {stat.title}
               </p>
-              <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mt-1">
+              <h3 className={`text-2xl font-bold text-zinc-900 dark:text-white mt-1 ${stat.sensitive ? 'sensitive' : ''}`}>
                 {stat.value}
               </h3>
             </div>
@@ -249,7 +251,7 @@ const Dashboard = () => {
                       <td className="py-4 text-left font-bold text-zinc-900 dark:text-white">
                         {order.total.toFixed(2)}
                       </td>
-                      <td className={`py-4 text-left font-bold ${profitColor}`}>
+                      <td className={`py-4 text-left font-bold sensitive ${profitColor}`}>
                         {profit.toFixed(2)}
                       </td>
                       <td className="py-4 text-center">
@@ -302,14 +304,17 @@ const Dashboard = () => {
               <div key={log.id} className="flex gap-4 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 group hover:shadow-md transition-all">
                 <div className={`p-2 rounded-lg h-fit ${log.type === 'sale' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30' :
                   log.type === 'inventory' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' :
+                  log.type === 'security' ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30' :
                     'bg-zinc-100 text-zinc-600 dark:bg-zinc-800'
                   }`}>
-                  {log.type === 'sale' ? <ShoppingBag size={18} /> : <Package size={18} />}
+                  {log.type === 'sale' ? <ShoppingBag size={18} /> : 
+                   log.type === 'security' ? <ShieldAlert size={18} /> :
+                   <Package size={18} />}
                 </div>
                 <div className="flex-1">
                   <div className="flex justify-between items-start mb-1">
                     <h4 className="font-bold text-zinc-900 dark:text-white">{log.action}</h4>
-                    <span className="text-xs text-zinc-500">{new Date(log.date).toLocaleString("ar-SA")}</span>
+                    <span className="text-xs text-zinc-500 font-mono" dir="ltr">{log.date}</span>
                   </div>
                   <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">{log.details}</p>
                   <div className="flex items-center gap-2">

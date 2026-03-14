@@ -23,6 +23,7 @@ import * as XLSX from "xlsx";
 
 export default function Products() {
   const {
+    user,
     products,
     categories,
     addProduct,
@@ -62,6 +63,8 @@ export default function Products() {
     trackInventory: true,
     minStockAlert: "5",
   });
+
+  const canEdit = user?.role === "admin" || user?.permissions?.canEditProducts;
 
   const filteredProducts = products.filter(
     (p) =>
@@ -309,27 +312,34 @@ export default function Products() {
               </span>
             )}
           </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              setEditingProduct(null);
-              setNewProduct({
-                name: "",
-                price: "",
-                costPrice: "",
-                stock: "",
-                category: "",
-                barcode: "",
-                image: "https://picsum.photos/seed/product/200/200",
-              });
-              setIsAddModalOpen(true);
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors shadow-sm"
-          >
-            <Plus className="w-5 h-5" />
-            إضافة منتج جديد
-          </motion.button>
+          
+          {canEdit && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                setEditingProduct(null);
+                setNewProduct({
+                  name: "",
+                  price: "",
+                  costPrice: "",
+                  stock: "",
+                  category: "",
+                  categoryId: "", // missing in original reset
+                  barcode: "",
+                  image: "https://picsum.photos/seed/product/200/200",
+                  isActive: true, // missing in original reset
+                  trackInventory: true, // missing in original reset
+                  minStockAlert: "5" // missing in original reset
+                });
+                setIsAddModalOpen(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors shadow-sm"
+            >
+              <Plus className="w-5 h-5" />
+              إضافة منتج جديد
+            </motion.button>
+          )}
         </div>
       </div>
 
@@ -382,14 +392,16 @@ export default function Products() {
           <table className="w-full text-right">
             <thead>
               <tr className="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 text-sm">
-                <th className="px-6 py-4 font-medium w-12 text-center">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                    checked={filteredProducts.length > 0 && selectedProductIds.size === filteredProducts.length}
-                    onChange={toggleSelectAll}
-                  />
-                </th>
+                {canEdit && (
+                  <th className="px-6 py-4 font-medium w-12 text-center">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                      checked={filteredProducts.length > 0 && selectedProductIds.size === filteredProducts.length}
+                      onChange={toggleSelectAll}
+                    />
+                  </th>
+                )}
                 <th className="px-6 py-4 font-medium">المنتج</th>
                 <th className="px-6 py-4 font-medium">الباركود</th>
                 <th className="px-6 py-4 font-medium">القسم</th>
@@ -459,14 +471,16 @@ export default function Products() {
                           : "hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors"
                       }
                     >
-                      <td className="px-6 py-4 w-12 text-center">
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                          checked={selectedProductIds.has(product.id)}
-                          onChange={() => toggleSelectProduct(product.id)}
-                        />
-                      </td>
+                      {canEdit && (
+                        <td className="px-6 py-4 w-12 text-center">
+                          <input
+                            type="checkbox"
+                            className="w-4 h-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                            checked={selectedProductIds.has(product.id)}
+                            onChange={() => toggleSelectProduct(product.id)}
+                          />
+                        </td>
+                      )}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0">
@@ -506,7 +520,7 @@ export default function Products() {
                           {categoryName}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-medium text-zinc-600 dark:text-zinc-400">
+                      <td className="px-6 py-4 font-medium text-zinc-600 dark:text-zinc-400 sensitive">
                         {product.costPrice || 0} {settings.currency}
                       </td>
                       <td className="px-6 py-4 font-bold text-indigo-600 dark:text-indigo-400">
@@ -526,31 +540,34 @@ export default function Products() {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <label className="relative inline-flex items-center cursor-pointer">
+                        <label className={`relative inline-flex items-center ${canEdit ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}>
                           <input
                             type="checkbox"
                             className="sr-only peer"
                             checked={product.isActive ?? true}
+                            disabled={!canEdit}
                             onChange={() => toggleStatus(product)}
                           />
                           <div className="w-11 h-6 bg-zinc-200 dark:bg-zinc-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                         </label>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => openEditModal(product)}
-                            className="p-1.5 text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(product.id)}
-                            className="p-1.5 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        {canEdit && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => openEditModal(product)}
+                              className="p-1.5 text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(product.id)}
+                              className="p-1.5 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </motion.tr>
                   );

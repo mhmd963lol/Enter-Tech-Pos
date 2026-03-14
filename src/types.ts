@@ -38,10 +38,22 @@ export interface CartItem extends Product {
 export type Role = "admin" | "cashier";
 
 export interface User {
-  id: string;
+  id: string; // The active storeId mapping they are connected to
+  authUid?: string; // Their real Firebase Google/Phone UID
   name: string;
   role: Role;
   pin?: string; // For admin overrides
+  permissions?: EmployeePermissions;
+}
+
+export interface EmployeePermissions {
+  canViewProducts: boolean;
+  canEditProducts: boolean;
+  canManageEmployees: boolean;
+  canViewReports: boolean;
+  canCancelOrders: boolean;
+  canManageInventory: boolean;
+  canManageSettings: boolean;
 }
 
 /** Historical snapshot of a product at time of sale — prevents data corruption if product is later edited. */
@@ -244,8 +256,11 @@ export interface PurchaseInvoice {
 
 export interface Employee {
   id: string;
+  authUid?: string; // Links this employee to a Firebase Auth user
+  storeId?: string; // The store they belong to
   name: string;
   role: Role;
+  permissions?: EmployeePermissions; // Granular permissions
   phone: string;
   salary: number;
   joinDate: string;

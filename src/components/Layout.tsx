@@ -37,12 +37,15 @@ import ThemePageTransition from "./ThemePageTransition";
 import StatusBar from "./StatusBar";
 import { APP_VERSION, APP_VERSION_SHORT } from "../version";
 
+import { EmployeePermissions } from "../types";
+
 interface NavItem {
   icon: React.ElementType;
   label: string;
   to?: string;
   subItems?: { label: string; to: string }[];
   roles?: ("admin" | "cashier")[];
+  permission?: keyof EmployeePermissions;
 }
 
 const navItems: NavItem[] = [
@@ -51,6 +54,7 @@ const navItems: NavItem[] = [
   {
     icon: Package,
     label: "الأصناف والمخزون",
+    permission: "canViewProducts",
     subItems: [
       { label: "الأصناف", to: "/products" },
       { label: "الأقسام", to: "/categories" },
@@ -81,11 +85,11 @@ const navItems: NavItem[] = [
       { label: "استخراج العملاء", to: "/customers/export" },
     ],
   },
-  { icon: Users, label: "حسابات الموظفين", to: "/employees", roles: ["admin"] },
+  { icon: Users, label: "حسابات الموظفين", to: "/employees", permission: "canManageEmployees" },
   {
     icon: Wallet,
     label: "إدارة الصندوق واليومية",
-    roles: ["admin"],
+    permission: "canViewReports",
     subItems: [
       { label: "كشف حساب الصندوق", to: "/finance/vault" },
       { label: "المصروفات", to: "/finance/expenses" },
@@ -103,7 +107,7 @@ const navItems: NavItem[] = [
   {
     icon: Settings,
     label: "الإعدادات",
-    roles: ["admin"],
+    permission: "canManageSettings",
     subItems: [
       { label: "جميع الإعدادات", to: "/settings" },
     ],
@@ -131,8 +135,17 @@ const SidebarItem: React.FC<{
   const location = useLocation();
   const { user, settings } = useAppContext();
 
+  // 1. Role Check
   if (item.roles && user && !item.roles.includes(user.role)) {
     return null;
+  }
+  
+  // 2. Granular Permission Check for Cashiers
+  if (item.permission && user?.role === "cashier") {
+    // If permission doesn't exist on user, or is false, block.
+    if (!user.permissions || !user.permissions[item.permission]) {
+       return null;
+    }
   }
 
   const isActive = item.to

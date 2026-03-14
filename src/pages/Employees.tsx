@@ -1,5 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAppContext } from "../context/AppContext";
+import { collection, query, where, onSnapshot, doc, setDoc, deleteDoc } from "firebase/firestore";
+import { db } from "../lib/firebase";
+import toast from "react-hot-toast";
 import {
   Search,
   Plus,
@@ -20,11 +23,74 @@ import { Employee, Role } from "../types";
 import NumberInput from "../components/NumberInput";
 
 export default function Employees() {
-  const { employees, addEmployee, updateEmployee, deleteEmployee, settings } =
-    useAppContext();
+  const { user, employees, addEmployee, updateEmployee, deleteEmployee, settings } = useAppContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const q = query(collection(db, "pending_employees"), where("targetStoreId", "==", user.id), where("status", "==", "pending"));
+    const unsub = onSnapshot(q, (snap) => {
+       setPendingRequests(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    return () => unsub();
+  }, [user?.id]);
+
+  const handleAcceptRequest = async (req: any) => {
+    try {
+      const accessId = `acc_${req.authUid}`;
+      await setDoc(doc(db, "employee_access", accessId), {
+         authUid: req.authUid,
+         storeId: user?.id,
+         role: "cashier",
+         name: req.name,
+         email: req.email,
+         phone: req.phone,
+         permissions: {
+           canViewProducts: true,
+           canEditProducts: false,
+           canManageEmployees: false,
+           canViewReports: false,
+           canCancelOrders: false,
+           canManageInventory: false,
+           canManageSettings: false
+         }
+      });
+      addEmployee({
+         id: crypto.randomUUID(), 
+         authUid: req.authUid,
+         name: req.name,
+         role: "cashier",
+         phone: req.phone || "",
+         salary: 0,
+         joinDate: new Date().toISOString(),
+         isActive: true,
+         permissions: {
+           canViewProducts: true,
+           canEditProducts: false,
+           canManageEmployees: false,
+           canViewReports: false,
+           canCancelOrders: false,
+           canManageInventory: false,
+           canManageSettings: false
+         }
+      });
+      await deleteDoc(doc(db, "pending_employees", req.id));
+      toast.success("تم قبول الموظف بنجاح");
+    } catch (err) {
+      toast.error("حدث خطأ أثناء القبول");
+    }
+  };
+
+  const handleRejectRequest = async (id: string) => {
+    if (!window.confirm("هل أنت متأكد من رفض طلب الانضمام؟")) return;
+    try {
+       await deleteDoc(doc(db, "pending_employees", id));
+       toast.success("تم رفض الطلب");
+    } catch(e) { toast.error("حدث خطأ"); }
+  };
 
   const [newEmployee, setNewEmployee] = useState<Omit<Employee, "id">>({
     name: "",
@@ -33,6 +99,15 @@ export default function Employees() {
     salary: 0,
     joinDate: new Date().toISOString().split("T")[0],
     isActive: true,
+    permissions: {
+      canViewProducts: true,
+      canEditProducts: false,
+      canManageEmployees: false,
+      canViewReports: false,
+      canCancelOrders: false,
+      canManageInventory: false,
+      canManageSettings: false
+    }
   });
 
   const filteredEmployees = employees.filter(
@@ -56,6 +131,15 @@ export default function Employees() {
         salary: employee.salary,
         joinDate: employee.joinDate.split("T")[0],
         isActive: employee.isActive,
+        permissions: employee.permissions || {
+          canViewProducts: true,
+          canEditProducts: false,
+          canManageEmployees: false,
+          canViewReports: false,
+          canCancelOrders: false,
+          canManageInventory: false,
+          canManageSettings: false
+        }
       });
     } else {
       setEditingEmployee(null);
@@ -66,6 +150,15 @@ export default function Employees() {
         salary: 0,
         joinDate: new Date().toISOString().split("T")[0],
         isActive: true,
+        permissions: {
+          canViewProducts: true,
+          canEditProducts: false,
+          canManageEmployees: false,
+          canViewReports: false,
+          canCancelOrders: false,
+          canManageInventory: false,
+          canManageSettings: false
+        }
       });
     }
     setIsModalOpen(true);
@@ -107,6 +200,38 @@ export default function Employees() {
           إضافة موظف
         </button>
       </div>
+
+      {pendingRequests.length > 0 && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-6 shadow-sm">
+          <h3 className="text-lg font-bold text-amber-900 dark:text-amber-500 mb-4 flex items-center gap-2">
+            <ShieldAlert className="w-5 h-5" />
+            طلبات انضمام معلقة ({pendingRequests.length})
+          </h3>
+          <div className="grid gap-4">
+            {pendingRequests.map(req => (
+              <div key={req.id} className="bg-white dark:bg-zinc-900 border border-amber-100 dark:border-amber-900/50 p-4 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/50 rounded-full flex items-center justify-center">
+                    <UserCircle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-zinc-900 dark:text-white">{req.name}</h4>
+                    <p className="text-sm text-zinc-500 flex items-center gap-2"><Phone className="w-3 h-3"/> {req.phone}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => handleAcceptRequest(req)} className="flex items-center gap-1 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold transition-colors">
+                    <CheckCircle className="w-4 h-4" /> قبول
+                  </button>
+                  <button onClick={() => handleRejectRequest(req.id)} className="flex items-center gap-1 bg-red-100 hover:bg-red-200 text-red-600 dark:bg-red-900/30 dark:hover:bg-red-900/50 px-4 py-2 rounded-lg font-bold transition-colors">
+                    <XCircle className="w-4 h-4" /> رفض
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
@@ -396,6 +521,42 @@ export default function Employees() {
                     حالة الموظف (نشط / موقوف)
                   </span>
                 </div>
+
+                {newEmployee.role === "cashier" && (
+                  <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                    <h4 className="text-sm font-bold text-zinc-900 dark:text-white mb-3 flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-indigo-500" />
+                      الصلاحيات المخصصة
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      {[
+                        { key: "canViewProducts", label: "رؤية المنتجات" },
+                        { key: "canEditProducts", label: "تعديل المنتجات" },
+                        { key: "canManageInventory", label: "إدارة المخزون" },
+                        { key: "canCancelOrders", label: "إلغاء الطلبات" },
+                        { key: "canViewReports", label: "رؤية التقارير والجرد" },
+                        { key: "canManageEmployees", label: "إدارة الموظفين" },
+                        { key: "canManageSettings", label: "إدارة الإعدادات" }
+                      ].map(perm => (
+                        <label key={perm.key} className="flex items-center gap-2 cursor-pointer bg-zinc-50 dark:bg-zinc-900/50 p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                          <input
+                            type="checkbox"
+                            className="w-4 h-4 text-indigo-600 rounded border-zinc-300 focus:ring-indigo-500"
+                            checked={newEmployee.permissions?.[perm.key as keyof typeof newEmployee.permissions] ?? false}
+                            onChange={(e) => setNewEmployee({
+                              ...newEmployee,
+                              permissions: {
+                                ...newEmployee.permissions!,
+                                [perm.key]: e.target.checked
+                              }
+                            })}
+                          />
+                          <span className="text-zinc-700 dark:text-zinc-300 select-none whitespace-nowrap">{perm.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="pt-6">
                   <button

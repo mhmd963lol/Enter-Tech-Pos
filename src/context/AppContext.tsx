@@ -396,6 +396,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const login = (userData: User) => setUser(userData);
   const logout = async () => {
     playSound("logout");
+    if (user) {
+      addLog({
+        action: "تسجيل خروج",
+        details: `تسجيل خروج المستخدم: ${user.name}`,
+        type: "security",
+      });
+    }
     if (auth) {
       await signOut(auth);
     }
@@ -1074,10 +1081,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const addLog = (logData: Omit<SystemLog, "id" | "date" | "userId" | "userName">) => {
+    const d = new Date();
+    const formattedDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+    
     const newLog: SystemLog = {
       ...logData,
       id: `LOG-${crypto.randomUUID().slice(0, 8)}`,
-      date: new Date().toISOString(),
+      date: formattedDate,
       userId: user?.id || "system",
       userName: user?.name || "النظام",
     };

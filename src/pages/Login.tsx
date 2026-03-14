@@ -17,6 +17,8 @@ import {
   signInWithPhoneNumber,
   RecaptchaVerifier,
   reload,
+  signOut,
+  updatePassword,
 } from "firebase/auth";
 import { doc, setDoc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import toast from "react-hot-toast";
@@ -89,7 +91,7 @@ function ForgotPasswordPanel({
 }
 
 export default function Login() {
-  const { login, settings, updateSettings, playSound, deferredPrompt, setDeferredPrompt } = useAppContext();
+  const { login, settings, updateSettings, playSound, deferredPrompt, setDeferredPrompt, addLog } = useAppContext();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [authMethod, setAuthMethod] = useState<"email" | "phone">("email");
   const [loading, setLoading] = useState(false);
@@ -101,8 +103,14 @@ export default function Login() {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const recaptchaRef = useRef<any>(null);
 
+  const [pendingGoogleUser, setPendingGoogleUser] = useState<any>(null);
+  const [googlePassword, setGooglePassword] = useState("");
+
   const [loginData, setLoginData] = useState({ email: "", phone: "", password: "", rememberMe: false });
-  const [registerData, setRegisterData] = useState({ name: "", email: "", phone: "", password: "", countryCode: "+966" });
+  const [registerData, setRegisterData] = useState<{
+    name: string; email: string; phone: string; password: string; countryCode: string;
+    userType: "manager" | "cashier"; ownerPhone: string;
+  }>({ name: "", email: "", phone: "", password: "", countryCode: "+966", userType: "manager", ownerPhone: "" });
   const [otpCode, setOtpCode] = useState("");
   const [forgotEmail, setForgotEmail] = useState("");
   const [otpCooldown, setOtpCooldown] = useState(0);
@@ -125,6 +133,12 @@ export default function Login() {
     getRedirectResult(auth)
       .then(async (result) => {
         if (result?.user) {
+          const hasPassword = result.user.providerData.some(p => p.providerId === 'password');
+          if (!hasPassword) {
+            setPendingGoogleUser(result.user);
+            setLoading(false);
+            return;
+          }
           await handleAuthResult(result.user);
           playSound("login_success");
           toast.success("تم تسجيل الدخول بـ Google بنجاح!");
@@ -146,8 +160,10 @@ export default function Login() {
 
   const clearForms = () => {
     setLoginData({ email: "", phone: "", password: "", rememberMe: false });
-    setRegisterData({ name: "", email: "", phone: "", password: "", countryCode: "+966" });
+    setRegisterData({ name: "", email: "", phone: "", password: "", countryCode: "+966", userType: "manager", ownerPhone: "" });
     setOtpCode("");
+    setPendingGoogleUser(null);
+    setGooglePassword("");
     setPhoneStep("number");
     setConfirmationResult(null);
     setShowForgotPassword(false);
@@ -167,7 +183,33 @@ export default function Login() {
   };
 
   // ── Helpers ────────────────────────────────
-  const syncNewUserToFirestore = async (uid: string, name: string, phone?: string, role: "admin" | "cashier" = "cashier") => {
+  const requestCashierAccess = async (uid: string, name: string, email: string, phone: string, ownerPhone: string) => {
+    let targetStoreId = ownerPhone;
+    const queryOwner = query(collection(db, "phone_mappings"), where("__name__", "==", ownerPhone));
+    const ownerSnap = await getDocs(queryOwner);
+    if (!ownerSnap.empty) {
+      targetStoreId = ownerSnap.docs[0].data().uid;
+    } else {
+      const queryOwnerUsers = query(collection(db, "users"), where("phone", "==", ownerPhone));
+      const ownerUsersSnap = await getDocs(queryOwnerUsers);
+      if (!ownerUsersSnap.empty) {
+        targetStoreId = ownerUsersSnap.docs[0].id;
+      }
+    }
+
+    await setDoc(doc(db, "pending_employees", uid), {
+      authUid: uid,
+      name,
+      email,
+      phone,
+      targetStoreId,
+      requestedOwnerPhone: ownerPhone,
+      status: "pending",
+      createdAt: new Date().toISOString()
+    });
+  };
+
+  const syncNewUserToFirestore = async (uid: string, name: string, phone?: string, role: "admin" | "cashier" = "admin") => {
     await setDoc(doc(db, "users", uid), {
       settings: settings,
       profile: { name, role, pin: "", phone: phone || "" },
@@ -187,47 +229,130 @@ export default function Login() {
     if (email) {
       const q = query(collection(db, "users"), where("email", "==", email));
       const snap = await getDocs(q);
-      if (!snap.empty) return "البريد الإلكتروني مسجل بالفعل. لديك حساب بالفعل، الرجاء تسجيل الدخول.";
+      const eq = query(collection(db, "employee_access"), where("email", "==", email));
+      const esnap = await getDocs(eq);
+      if (!snap.empty || !esnap.empty) return "البريد الإلكتروني مسجل بالفعل. لديك حساب بالفعل، الرجاء تسجيل الدخول.";
     }
     if (phone) {
       const q = query(collection(db, "users"), where("phone", "==", phone));
       const snap = await getDocs(q);
-      if (!snap.empty) return "رقم الهاتف مسجل بالفعل. لديك حساب بالفعل، الرجاء تسجيل الدخول.";
+      const eq = query(collection(db, "employee_access"), where("phone", "==", phone));
+      const esnap = await getDocs(eq);
+      if (!snap.empty || !esnap.empty) return "رقم الهاتف مسجل بالفعل. لديك حساب بالفعل، الرجاء تسجيل الدخول.";
     }
     return null;
   };
 
   const handleAuthResult = async (firebaseUser: any) => {
-    const userDocRef = doc(db, "users", firebaseUser.uid);
-    const userDoc = await getDoc(userDocRef);
+    let employeeAccessData = null;
+    let accessDocId = null;
 
-    // SECURITY: Safe fallbacks — never default to admin or 0000
-    let role: "admin" | "cashier" = "cashier";
-    let pin = "";
-    let displayName = firebaseUser.displayName || "مستخدم";
+    // 1. Check if user is an approved employee
+    const accessByAuthUid = query(collection(db, "employee_access"), where("authUid", "==", firebaseUser.uid));
+    const accessSnap = await getDocs(accessByAuthUid);
 
-    if (!userDoc.exists()) {
-      // Check if this is the very first user (owner setup)
-      const { getDocs: _gd, collection: _col } = await import("firebase/firestore");
-      const allUsers = await _gd(_col(db, "users"));
-      const isFirstUser = allUsers.empty;
-      // First user ever → admin (the store owner). Subsequent users → cashier.
-      const assignedRole = isFirstUser ? "admin" : "cashier";
-      await syncNewUserToFirestore(firebaseUser.uid, displayName, undefined, assignedRole);
-      role = assignedRole;
+    if (!accessSnap.empty) {
+      employeeAccessData = accessSnap.docs[0].data();
+      accessDocId = accessSnap.docs[0].id;
     } else {
-      const data = userDoc.data();
-      if (data.settings) updateSettings(data.settings);
-      if (data.profile) {
-        // Only accept known roles — reject anything else
-        const storedRole = data.profile.role;
-        role = storedRole === "admin" || storedRole === "cashier" ? storedRole : "cashier";
-        pin = typeof data.profile.pin === "string" ? data.profile.pin : "";
-        if (data.profile.name) displayName = data.profile.name;
+      // Check if pre-invited by email/phone
+      if (firebaseUser.email) {
+        const accessByEmail = query(collection(db, "employee_access"), where("email", "==", firebaseUser.email));
+        const emailSnap = await getDocs(accessByEmail);
+        if (!emailSnap.empty) {
+          employeeAccessData = emailSnap.docs[0].data();
+          accessDocId = emailSnap.docs[0].id;
+        }
+      }
+      if (!employeeAccessData && firebaseUser.phoneNumber) {
+        const accessByPhone = query(collection(db, "employee_access"), where("phone", "==", firebaseUser.phoneNumber));
+        const phoneSnap = await getDocs(accessByPhone);
+        if (!phoneSnap.empty) {
+          employeeAccessData = phoneSnap.docs[0].data();
+          accessDocId = phoneSnap.docs[0].id;
+        }
       }
     }
 
-    login({ id: firebaseUser.uid, name: displayName, role, pin });
+    if (employeeAccessData) {
+      if (accessDocId && !employeeAccessData.authUid) {
+        // Link them for future usage
+        await setDoc(doc(db, "employee_access", accessDocId), { authUid: firebaseUser.uid }, { merge: true });
+      }
+      const displayName = firebaseUser.displayName || employeeAccessData.name || "موظف";
+      login({
+        id: employeeAccessData.storeId,
+        authUid: firebaseUser.uid,
+        name: displayName,
+        role: employeeAccessData.role || "cashier",
+        permissions: employeeAccessData.permissions,
+      });
+
+      // We cannot easily execute addLog inside Login since AppContext's store state hasn't synced to this storeId yet.
+      // But we will write the specific DB entry.
+      try {
+        const logId = `LOG-${crypto.randomUUID().slice(0,8)}`;
+        await setDoc(doc(db, `users/${employeeAccessData.storeId}/logs`, logId), {
+           id: logId,
+           action: "تسجيل دخول النظام",
+           details: `تسجيل دخول الكاشير: ${displayName}`,
+           type: "security",
+           date: new Date().toISOString(),
+           userId: firebaseUser.uid,
+           userName: displayName
+        });
+      } catch(e) {}
+      return;
+    }
+
+    // 2. Check if they are Pending
+    const pendingDoc = await getDoc(doc(db, "pending_employees", firebaseUser.uid));
+    if (pendingDoc.exists()) {
+      toast.error("حسابك قيد المراجعة من مدير النظام. يرجى الانتظار لحين الموافقة.", { duration: 6000 });
+      await signOut(auth);
+      return;
+    }
+
+    // 3. User is a Store Owner (Manager)
+    const userDocRef = doc(db, "users", firebaseUser.uid);
+    const userDoc = await getDoc(userDocRef);
+
+    let displayName = firebaseUser.displayName || "مدير النظام";
+
+    if (!userDoc.exists()) {
+      // It's a new account
+      if (registerData.userType === "cashier") {
+        // Just created account as cashier now, send to pending
+        const cleanPhone = registerData.countryCode + registerData.phone;
+        await requestCashierAccess(firebaseUser.uid, registerData.name || displayName, firebaseUser.email || registerData.email, cleanPhone, registerData.ownerPhone);
+        toast.success("تم إرسال طلب الانضمام. يرجى انتظار موافقة المدير.", { duration: 6000 });
+        await signOut(auth);
+        return;
+      } else {
+        // Create new store as Manager
+        await syncNewUserToFirestore(firebaseUser.uid, displayName, firebaseUser.phoneNumber || undefined, "admin");
+      }
+    } else {
+      const data = userDoc.data();
+      if (data.settings) updateSettings(data.settings);
+      if (data.profile?.name) displayName = data.profile.name;
+    }
+
+    // Log the Manager in
+    login({ id: firebaseUser.uid, authUid: firebaseUser.uid, name: displayName, role: "admin" });
+    
+    try {
+      const logId = `LOG-${crypto.randomUUID().slice(0,8)}`;
+      await setDoc(doc(db, `users/${firebaseUser.uid}/logs`, logId), {
+          id: logId,
+          action: "تسجيل دخول النظام",
+          details: `تسجيل دخول المدير: ${displayName}`,
+          type: "security",
+          date: new Date().toISOString(),
+          userId: firebaseUser.uid,
+          userName: displayName
+      });
+    } catch(e) {}
   };
 
   // ── Google ──────────────────────────────────
@@ -576,8 +701,63 @@ export default function Login() {
           />
         )}
 
+        {/* ─── Set Google Password ─── */}
+        {pendingGoogleUser && (
+          <motion.div key="googlePassword" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+            className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 p-8">
+            <h2 className="text-xl font-bold text-[#2C3A47] dark:text-white text-center mb-6">إنشاء كلمة مرور للحساب</h2>
+            <p className="text-gray-500 dark:text-zinc-400 text-center mb-6 text-sm leading-relaxed">
+              لقد سجلت الدخول باستخدام Google لأول مرة. يرجى إنشاء كلمة مرور لتتمكن من تسجيل الدخول يدوياً في المستقبل.
+            </p>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              setLoading(true);
+              try {
+                await updatePassword(pendingGoogleUser, googlePassword);
+                await handleAuthResult(pendingGoogleUser);
+                playSound("login_success");
+                toast.success("تم تحديد كلمة المرور وتسجيل الدخول بنجاح!");
+                setPendingGoogleUser(null);
+                setGooglePassword("");
+              } catch (err: any) {
+                if (err.code === "auth/requires-recent-login") {
+                   toast.error("يرجى الضغط على زر تخطي أو تسجيل الدخول مرة أخرى.");
+                } else {
+                   toast.error("حدث خطأ أثناء حفظ كلمة المرور: " + (err.message || ""));
+                }
+              } finally {
+                setLoading(false);
+              }
+            }} className="space-y-4">
+              <div className="relative">
+                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 w-5 h-5 pointer-events-none" />
+                <input type={showPassword ? "text" : "password"} required placeholder="كلمة المرور الجديدة" minLength={6} value={googlePassword}
+                  onChange={(e) => setGooglePassword(e.target.value)}
+                  className="w-full pr-10 pl-10 py-3 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 dark:text-white text-left" dir="ltr" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 hover:text-gray-600">
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading || googlePassword.length < 6}
+                className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] dark:text-white py-3.5 rounded-full font-bold text-base transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
+                {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><Check className="w-5 h-5" /> حفظ ومتابعة</>}
+              </motion.button>
+              <button type="button" onClick={() => {
+                handleAuthResult(pendingGoogleUser).then(() => {
+                  playSound("login_success");
+                  toast.success("تم تسجيل الدخول بـ Google بنجاح!");
+                  setPendingGoogleUser(null);
+                  setGooglePassword("");
+                });
+              }} className="w-full text-center text-sm font-bold text-gray-500 hover:text-gray-700 dark:hover:text-zinc-300 mt-4 transition-colors">
+                تخطي في الوقت الحالي
+              </button>
+            </form>
+          </motion.div>
+        )}
+
         {/* ─── LOGIN ─── */}
-        {!showForgotPassword && mode === "login" && (
+        {!showForgotPassword && mode === "login" && !pendingGoogleUser && (
           <motion.div key="login" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
             className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 p-8">
 
@@ -705,7 +885,7 @@ export default function Login() {
         )}
 
         {/* ─── REGISTER ─── */}
-        {!showForgotPassword && mode === "register" && (
+        {!showForgotPassword && mode === "register" && !pendingGoogleUser && (
           <motion.div key="register" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
             className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 p-8">
 
@@ -739,6 +919,31 @@ export default function Login() {
             {/* Email Register */}
             {authMethod === "email" && (
               <form onSubmit={handleEmailRegister} className="space-y-4">
+                
+                {/* Manager / Cashier Toggle */}
+                <div className="flex bg-gray-50 dark:bg-zinc-800 p-1 rounded-xl">
+                  <button type="button" onClick={() => setRegisterData({ ...registerData, userType: "manager" })}
+                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${registerData.userType === "manager" ? "bg-white dark:bg-zinc-700 shadow-sm text-[#2C3A47] dark:text-white" : "text-gray-500 dark:text-zinc-400"}`}>
+                    مدير نشاط
+                  </button>
+                  <button type="button" onClick={() => setRegisterData({ ...registerData, userType: "cashier" })}
+                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${registerData.userType === "cashier" ? "bg-white dark:bg-zinc-700 shadow-sm text-[#2C3A47] dark:text-white" : "text-gray-500 dark:text-zinc-400"}`}>
+                    موظف / كاشير
+                  </button>
+                </div>
+
+                {registerData.userType === "cashier" && (
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mt-2">
+                    <p className="text-sm font-bold text-amber-800 dark:text-amber-500 mb-2">طلب انضمام لنشاط قائم</p>
+                    <div className="relative">
+                      <Phone className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500/70 w-5 h-5 pointer-events-none" />
+                      <input type="text" required placeholder="رقم الموبايل الخاص بالمدير" value={registerData.ownerPhone}
+                        onChange={(e) => setRegisterData({ ...registerData, ownerPhone: e.target.value })}
+                        className="w-full pr-10 pl-4 py-3 border border-amber-200 dark:border-amber-800 bg-white dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-amber-500 text-gray-700 dark:text-white font-bold text-left" dir="ltr" />
+                    </div>
+                  </div>
+                )}
+
                 <input type="text" required placeholder="الاسم الكامل" value={registerData.name}
                   onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 dark:text-white font-bold" />
@@ -769,6 +974,30 @@ export default function Login() {
               <>
                 {phoneStep === "number" ? (
                   <form onSubmit={handleSendOtp} className="space-y-4">
+                    {/* Manager / Cashier Toggle */}
+                    <div className="flex bg-gray-50 dark:bg-zinc-800 p-1 rounded-xl">
+                      <button type="button" onClick={() => setRegisterData({ ...registerData, userType: "manager" })}
+                        className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${registerData.userType === "manager" ? "bg-white dark:bg-zinc-700 shadow-sm text-[#2C3A47] dark:text-white" : "text-gray-500 dark:text-zinc-400"}`}>
+                        مدير نشاط
+                      </button>
+                      <button type="button" onClick={() => setRegisterData({ ...registerData, userType: "cashier" })}
+                        className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${registerData.userType === "cashier" ? "bg-white dark:bg-zinc-700 shadow-sm text-[#2C3A47] dark:text-white" : "text-gray-500 dark:text-zinc-400"}`}>
+                        موظف / كاشير
+                      </button>
+                    </div>
+
+                    {registerData.userType === "cashier" && (
+                      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mt-2 mb-2">
+                        <p className="text-sm font-bold text-amber-800 dark:text-amber-500 mb-2">طلب انضمام لنشاط قائم</p>
+                        <div className="relative">
+                          <Phone className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500/70 w-5 h-5 pointer-events-none" />
+                          <input type="text" required placeholder="رقم الموبايل الخاص بالمدير" value={registerData.ownerPhone}
+                            onChange={(e) => setRegisterData({ ...registerData, ownerPhone: e.target.value })}
+                            className="w-full pr-10 pl-4 py-3 border border-amber-200 dark:border-amber-800 bg-white dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-amber-500 text-gray-700 dark:text-white font-bold text-left" dir="ltr" />
+                        </div>
+                      </div>
+                    )}
+
                     <input type="text" required placeholder="الاسم الكامل" value={registerData.name}
                       onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
                       className="w-full px-4 py-3 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 dark:text-white font-bold" />
