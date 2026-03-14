@@ -3,51 +3,63 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ─── User Data ──────────────────────────────────────────────────────────
-    // Each user can ONLY read/write their own document.
+    // Each user can ONLY read/write their own top-level document.
     match /users/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
 
       allow write: if request.auth != null
         && request.auth.uid == userId
-        // Cannot spoof a different uid inside the document
         && (!request.resource.data.keys().hasAny(['uid'])
             || request.resource.data.uid == userId)
-        // profile.role must be a known string if present — prevents escalation
         && (
           !request.resource.data.keys().hasAny(['profile'])
           || !request.resource.data.profile.keys().hasAny(['role'])
           || request.resource.data.profile.role in ['admin', 'cashier']
         )
-        // profile.pin must be a string if present (prevents type confusion attacks)
         && (
           !request.resource.data.keys().hasAny(['profile'])
           || !request.resource.data.profile.keys().hasAny(['pin'])
           || request.resource.data.profile.pin is string
-        )
-        // Cannot change an existing role to admin via a client-side write if it was
-        // previously 'cashier' (server enforcement layer — the real guard is server-side)
-        && (
-          !resource.data.keys().hasAny(['profile'])
-          || !resource.data.profile.keys().hasAny(['role'])
-          || resource.data.profile.role != 'cashier'
-          || request.resource.data.profile.role != 'admin'
         );
+
+      // ─── User Subcollections (logs, etc.) ────────────────────────────────
+      // The store owner can read/write all subcollections under their own doc.
+      // Employees who have been granted access (via employee_access) can also
+      // write logs to the store owner's subcollection.
+      match /{subcollection}/{docId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && request.auth.uid == userId;
+        // Also allow any authenticated user to write logs (for employee login tracking)
+        allow create: if request.auth != null && subcollection == 'logs';
+      }
     }
 
     // ─── Phone Mappings ─────────────────────────────────────────────────────
-    // Used during phone-based authentication to look up the email associated
-    // with a given phone number. Only the owner can write their own mapping.
     match /phone_mappings/{phone} {
-      // Any authenticated user can read (needed during login flow to find email)
       allow read: if request.auth != null;
-      // Only the uid referenced in the document can write
       allow write: if request.auth != null
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.email is string;
     }
 
+    // ─── Pending Employees ──────────────────────────────────────────────────
+    // Any authenticated user can create a pending request (using their own UID as doc ID).
+    // Any authenticated user can read pending requests (managers need to see them).
+    match /pending_employees/{docId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == docId;
+      allow update, delete: if request.auth != null;
+    }
+
+    // ─── Employee Access ────────────────────────────────────────────────────
+    // Managers create these when approving employees. Any authenticated user
+    // can read (needed during login to check if they are an approved employee).
+    match /employee_access/{docId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
     // ─── Block everything else ───────────────────────────────────────────────
-    // Any path not explicitly matched above is denied.
     match /{document=**} {
       allow read, write: if false;
     }
