@@ -18,7 +18,7 @@ import {
   RecaptchaVerifier,
   reload,
 } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import toast from "react-hot-toast";
 
 // Removed SVG Logo to use the new professional PNG logo
@@ -105,6 +105,19 @@ export default function Login() {
   const [registerData, setRegisterData] = useState({ name: "", email: "", phone: "", password: "", countryCode: "+966" });
   const [otpCode, setOtpCode] = useState("");
   const [forgotEmail, setForgotEmail] = useState("");
+  const [otpCooldown, setOtpCooldown] = useState(0);
+  const cooldownTimer = useRef<any>(null);
+
+  useEffect(() => {
+    if (otpCooldown > 0) {
+      cooldownTimer.current = setInterval(() => {
+        setOtpCooldown((prev) => prev - 1);
+      }, 1000);
+    } else {
+      if (cooldownTimer.current) clearInterval(cooldownTimer.current);
+    }
+    return () => { if (cooldownTimer.current) clearInterval(cooldownTimer.current); };
+  }, [otpCooldown]);
 
   // Handle Google Redirect result on mount
   useEffect(() => {
@@ -158,8 +171,32 @@ export default function Login() {
     await setDoc(doc(db, "users", uid), {
       settings: settings,
       profile: { name, role: "admin", pin: "0000", phone: phone || "" },
+      email: registerData.email || `${phone}@cashier-tech.com`,
+      phone: phone || "",
       createdAt: new Date().toISOString(),
     });
+
+    // Also create a separate mapping for easy lookup by phone
+    if (phone) {
+      await setDoc(doc(db, "phone_mappings", phone), {
+        uid,
+        email: registerData.email || `${phone}@cashier-tech.com`
+      });
+    }
+  };
+
+  const checkDuplicate = async (email: string, phone: string) => {
+    if (email) {
+      const q = query(collection(db, "users"), where("email", "==", email));
+      const snap = await getDocs(q);
+      if (!snap.empty) return "البريد الإلكتروني مسجل بالفعل. لديك حساب بالفعل، الرجاء تسجيل الدخول.";
+    }
+    if (phone) {
+      const q = query(collection(db, "users"), where("phone", "==", phone));
+      const snap = await getDocs(q);
+      if (!snap.empty) return "رقم الهاتف مسجل بالفعل. لديك حساب بالفعل، الرجاء تسجيل الدخول.";
+    }
+    return null;
   };
 
   const handleAuthResult = async (firebaseUser: any) => {
@@ -224,6 +261,13 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
+      const duplicateError = await checkDuplicate(registerData.email, "");
+      if (duplicateError) {
+        toast.error(duplicateError);
+        setMode("login");
+        return;
+      }
+
       const cred = await createUserWithEmailAndPassword(auth, registerData.email, registerData.password);
       await updateProfile(cred.user, { displayName: registerData.name });
       await syncNewUserToFirestore(cred.user.uid, registerData.name);
@@ -232,7 +276,8 @@ export default function Login() {
       toast.success("تم إرسال رابط التحقق إلى بريدك الإلكتروني!");
     } catch (err: any) {
       if (err.code === "auth/email-already-in-use") {
-        toast.error("هذا البريد مسجل مسبقاً. يمكنك تسجيل الدخول.");
+        toast.error("لديك حساب بالفعل، الرجاء تسجيل الدخول.");
+        setMode("login");
       } else if (err.code === "auth/weak-password") {
         toast.error("كلمة المرور ضعيفة جداً (6 أحرف على الأقل)");
       } else {
@@ -298,6 +343,12 @@ export default function Login() {
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (otpCooldown > 0) {
+      toast.error(`يرجى الانتظار ${otpCooldown} ثانية قبل إعادة المحاولة`);
+      return;
+    }
+
     setLoading(true);
 
     // Clean phone number: remove spaces and leading zeros if country code is present
@@ -310,10 +361,21 @@ export default function Login() {
     const phoneNum = `${registerData.countryCode}${rawPhone}`;
 
     try {
+      if (mode === "register") {
+        const duplicateError = await checkDuplicate("", phoneNum);
+        if (duplicateError) {
+          toast.error(duplicateError);
+          setMode("login");
+          setLoading(false);
+          return;
+        }
+      }
+
       const appVerifier = setupRecaptcha();
       const result = await signInWithPhoneNumber(auth, phoneNum, appVerifier);
       setConfirmationResult(result);
       setPhoneStep("otp");
+      setOtpCooldown(60); // 60 seconds rate limiting
       toast.success("تم إرسال رمز التحقق عبر الرسائل القصيرة");
     } catch (err: any) {
       console.error("SMS Error:", err);
@@ -326,6 +388,54 @@ export default function Login() {
       if (recaptchaRef.current) {
         try { recaptchaRef.current.clear(); } catch { }
         recaptchaRef.current = null;
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePhonePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    let rawPhone = loginData.phone.replace(/\s+/g, '');
+    if (rawPhone.startsWith('0')) rawPhone = rawPhone.substring(1);
+    const phoneNum = `${registerData.countryCode}${rawPhone}`;
+
+    try {
+      // Find the associated email for this phone
+      const q = query(collection(db, "phone_mappings"), where("__name__", "==", phoneNum));
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        // Fallback or secondary check in users collection
+        const qu = query(collection(db, "users"), where("phone", "==", phoneNum));
+        const snapU = await getDocs(qu);
+        if (snapU.empty) {
+          toast.error("لا يوجد حساب مرتب بذا الرقم. يرجى المتابعة عبر OTP لأول مرة.");
+          setPhoneStep("otp"); // Fallback to OTP if no password record found
+          setLoading(false);
+          return;
+        }
+        const userData = snapU.docs[0].data();
+        const email = userData.email || `${phoneNum}@cashier-tech.com`;
+        const cred = await signInWithEmailAndPassword(auth, email, loginData.password);
+        await handleAuthResult(cred.user);
+      } else {
+        const mapping = snap.docs[0].data();
+        const cred = await signInWithEmailAndPassword(auth, mapping.email, loginData.password);
+        await handleAuthResult(cred.user);
+      }
+
+      playSound("login_success");
+      toast.success("تم تسجيل الدخول بنجاح");
+    } catch (err: any) {
+      console.error("Phone Password Login Error:", err);
+      playSound("error");
+      if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found" || err.code === "auth/invalid-credential") {
+        toast.error("كلمة المرور غير صحيحة أو البيانات غير متطابقة");
+      } else {
+        toast.error("حدث خطأ أثناء تسجيل الدخول. تأكد من بياناتك.");
       }
     } finally {
       setLoading(false);
@@ -537,22 +647,40 @@ export default function Login() {
                         onChange={(e) => setLoginData({ ...loginData, phone: e.target.value })}
                         className="flex-1 pl-4 pr-3 py-3 font-bold text-gray-700 dark:text-white outline-none text-left" dir="ltr" />
                     </div>
-                    <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
+                    <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading || otpCooldown > 0}
                       className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] dark:text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
-                      {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" /> إرسال رمز التحقق</>}
+                      {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" /> {otpCooldown > 0 ? `إعادة الإرسال بعد (${otpCooldown}ث)` : "إرسال رمز التحقق"}</>}
                     </motion.button>
                   </form>
                 ) : (
-                  <form onSubmit={handleVerifyOtp} className="space-y-4">
-                    <p className="text-sm text-gray-500 dark:text-zinc-400 text-center font-bold">أدخل الرمز المكون من 6 أرقام المرسل إلى هاتفك</p>
-                    <input type="text" required placeholder="_ _ _ _ _ _" maxLength={6} value={otpCode}
-                      onChange={(e) => setOtpCode(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 dark:text-white text-center text-2xl tracking-[0.5em] font-bold" dir="ltr" />
+                  <form onSubmit={handlePhonePasswordLogin} className="space-y-4">
+                    <div className="flex border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl overflow-hidden focus-within:border-[#00E676] transition-colors" dir="ltr">
+                      <select value={registerData.countryCode} onChange={(e) => setRegisterData({ ...registerData, countryCode: e.target.value })}
+                        className="bg-gray-50 dark:bg-zinc-800 text-gray-700 dark:text-white px-3 py-3 text-sm font-bold outline-none border-r border-gray-300" dir="ltr">
+                        <option value="+966">🇸🇦 +966</option>
+                        <option value="+971">🇦🇪 +971</option>
+                        <option value="+20">🇪🇬 +20</option>
+                        <option value="+90">🇹🇷 +90</option>
+                        <option value="+1">🇺🇸 +1</option>
+                      </select>
+                      <input type="tel" required placeholder="5XXXXXXXX" value={loginData.phone}
+                        onChange={(e) => setLoginData({ ...loginData, phone: e.target.value })}
+                        className="flex-1 pl-4 pr-3 py-3 font-bold text-gray-700 dark:text-white outline-none text-left" dir="ltr" />
+                    </div>
+                    <div className="relative">
+                      <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 w-5 h-5 pointer-events-none" />
+                      <input type={showPassword ? "text" : "password"} required placeholder="كلمة المرور" value={loginData.password}
+                        onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                        className="w-full pr-10 pl-10 py-3 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 dark:text-white text-left" dir="ltr" />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 hover:text-gray-600">
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
                     <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
                       className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] dark:text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
-                      {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><Check className="w-5 h-5" /> تأكيد الرمز والدخول</>}
+                      {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><LogIn className="w-5 h-5" /> دخول بكلمة المرور</>}
                     </motion.button>
-                    <button type="button" onClick={() => setPhoneStep("number")} className="w-full text-center text-sm font-bold text-gray-400 dark:text-zinc-500 hover:text-[#2C3A47] dark:text-white">تغيير رقم الهاتف</button>
+                    <button type="button" onClick={() => setPhoneStep("otp")} className="w-full text-center text-sm font-bold text-[#00E676] hover:underline">أو تسجيل الدخول عبر OTP</button>
                   </form>
                 )}
               </>

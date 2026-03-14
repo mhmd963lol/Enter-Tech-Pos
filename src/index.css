@@ -319,6 +319,28 @@ input[type=number] {
   -moz-appearance: textfield;
 }
 
+/* Responsive & Visibility Fixes */
+.prevent-squish {
+  flex-shrink: 0 !important;
+  min-width: max-content;
+}
+
+.scroll-on-overflow {
+  overflow: auto;
+  max-height: 100%;
+}
+
+.no-overlap {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flexible-text {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
 /* Custom Hover-only Scrollbars */
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;

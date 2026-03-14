@@ -686,8 +686,8 @@ export default function POS() {
                   </div>
 
 
-                  {/* Checkout Panel */}
-                  <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 space-y-4">
+                  {/* Fixed Checkout Panel */}
+                  <div className="mt-auto p-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 space-y-4 shrink-0 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] dark:shadow-[0_-4px_10px_rgba(0,0,0,0.1)]">
                     <div className="space-y-2 text-sm pb-2 border-b border-zinc-200 dark:border-zinc-800">
                       <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
                         <span>المجموع الفرعي</span>
@@ -708,7 +708,7 @@ export default function POS() {
                     </div>
 
                     <div className="pt-2">
-                      <div className="flex items-center justify-between mb-2">
+                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400">المبلغ المستلم:</span>
                         <span className="text-[10px] text-zinc-400">انقر للإدخال السريع</span>
                       </div>
@@ -751,7 +751,7 @@ export default function POS() {
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: "auto", opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          className="space-y-3 overflow-hidden pt-2"
+                          className="space-y-3 overflow-y-auto max-h-[30vh] custom-scrollbar pt-2"
                         >
                           <div className="grid grid-cols-4 gap-2">
                             {(["cash", "card", "debt", "split"] as const).map((method) => (
