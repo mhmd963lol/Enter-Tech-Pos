@@ -553,10 +553,10 @@ export default function POS() {
                     stiffness: 300,
                     duration: settings.disableAnimations ? 0.12 : 0.4
                   }}
-                  style={{ maxHeight: 'calc(100svh - 1rem)' }}
+                  style={{ maxHeight: typeof window !== 'undefined' && window.innerWidth < 1024 ? 'calc(100svh - 1rem)' : '100%' }}
                   className={`
                  w-[calc(100%-1rem)] max-w-[480px] lg:w-[420px] flex flex-col bg-white dark:bg-zinc-950 shadow-2xl border-r lg:border-r-0 lg:border-l border-zinc-200 dark:border-zinc-800 shrink-0
-                 fixed lg:sticky lg:top-0 lg:flex lg:rounded-2xl min-h-[50vh] h-auto lg:h-[calc(100svh-1rem)]
+                 fixed lg:sticky lg:top-0 lg:flex lg:rounded-2xl min-h-[50vh] h-auto lg:h-full
                  bottom-2 left-2 right-2 lg:bottom-0 lg:left-0 lg:right-0 z-[60] lg:z-auto rounded-3xl lg:rounded-b-2xl origin-right
                  ${settings.masterTheme === "ios-glass" ? "glass-panel" : ""}
                `}
