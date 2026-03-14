@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useAppContext } from "../context/AppContext";
 import {
   Search,
@@ -37,6 +37,7 @@ import toast from "react-hot-toast";
 import AddMaintenanceJobModal from "../components/AddMaintenanceJobModal";
 import QuickAddCustomerModal from "../components/QuickAddCustomerModal";
 import CustomKeypad from "../components/CustomKeypad";
+import { calcSubtotal, calcTax, roundMoney } from "../lib/moneyUtils";
 
 export default function POS() {
   const {
@@ -129,13 +130,14 @@ export default function POS() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [cart]);
 
-  const cartTotal = cart.reduce(
-    (sum, item) => sum + (item.customPrice ?? item.price) * item.quantity,
-    0,
-  );
-  const tax = settings.enableTax ? cartTotal * (settings.taxRate / 100) : 0;
-  const grandTotal = cartTotal + tax;
-  const change = amountPaid ? Math.max(0, Number(amountPaid) - grandTotal) : 0;
+  // Precision-safe cart calculations with useMemo (only recalculates when cart/settings change)
+  const { cartTotal, tax, grandTotal, change } = useMemo(() => {
+    const total = calcSubtotal(cart);
+    const t = calcTax(total, settings.taxRate, settings.enableTax);
+    const grand = roundMoney(total + t);
+    const ch = amountPaid ? Math.max(0, roundMoney(Number(amountPaid) - grand)) : 0;
+    return { cartTotal: total, tax: t, grandTotal: grand, change: ch };
+  }, [cart, settings.enableTax, settings.taxRate, amountPaid]);
 
   const handleCheckout = () => {
     if (cart.length === 0) return;

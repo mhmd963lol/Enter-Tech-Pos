@@ -5,6 +5,8 @@ import React, {
   useEffect,
   useState,
   useRef,
+  useMemo,
+  useCallback,
 } from "react";
 import {
   Product,
@@ -32,6 +34,10 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc, setDoc, onSnapshot, collection } from "firebase/firestore";
 import { useExchangeRate } from "../hooks/useExchangeRate";
 import { Wifi, WifiOff, RefreshCcw } from "lucide-react";
+import { roundMoney, calcSubtotal, calcTax, calcProfit } from "../lib/moneyUtils";
+import { buildOrder, validateStock } from "../services/cartService";
+import { validateOrderIntegrity, validateCartPrices } from "../services/validationService";
+import { enqueueOperation, getQueuedOperations, clearQueue } from "../services/offlineQueue";
 
 
 interface AppContextType {
@@ -326,34 +332,51 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  // Debounced Sync to Firestore
+  // Debounced Sync to Firestore (with offline queue)
   useEffect(() => {
     if (!user?.id) return;
 
     setSyncStatus('syncing');
     const timeoutId = setTimeout(async () => {
+      const dataToSync = deepClean({
+        products,
+        categories,
+        orders,
+        cart,
+        settings,
+        returns,
+        maintenanceJobs,
+        expenses,
+        incomes,
+        customers,
+        notifications,
+        suppliers,
+        purchases,
+        employees,
+        transactions,
+        logs: logs || []
+      });
+
+      if (!navigator.onLine) {
+        // Offline: queue the operation for later
+        enqueueOperation({ type: 'sync_data', data: dataToSync });
+        setSyncStatus('error');
+        return;
+      }
+
       try {
-        await setDoc(doc(db, "users", user.id), deepClean({
-          products,
-          categories,
-          orders,
-          cart,
-          settings,
-          returns,
-          maintenanceJobs,
-          expenses,
-          incomes,
-          customers,
-          notifications,
-          suppliers,
-          purchases,
-          employees,
-          transactions,
-          logs: logs || []
-        }), { merge: true });
+        // Process any queued operations first
+        const queued = getQueuedOperations();
+        if (queued.length > 0) {
+          // Use latest queued data merged with current
+          clearQueue();
+        }
+
+        await setDoc(doc(db, "users", user.id), dataToSync, { merge: true });
         setSyncStatus('synced');
       } catch (error) {
-        console.error("Error syncing data to Firestore", error);
+        // On failure, queue for retry
+        enqueueOperation({ type: 'sync_data', data: dataToSync });
         setSyncStatus('error');
       }
     }, 2000);
@@ -364,6 +387,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     maintenanceJobs, expenses, incomes, customers,
     notifications, suppliers, purchases, employees, transactions, user?.id
   ]);
+
+  // Auto-sync queued operations when coming back online
+  useEffect(() => {
+    if (isOnline && user?.id) {
+      const queued = getQueuedOperations();
+      if (queued.length > 0) {
+        const latestOp = queued[queued.length - 1];
+        setDoc(doc(db, "users", user.id), deepClean(latestOp.data), { merge: true })
+          .then(() => {
+            clearQueue();
+            setSyncStatus('synced');
+          })
+          .catch(() => setSyncStatus('error'));
+      }
+    }
+  }, [isOnline, user?.id]);
 
   // (Duplicate useEffects removed — single onAuthStateChanged and single Firestore sync above)
 
@@ -817,49 +856,45 @@ export function AppProvider({ children }: { children: ReactNode }) {
   ) => {
     if (cart.length === 0) return;
 
-    const subtotal = cart.reduce(
-      (sum, item) => sum + (item.customPrice ?? item.price) * item.quantity,
-      0,
-    );
-    const tax = settings.enableTax ? subtotal * (settings.taxRate / 100) : 0;
-    const total = subtotal + tax;
-    const actualAmountPaid =
-      amountPaid ?? (paymentMethod === "debt" ? 0 : total);
+    // Validate cart integrity before checkout
+    const validation = validateCartPrices(cart, products);
+    if (!validation.valid) {
+      addNotification({
+        title: "خطأ في البيانات",
+        message: validation.issues[0],
+        type: "error",
+      });
+      return;
+    }
 
-    const profit = cart.reduce((sum, item) => sum + ((item.customPrice ?? item.price) - item.costPrice) * item.quantity, 0);
-    const today = new Date().toISOString().split('T')[0];
-    const dailyNumber = orders.filter(o => o.date.startsWith(today)).length + 1;
+    // Build order using precision-safe calculations
+    const newOrder = buildOrder({
+      cart, settings, user, orders,
+      paymentMethod, customerName, customerId, amountPaid, splitDetails,
+    });
 
-    const newOrder: Order = {
-      id: `ORD-${crypto.randomUUID().slice(0, 8)}`,
-      dailyNumber,
-      date: new Date().toISOString(),
-      subtotal,
-      tax,
-      total,
-      profit,
-      status: "completed",
-      items: [...cart],
-      paymentMethod,
-      splitDetails,
-      customerName,
-      customerId,
-      amountPaid: actualAmountPaid,
-      cashierId: user?.id,
-      cashierName: user?.name,
-    };
+    // Validate order integrity
+    const orderValidation = validateOrderIntegrity(newOrder);
+    if (!orderValidation.valid) {
+      addNotification({
+        title: "خطأ في الحساب",
+        message: orderValidation.issues[0],
+        type: "error",
+      });
+      return;
+    }
 
     setOrders((prev) => [newOrder, ...prev]);
     addLog({
       action: "بيع طلب",
-      details: `إتمام عملية بيع برقم ${newOrder.id} - الإجمالي: ${total} - الربح: ${profit}`,
+      details: `إتمام عملية بيع برقم ${newOrder.id} - الإجمالي: ${newOrder.total} - الربح: ${newOrder.profit}`,
       type: "sale"
     });
     playSound("success");
 
     // Update customer balance if order is completed
     if (customerId && newOrder.status === "completed") {
-      const debt = total - actualAmountPaid;
+      const debt = roundMoney(newOrder.total - newOrder.amountPaid);
       if (debt !== 0) {
         adjustCustomerBalance(customerId, debt);
       }
@@ -872,12 +907,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (cartItem) {
           const newStock = Math.max(0, product.stock - cartItem.quantity);
 
-          // Check for low stock notification
           if (
             product.trackInventory &&
             newStock <= (product.minStockAlert || 0)
           ) {
-            // Use setTimeout to avoid updating state during render if this was somehow synchronous
             setTimeout(() => {
               addNotification({
                 title: newStock === 0 ? "نفاد المخزون" : "تنبيه انخفاض المخزون",
@@ -1506,89 +1539,97 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [customers, settings.currency]);
 
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    user,
+    isAuthLoading,
+    products,
+    categories,
+    orders,
+    cart,
+    settings,
+    isPro,
+    isPrivacyMode,
+    returns,
+    maintenanceJobs,
+    expenses,
+    incomes,
+    customers,
+    notifications,
+    suppliers,
+    purchases,
+    employees,
+    transactions,
+    login,
+    logout,
+    togglePrivacyMode,
+    addToCart,
+    removeFromCart,
+    updateCartQuantity,
+    updateCartItemPrice,
+    clearCart,
+    checkout,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    addCustomer,
+    updateCustomer,
+    deleteCustomer,
+    adjustCustomerBalance,
+    updateOrderStatus,
+    updateSettings,
+    upgradeToPro,
+    playSound,
+    resetApp,
+    addReturn,
+    addMaintenanceJob,
+    updateMaintenanceJob,
+    addNotification,
+    markNotificationAsRead,
+    clearNotifications,
+    addSupplier,
+    updateSupplier,
+    deleteSupplier,
+    addPurchaseInvoice,
+    updatePurchaseInvoiceStatus,
+    addEmployee,
+    updateEmployee,
+    deleteEmployee,
+    addExpense,
+    deleteExpense,
+    addIncome,
+    deleteIncome,
+    addTransaction,
+    deferredPrompt,
+    setDeferredPrompt,
+    exchangeRate,
+    isRateLive,
+    rateSource,
+    rateTimestamp,
+    refreshExchangeRate,
+    isCartOpen,
+    setIsCartOpen,
+    isSidebarCollapsed,
+    setIsSidebarCollapsed,
+    collectDebt,
+    logs,
+    addLog,
+    isOnline,
+    syncStatus,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [
+    user, isAuthLoading, products, categories, orders, cart, settings,
+    isPro, isPrivacyMode, returns, maintenanceJobs, expenses, incomes,
+    customers, notifications, suppliers, purchases, employees, transactions,
+    deferredPrompt, isCartOpen, isSidebarCollapsed, logs, isOnline, syncStatus,
+    exchangeRate, isRateLive, rateSource, rateTimestamp,
+  ]);
+
   return (
-    <AppContext.Provider
-      value={{
-        user,
-        isAuthLoading,
-        products,
-        categories,
-        orders,
-        cart,
-        settings,
-        isPro,
-        isPrivacyMode,
-        returns,
-        maintenanceJobs,
-        expenses,
-        incomes,
-        customers,
-        notifications,
-        suppliers,
-        purchases,
-        employees,
-        transactions,
-        login,
-        logout,
-        togglePrivacyMode,
-        addToCart,
-        removeFromCart,
-        updateCartQuantity,
-        updateCartItemPrice,
-        clearCart,
-        checkout,
-        addProduct,
-        updateProduct,
-        deleteProduct,
-        addCategory,
-        updateCategory,
-        deleteCategory,
-        addCustomer,
-        updateCustomer,
-        deleteCustomer,
-        adjustCustomerBalance,
-        updateOrderStatus,
-        updateSettings,
-        upgradeToPro,
-        playSound,
-        resetApp,
-        addReturn,
-        addMaintenanceJob,
-        updateMaintenanceJob,
-        addNotification,
-        markNotificationAsRead,
-        clearNotifications,
-        addSupplier,
-        updateSupplier,
-        deleteSupplier,
-        addPurchaseInvoice,
-        updatePurchaseInvoiceStatus,
-        addEmployee,
-        updateEmployee,
-        deleteEmployee,
-        addExpense,
-        deleteExpense,
-        addIncome,
-        deleteIncome,
-        addTransaction,
-        deferredPrompt,
-        setDeferredPrompt,
-        exchangeRate,
-        isRateLive,
-        rateSource,
-        rateTimestamp,
-        refreshExchangeRate,
-        isCartOpen,
-        setIsCartOpen,
-        isSidebarCollapsed,
-        setIsSidebarCollapsed,
-        collectDebt,
-        logs,
-        addLog,
-        isOnline,
-        syncStatus,
-      }}
-    >
+    <AppContext.Provider value={contextValue}>
       {children}
     </AppContext.Provider>
   );
