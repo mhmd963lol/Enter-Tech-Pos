@@ -184,12 +184,12 @@ export default function Categories() {
       {/* Add/Edit Category Modal */}
       <AnimatePresence>
         {isAddModalOpen && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-zinc-950 rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-zinc-100 dark:border-zinc-800"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              className="bg-white dark:bg-zinc-950 rounded-t-3xl sm:rounded-2xl shadow-xl w-full sm:max-w-md max-h-[92vh] flex flex-col overflow-hidden border border-zinc-100 dark:border-zinc-800"
             >
               <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex justify-between items-center">
                 <h3 className="text-xl font-bold text-zinc-900 dark:text-white">
@@ -202,7 +202,7 @@ export default function Categories() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <form onSubmit={handleAddCategory} className="p-6 space-y-4">
+              <form onSubmit={handleAddCategory} className="p-6 space-y-4 overflow-y-auto">
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                     اسم القسم

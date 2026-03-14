@@ -167,19 +167,14 @@ export default function Login() {
   };
 
   // ── Helpers ────────────────────────────────
-  const syncNewUserToFirestore = async (uid: string, name: string, phone?: string) => {
-    // SECURITY: New users are created as "cashier" by default.
-    // The store owner must manually promote accounts to "admin" from Settings.
-    // No default PIN is set — the admin must configure it on first login.
+  const syncNewUserToFirestore = async (uid: string, name: string, phone?: string, role: "admin" | "cashier" = "cashier") => {
     await setDoc(doc(db, "users", uid), {
       settings: settings,
-      profile: { name, role: "cashier", pin: "", phone: phone || "" },
+      profile: { name, role, pin: "", phone: phone || "" },
       email: registerData.email || `${phone}@cashier-tech.com`,
       phone: phone || "",
       createdAt: new Date().toISOString(),
     });
-
-    // Also create a separate mapping for easy lookup by phone
     if (phone) {
       await setDoc(doc(db, "phone_mappings", phone), {
         uid,
@@ -212,8 +207,14 @@ export default function Login() {
     let displayName = firebaseUser.displayName || "مستخدم";
 
     if (!userDoc.exists()) {
-      // First-time login via Google/Phone not yet registered
-      await syncNewUserToFirestore(firebaseUser.uid, displayName);
+      // Check if this is the very first user (owner setup)
+      const { getDocs: _gd, collection: _col } = await import("firebase/firestore");
+      const allUsers = await _gd(_col(db, "users"));
+      const isFirstUser = allUsers.empty;
+      // First user ever → admin (the store owner). Subsequent users → cashier.
+      const assignedRole = isFirstUser ? "admin" : "cashier";
+      await syncNewUserToFirestore(firebaseUser.uid, displayName, undefined, assignedRole);
+      role = assignedRole;
     } else {
       const data = userDoc.data();
       if (data.settings) updateSettings(data.settings);

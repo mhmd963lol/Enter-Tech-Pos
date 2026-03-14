@@ -11,7 +11,6 @@ import {
   X,
   Users,
   ChevronDown,
-  ChevronUp,
   ChevronRight,
   ChevronLeft,
   Store,
@@ -20,6 +19,7 @@ import {
   Sun,
   Bell,
   Maximize,
+  Minimize,
   Wallet,
   Mail,
   Wrench,
@@ -281,15 +281,21 @@ export default function Layout() {
     updateSettings({ theme: settings.theme === "dark" ? "light" : "dark" });
   };
 
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {
-        // Fullscreen not supported or denied
-      });
+      document.documentElement.requestFullscreen().catch(() => {});
     } else {
       document.exitFullscreen();
     }
   };
+
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
 
   // Click outside listener for mobile sidebar
   useEffect(() => {
@@ -435,6 +441,14 @@ export default function Layout() {
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-zinc-900"></span>
               )}
             </button>
+            {/* Privacy mode toggle — visible on mobile too */}
+            <button
+              onClick={togglePrivacyMode}
+              className={`p-2 rounded-xl transition-colors ${isPrivacyMode ? "bg-red-50 text-red-600 dark:bg-red-900/20" : "text-zinc-400"}`}
+              title={isPrivacyMode ? "إظهار الأرقام" : "إخفاء الأرقام"}
+            >
+              {isPrivacyMode ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
             <button onClick={toggleTheme} className="p-2 text-zinc-400">
               {settings.theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
@@ -443,15 +457,18 @@ export default function Layout() {
 
         {/* Desktop Controls (Top Bar) */}
         <div className="hidden lg:flex h-14 items-center justify-end px-8 gap-4 border-b border-zinc-100 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-sm">
-          <button
-            onClick={togglePrivacyMode}
+          <button onClick={togglePrivacyMode}
             className={`p-2 rounded-full transition-colors ${isPrivacyMode ? "bg-red-50 text-red-600 dark:bg-red-900/20" : "text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
             title={isPrivacyMode ? "إظهار الأرقام" : "إخفاء الأرقام"}
           >
             {isPrivacyMode ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
-          <button onClick={toggleFullscreen} className="p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full" title="ملء الشاشة">
-            <Maximize size={18} />
+          <button
+            onClick={toggleFullscreen}
+            className="p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
+            title={isFullscreen ? "الخروج من ملء الشاشة" : "ملء الشاشة"}
+          >
+            {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
           </button>
           <button onClick={() => setIsNotificationPanelOpen(true)} className="p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full relative">
             <Bell size={18} />

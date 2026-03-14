@@ -567,15 +567,15 @@ export default function Products() {
           {isAddModalOpen && (
           <div
             key="add-modal"
-            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm"
             onClick={closeModal}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-zinc-950 rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-zinc-100 dark:border-zinc-800"
+              className="bg-white dark:bg-zinc-950 rounded-t-3xl sm:rounded-2xl shadow-xl w-full sm:max-w-md max-h-[92vh] flex flex-col overflow-hidden border border-zinc-100 dark:border-zinc-800"
             >
               <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex justify-between items-center">
                 <h3 className="text-xl font-bold text-zinc-900 dark:text-white">
@@ -588,7 +588,7 @@ export default function Products() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <form onSubmit={handleAddProduct} className="p-6 space-y-4">
+              <form onSubmit={handleAddProduct} className="p-6 space-y-4 overflow-y-auto">
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                     اسم المنتج
