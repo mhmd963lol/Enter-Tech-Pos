@@ -9,6 +9,7 @@ import {
   CheckCircle,
   Trash2,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { AppNotification } from "../types";
 
@@ -21,8 +22,25 @@ export default function NotificationPanel({
   isOpen,
   onClose,
 }: NotificationPanelProps) {
-  const { notifications, markNotificationAsRead, clearNotifications } =
+  const { notifications, markNotificationAsRead, clearNotifications, deleteNotification } =
     useAppContext();
+  const navigate = useNavigate();
+
+  const handleNotificationClick = (notification: AppNotification) => {
+    if (!notification.read) {
+      markNotificationAsRead(notification.id);
+    }
+    if (notification.link) {
+      navigate(notification.link);
+      onClose();
+    }
+  };
+
+  const handleDeleteNotification = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    deleteNotification(id);
+  };
+
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -115,26 +133,41 @@ export default function NotificationPanel({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     key={notification.id}
-                    onClick={() => markNotificationAsRead(notification.id)}
-                    className={`p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 cursor-pointer transition-colors ${getBgColor(notification.type, notification.read)}`}
+                    onClick={() => handleNotificationClick(notification)}
+                    className={`p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 cursor-pointer transition-colors relative group ${getBgColor(notification.type, notification.read)}`}
                   >
                     <div className="flex gap-3">
                       <div className="shrink-0 mt-0.5">
                         {getIcon(notification.type)}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h4
-                          className={`text-sm font-bold ${notification.read ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-900 dark:text-white"}`}
-                        >
-                          {notification.title}
-                        </h4>
+                      <div className="flex-1 min-w-0 pb-1">
+                        <div className="flex justify-between items-start">
+                          <h4
+                            className={`text-sm font-bold pl-8 ${notification.read ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-900 dark:text-white"}`}
+                          >
+                            {notification.title}
+                          </h4>
+                          <button
+                            onClick={(e) => handleDeleteNotification(e, notification.id)}
+                            className="absolute left-2 top-2 p-1.5 text-zinc-400 hover:text-red-500 hover:bg-white dark:hover:bg-zinc-800 rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-sm group-hover:shadow"
+                            title="حذف الإشعار"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                         <p
-                          className={`text-xs mt-1 ${notification.read ? "text-zinc-500 dark:text-zinc-500" : "text-zinc-600 dark:text-zinc-400"}`}
+                          className={`text-xs mt-1 leading-relaxed ${notification.read ? "text-zinc-500 dark:text-zinc-500" : "text-zinc-600 dark:text-zinc-400"}`}
                         >
                           {notification.message}
                         </p>
-                        <span className="text-[10px] text-zinc-400 mt-2 block">
-                          {new Date(notification.date).toLocaleString("ar-SA")}
+                        <span className="text-[10px] text-zinc-400 mt-2 block font-medium">
+                          {new Date(notification.date).toLocaleString("ar-SA", {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
                         </span>
                       </div>
                       {!notification.read && (

@@ -26,8 +26,26 @@ export default function BarcodeGenerator() {
   const [showPrice, setShowPrice] = useState(true);
   const [showName, setShowName] = useState(true);
   const [showStoreName, setShowStoreName] = useState(true);
+  const [selectedPreset, setSelectedPreset] = useState("custom");
 
   const printRef = useRef<HTMLDivElement>(null);
+
+  const presets = [
+    { id: "xprinter-38x25", label: "اكس برنتر (38×25 ملم)", w: 38, h: 25 },
+    { id: "zebra-40x20", label: "زيبرا صغير (40×20 ملم)", w: 40, h: 20 },
+    { id: "medium-50x30", label: "متوسط (50×30 ملم)", w: 50, h: 30 },
+    { id: "shelf-60x40", label: "ملصق رفوف (60×40 ملم)", w: 60, h: 40 },
+    { id: "custom", label: "تخصيص يدوي", w: labelWidth, h: labelHeight },
+  ];
+
+  const handlePresetChange = (presetId: string) => {
+    setSelectedPreset(presetId);
+    const preset = presets.find(p => p.id === presetId);
+    if (preset && preset.id !== "custom") {
+      setLabelWidth(preset.w);
+      setLabelHeight(preset.h);
+    }
+  };
 
   const filteredProducts = products.filter(
     (p) => p.name.includes(searchTerm) || p.barcode.includes(searchTerm),
@@ -69,12 +87,15 @@ export default function BarcodeGenerator() {
           <style>
             @page {
               size: ${labelWidth}mm ${labelHeight}mm;
-              margin: 0;
+              margin: 0mm;
             }
             body {
               margin: 0;
               padding: 0;
-              font-family: system-ui, -apple-system, sans-serif;
+              font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              background-color: white;
+              color: black;
+              -webkit-print-color-adjust: exact;
             }
             .label-container {
               width: ${labelWidth}mm;
@@ -85,38 +106,40 @@ export default function BarcodeGenerator() {
               justify-content: center;
               text-align: center;
               box-sizing: border-box;
-              padding: 2mm;
+              padding: 1mm;
               page-break-after: always;
               overflow: hidden;
             }
             .store-name {
-              font-size: 8px;
-              font-weight: bold;
-              margin-bottom: 1mm;
+              font-size: 10px;
+              font-weight: 800;
+              margin-bottom: 0px;
             }
             .product-name {
-              font-size: 9px;
-              font-weight: 600;
+              font-size: 11px;
+              font-weight: 700;
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
-              max-width: 100%;
-              margin-bottom: 1mm;
+              width: 100%;
+              margin-bottom: 0px;
             }
-            .barcode-svg {
-              width: 80%;
-              height: 8mm;
-              margin-bottom: 1mm;
-            }
-            .barcode-text {
-              font-size: 8px;
-              letter-spacing: 2px;
-              font-family: monospace;
+            .barcode-wrapper {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              margin: 0;
+              padding: 0;
+              width: 100%;
+              transform: scale(${labelWidth < 40 ? 0.85 : 1});
             }
             .price {
-              font-size: 10px;
-              font-weight: bold;
-              margin-top: 1mm;
+              font-size: 12px;
+              font-weight: 900;
+              margin-top: 0px;
+            }
+            .barcode-svg {
+              margin: 0 !important;
             }
             @media print {
               .no-print { display: none; }
@@ -127,8 +150,10 @@ export default function BarcodeGenerator() {
           ${printContent}
           <script>
             window.onload = () => {
-              window.print();
-              setTimeout(() => window.close(), 500);
+              setTimeout(() => {
+                window.print();
+                setTimeout(() => window.close(), 500);
+              }, 300);
             };
           </script>
         </body>
@@ -169,6 +194,21 @@ export default function BarcodeGenerator() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                    قالب الملصق (طابعات حرارية)
+                  </label>
+                  <select
+                    value={selectedPreset}
+                    onChange={(e) => handlePresetChange(e.target.value)}
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:text-white mb-4"
+                  >
+                    {presets.map(p => (
+                      <option key={p.id} value={p.id}>{p.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                     أبعاد الملصق (العرض × الارتفاع) ملم
                   </label>
@@ -176,15 +216,17 @@ export default function BarcodeGenerator() {
                     <input
                       type="number"
                       value={labelWidth}
+                      disabled={selectedPreset !== "custom"}
                       onChange={(e) => setLabelWidth(Number(e.target.value))}
-                      className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:text-white"
+                      className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 dark:text-white"
                     />
                     <span className="text-zinc-400">×</span>
                     <input
                       type="number"
                       value={labelHeight}
+                      disabled={selectedPreset !== "custom"}
                       onChange={(e) => setLabelHeight(Number(e.target.value))}
-                      className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:text-white"
+                      className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 dark:text-white"
                     />
                   </div>
                 </div>
@@ -366,15 +408,17 @@ export default function BarcodeGenerator() {
                   <div className="store-name">{settings.storeName}</div>
                 )}
                 {showName && <div className="product-name">{item.name}</div>}
-                <Barcode
-                  value={item.barcode}
-                  displayValue={true}
-                  width={1.5}
-                  height={30}
-                  fontSize={10}
-                  margin={0}
-                  background="transparent"
-                />
+                <div className="barcode-wrapper">
+                  <Barcode
+                    value={item.barcode}
+                    displayValue={true}
+                    width={labelWidth > 45 ? 1.8 : 1.3}
+                    height={labelHeight > 25 ? 35 : 22}
+                    fontSize={11}
+                    margin={2}
+                    background="transparent"
+                  />
+                </div>
                 {showPrice && (
                   <div className="price">
                     {item.price} {settings.currency}

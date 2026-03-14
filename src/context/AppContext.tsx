@@ -104,6 +104,7 @@ interface AppContextType {
     notification: Omit<AppNotification, "id" | "date" | "read">,
   ) => void;
   markNotificationAsRead: (id: string) => void;
+  deleteNotification: (id: string) => void;
   clearNotifications: () => void;
 
   // New Additions
@@ -1414,6 +1415,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const deleteNotification = (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
+
   const clearNotifications = () => {
     setNotifications([]);
   };
@@ -1871,6 +1876,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     updateMaintenanceJob,
     addNotification,
     markNotificationAsRead,
+    deleteNotification,
     clearNotifications,
     addSupplier,
     updateSupplier,

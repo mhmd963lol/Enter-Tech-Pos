@@ -27,6 +27,7 @@ export interface AppNotification {
   type: "warning" | "error" | "info" | "success";
   read: boolean;
   date: string;
+  link?: string;
 }
 
 export interface CartItem extends Product {
