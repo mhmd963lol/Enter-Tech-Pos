@@ -124,6 +124,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 import { Toaster } from "react-hot-toast";
 import SetupWizardModal from "./components/SetupWizardModal";
 import { useLocation } from "react-router-dom";
+import Vault from "./pages/Vault";
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -242,6 +243,7 @@ function AppContent() {
             element={<Placeholder title="استخراج العملاء" />}
           />
           <Route path="employees" element={<Employees />} />
+          <Route path="finance/vault" element={<Vault />} />
           <Route path="finance/expenses" element={<Expenses />} />
           <Route path="finance/income" element={<Income />} />
           <Route path="payments" element={<PaymentsCenter />} />

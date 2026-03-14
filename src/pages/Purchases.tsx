@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router-dom";
 
 export default function Purchases() {
-  const { purchases, updatePurchaseInvoiceStatus, settings } = useAppContext();
+  const { purchases, updatePurchaseInvoiceStatus, settings, user } = useAppContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -206,9 +206,9 @@ export default function Purchases() {
                     </td>
                     <td className="px-6 py-4">
                       <select
-                        className={`bg-transparent border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 focus:ring-2 focus:ring-indigo-500 cursor-pointer text-sm dark:text-white dark:bg-zinc-900 ${purchase.status === "completed" ? "opacity-50 cursor-not-allowed" : ""}`}
+                        className={`bg-transparent border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 focus:ring-2 focus:ring-indigo-500 cursor-pointer text-sm dark:text-white dark:bg-zinc-900 ${purchase.status === "completed" && user?.role !== "admin" ? "opacity-50 cursor-not-allowed" : ""}`}
                         value={purchase.status}
-                        disabled={purchase.status === "completed"} // Can't easily un-complete without complex reversal logic
+                        disabled={purchase.status === "completed" && user?.role !== "admin"}
                         onChange={(e) =>
                           updatePurchaseInvoiceStatus(
                             purchase.id,
@@ -216,8 +216,8 @@ export default function Purchases() {
                           )
                         }
                         title={
-                          purchase.status === "completed"
-                            ? "لا يمكن تعديل حالة الفاتورة المكتملة"
+                          purchase.status === "completed" && user?.role !== "admin"
+                            ? "صلاحية الإلغاء/التعديل للمسؤولين فقط"
                             : ""
                         }
                       >

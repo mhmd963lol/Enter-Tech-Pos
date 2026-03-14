@@ -74,7 +74,7 @@ const Section = ({ title, icon, children }: { title: string; icon: React.ReactNo
 };
 
 export default function SettingsPage() {
-  const { user, settings, updateSettings, isPro, resetApp, logout } = useAppContext();
+  const { user, settings, updateSettings, isPro, resetApp, logout, exportData, importData } = useAppContext();
   const [localSettings, setLocalSettings] = useState(settings);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -314,20 +314,18 @@ export default function SettingsPage() {
     setShowResetConfirm(true);
   };
 
-  const confirmReset = () => {
+  const confirmReset = async () => {
     if (resetConfirmationText !== "مسح") return;
-    resetApp();
+    setIsSaving(true);
+    await resetApp();
     logout();
     setShowResetConfirm(false);
     setResetConfirmationText("");
+    setIsSaving(false);
   };
 
   const handleExportBackup = () => {
-    const backupData = {
-      settings: localSettings,
-      version: "1.0",
-      exportDate: new Date().toISOString()
-    };
+    const backupData = exportData();
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
@@ -347,12 +345,15 @@ export default function SettingsPage() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const json = JSON.parse(event.target?.result as string);
         if (json && json.settings) {
-          setLocalSettings({ ...localSettings, ...json.settings });
-          toast.success("تم تحميل الإعدادات من النسخة الاحتياطية، يرجى حفظ التغييرات.");
+          setIsSaving(true);
+          await importData(json);
+          setLocalSettings(json.settings);
+          toast.success("تم تحميل البيانات من النسخة الاحتياطية بنجاح.");
+          setIsSaving(false);
         } else {
           toast.error("ملف النسخة الاحتياطية غير صالح.");
         }
@@ -854,6 +855,43 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
+                  {/* Dashboard Layout */}
+                  <div className="col-span-1 md:col-span-2 p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                    <label className="block text-lg font-bold text-zinc-900 dark:text-white mb-2">لوحة التحكم المخصصة (Dashboard)</label>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">تحكم في العناصر التي تظهر في الشاشة الرئيسية لمتجرك</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {[
+                        { id: "showSales", label: "إجمالي المبيعات" },
+                        { id: "showOrders", label: "إجمالي الطلبات" },
+                        { id: "showProducts", label: "المنتجات المتاحة" },
+                        { id: "showInventoryValue", label: "قيمة المخزون" },
+                        { id: "showChart", label: "المبيعات الأسبوعية (رسم بياني)" },
+                        { id: "showRecentOrders", label: "أحدث الطلبات والنشاطات" },
+                      ].map((item) => (
+                        <div key={item.id} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-100 dark:border-zinc-800 transition-all hover:border-indigo-300 dark:hover:border-indigo-700">
+                          <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">{item.label}</span>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              className="sr-only peer"
+                              checked={localSettings.dashboardLayout?.[item.id as keyof typeof localSettings.dashboardLayout] !== false}
+                              onChange={(e) =>
+                                setLocalSettings({
+                                  ...localSettings,
+                                  dashboardLayout: {
+                                    ...(localSettings.dashboardLayout || {}),
+                                    [item.id]: e.target.checked,
+                                  },
+                                })
+                              }
+                            />
+                            <div className="w-11 h-6 bg-zinc-200 dark:bg-zinc-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Fonts (With Preview Feature) */}
                   <div className="col-span-1 md:col-span-2 p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800">
                     <label className="block text-sm font-bold text-zinc-900 dark:text-white mb-1">الخطوط Typography (معاينة)</label>
@@ -947,6 +985,21 @@ export default function SettingsPage() {
                         <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">تفعيل الضريبة</span>
                       </label>
                     </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                  <div className="p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800 transition-all hover:border-indigo-300 dark:hover:border-indigo-700">
+                    <label className="block text-sm font-bold text-zinc-900 dark:text-white mb-2">آلية الترحيل للصندوق الرئيسي</label>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">اختر كيف تنتقل الأموال من المبيعات إلى الخزينة الرئيسية.</p>
+                    <select
+                      value={localSettings.cashTransferMode || "daily"}
+                      onChange={(e) => setLocalSettings({ ...localSettings, cashTransferMode: e.target.value as "auto" | "manual" })}
+                      className="w-full px-4 py-3 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold dark:text-white transition-all cursor-pointer"
+                    >
+                      <option value="daily">يدوي (ترحيل للمبيعات اليومية أولاً)</option>
+                      <option value="auto">تلقائي (ترحيل للخزينة الرئيسية مباشرة)</option>
+                    </select>
                   </div>
                 </div>
               </div>

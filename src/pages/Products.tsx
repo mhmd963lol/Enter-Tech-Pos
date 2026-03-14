@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { useAppContext } from "../context/AppContext";
 import {
   Plus,
@@ -417,8 +418,9 @@ export default function Products() {
       </div>
 
       {/* Add/Edit Product Modal */}
-      <AnimatePresence>
-        {isAddModalOpen && (
+      {createPortal(
+        <AnimatePresence>
+          {isAddModalOpen && (
           <div
             key="add-modal"
             className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
@@ -617,6 +619,11 @@ export default function Products() {
                     onChange={(e) =>
                       setNewProduct({ ...newProduct, barcode: e.target.value })
                     }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                      }
+                    }}
                   />
                 </div>
                 <div>
@@ -651,12 +658,15 @@ export default function Products() {
               </form>
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Delete Confirmation Modal */}
-      <AnimatePresence>
-        {productToDelete && (
+      {createPortal(
+        <AnimatePresence>
+          {productToDelete && (
           <div
             key="delete-modal"
             className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
@@ -694,8 +704,10 @@ export default function Products() {
               </div>
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Export Alert Toast */}
       <AnimatePresence>

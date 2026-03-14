@@ -69,6 +69,7 @@ export interface Order {
   cashierName?: string; // New field for transparency
   isReturn?: boolean;
   returnReason?: string;
+  vault?: "daily" | "main";
 }
 
 export interface SystemLog {
@@ -113,6 +114,7 @@ export interface Expense {
   description: string;
   date: string;
   type: "general" | "maintenance_parts";
+  vault?: "daily" | "main";
 }
 
 export interface Income {
@@ -121,6 +123,7 @@ export interface Income {
   source: string;
   description: string;
   date: string;
+  vault?: "daily" | "main";
 }
 
 export interface Customer {
@@ -172,6 +175,17 @@ export interface Settings {
   adminPin: string; // 4-digit PIN for overrides
   fontFamily?: string; // CSS font-family string
   disableAnimations?: boolean; // New: Option to turn off animations
+  dashboardLayout?: {
+    showSales?: boolean;
+    showOrders?: boolean;
+    showProducts?: boolean;
+    showInventoryValue?: boolean;
+    showChart?: boolean;
+    showRecentOrders?: boolean;
+    showLowStock?: boolean;
+    showFastActions?: boolean;
+  };
+  cashTransferMode?: "auto" | "manual"; // Auto: to main safe directly, Manual: to daily register, manual transfer required
 }
 
 export interface Supplier {
@@ -224,11 +238,13 @@ export interface Transaction {
   | "expense"
   | "income"
   | "payment_in"
-  | "payment_out";
+  | "payment_out"
+  | "transfer";
   amount: number;
   date: string;
   description: string;
   referenceId?: string; // Order ID, Purchase ID, etc.
+  vault?: "daily" | "main";
   entityId?: string; // Customer ID, Supplier ID, Employee ID
   entityName?: string;
 }

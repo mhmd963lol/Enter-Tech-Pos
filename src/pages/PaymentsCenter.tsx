@@ -8,29 +8,34 @@ import {
   Wallet,
   Calendar,
   FileText,
+  Trash2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Transaction } from "../types";
 
 export default function PaymentsCenter() {
-  const { transactions, settings } = useAppContext();
+  const { transactions, settings, user, deleteTransaction } = useAppContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<Transaction["type"] | "all">(
     "all",
   );
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const filteredTransactions = transactions.filter((t) => {
     const matchesSearch =
       t.description.includes(searchTerm) ||
       (t.entityName && t.entityName.includes(searchTerm));
     const matchesType = typeFilter === "all" || t.type === typeFilter;
-    return matchesSearch && matchesType;
+    const matchesStartDate = startDate ? t.date >= startDate : true;
+    const matchesEndDate = endDate ? t.date <= endDate + "T23:59:59.999Z" : true;
+    return matchesSearch && matchesType && matchesStartDate && matchesEndDate;
   });
 
-  const totalIn = transactions
+  const totalIn = filteredTransactions
     .filter((t) => ["sale", "income", "payment_in"].includes(t.type))
     .reduce((sum, t) => sum + t.amount, 0);
-  const totalOut = transactions
+  const totalOut = filteredTransactions
     .filter((t) => ["purchase", "expense", "payment_out"].includes(t.type))
     .reduce((sum, t) => sum + t.amount, 0);
   const netBalance = totalIn - totalOut;
@@ -162,23 +167,43 @@ export default function PaymentsCenter() {
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-zinc-400" />
-            <select
-              className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white"
-              value={typeFilter}
-              onChange={(e) =>
-                setTypeFilter(e.target.value as Transaction["type"] | "all")
-              }
-            >
-              <option value="all">جميع الحركات</option>
-              <option value="sale">مبيعات</option>
-              <option value="purchase">مشتريات</option>
-              <option value="expense">مصروفات</option>
-              <option value="income">إيرادات</option>
-              <option value="payment_in">سداد عملاء (مقبوضات)</option>
-              <option value="payment_out">سداد موردين (مدفوعات)</option>
-            </select>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                title="من تاريخ"
+              />
+              <span className="text-zinc-500">-</span>
+              <input
+                type="date"
+                className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                title="إلى تاريخ"
+              />
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Filter className="w-5 h-5 text-zinc-400" />
+              <select
+                className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white"
+                value={typeFilter}
+                onChange={(e) =>
+                  setTypeFilter(e.target.value as Transaction["type"] | "all")
+                }
+              >
+                <option value="all">جميع الحركات</option>
+                <option value="sale">مبيعات</option>
+                <option value="purchase">مشتريات</option>
+                <option value="expense">مصروفات</option>
+                <option value="income">إيرادات</option>
+                <option value="payment_in">سداد عملاء (مقبوضات)</option>
+                <option value="payment_out">سداد موردين (مدفوعات)</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -191,6 +216,9 @@ export default function PaymentsCenter() {
                 <th className="px-6 py-4 font-medium">البيان / الوصف</th>
                 <th className="px-6 py-4 font-medium">الجهة</th>
                 <th className="px-6 py-4 font-medium">المبلغ</th>
+                {user?.role === "admin" && (
+                  <th className="px-6 py-4 font-medium">إجراء</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -254,6 +282,21 @@ export default function PaymentsCenter() {
                           : "-"}
                         {transaction.amount.toFixed(2)} {settings.currency}
                       </td>
+                      {user?.role === "admin" && (
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => {
+                              if (window.confirm("هل أنت متأكد من إلغاء هذه الحركة؟ (سيتم عكس التأثير المالي)")) {
+                                deleteTransaction(transaction.id);
+                              }
+                            }}
+                            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                            title="إلغاء الحركة الماليّة"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      )}
                     </motion.tr>
                   );
                 })}

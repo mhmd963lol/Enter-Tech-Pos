@@ -90,7 +90,9 @@ interface AppContextType {
   updateSettings: (newSettings: Partial<Settings>) => void;
   upgradeToPro: () => void;
   playSound: (type: "success" | "error" | "click" | "login_success" | "logout") => void;
-  resetApp: () => void;
+  resetApp: () => Promise<void>;
+  exportData: () => any;
+  importData: (data: any) => Promise<void>;
   addReturn: (returnItem: Omit<ReturnItem, "id">) => void;
   addMaintenanceJob: (job: Omit<MaintenanceJob, "id">) => void;
   updateMaintenanceJob: (
@@ -120,6 +122,7 @@ interface AppContextType {
   addIncome: (income: Omit<Income, "id">) => void;
   deleteIncome: (id: string) => void;
   addTransaction: (transaction: Omit<Transaction, "id">) => void;
+  deleteTransaction: (id: string) => void;
   logs: SystemLog[];
   addLog: (log: Omit<SystemLog, "id" | "date" | "userId" | "userName">) => void;
   deferredPrompt: any;
@@ -158,6 +161,16 @@ const defaultSettings: Settings = {
   preventBelowCost: true,
   adminPin: "0000",
   disableAnimations: false,
+  dashboardLayout: {
+    showSales: true,
+    showOrders: true,
+    showProducts: true,
+    showInventoryValue: true,
+    showChart: true,
+    showRecentOrders: true,
+    showLowStock: true,
+    showFastActions: true,
+  },
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -857,7 +870,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (cart.length === 0) return;
 
     // Validate cart integrity before checkout
-    const validation = validateCartPrices(cart, products);
+    const validation = validateCartPrices(cart, products, user);
     if (!validation.valid) {
       addNotification({
         title: "خطأ في البيانات",
@@ -1121,7 +1134,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIsPro(true);
   };
 
-  const resetApp = () => {
+  const resetApp = async () => {
+    try {
+      if (user?.id) {
+        const emptyData = {
+          products: [],
+          categories: [],
+          orders: [],
+          cart: [],
+          returns: [],
+          maintenanceJobs: [],
+          expenses: [],
+          incomes: [],
+          customers: [],
+          suppliers: [],
+          purchases: [],
+          employees: [],
+          transactions: [],
+          logs: [],
+          settings: defaultSettings,
+        };
+        await setDoc(doc(db, "users", user.id), emptyData);
+      }
+    } catch (error) {
+      console.error("Failed to wipe data from server", error);
+    }
+    
+    // Clear local storage wiping any offline queue or cached data
+    localStorage.clear();
+
     setProducts([]);
     setCategories([]);
     setOrders([]);
@@ -1134,7 +1175,57 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSuppliers([]);
     setPurchases([]);
     setTransactions([]);
-    // keep settings and user
+    setEmployees([]);
+    setLogs([]);
+    setSettings(defaultSettings);
+  };
+
+  const exportData = () => {
+    return {
+      products,
+      categories,
+      orders,
+      cart,
+      returns,
+      maintenanceJobs,
+      expenses,
+      incomes,
+      customers,
+      suppliers,
+      purchases,
+      transactions,
+      employees,
+      logs,
+      settings,
+      version: "2.0",
+      exportDate: new Date().toISOString()
+    };
+  };
+
+  const importData = async (data: any) => {
+    if (!data) throw new Error("بيانات فارغة");
+    
+    // First clear everything securely
+    await resetApp();
+
+    // Now inject data
+    if (data.products) setProducts(data.products);
+    if (data.categories) setCategories(data.categories);
+    if (data.orders) setOrders(data.orders);
+    if (data.cart) setCart(data.cart);
+    if (data.returns) setReturns(data.returns);
+    if (data.maintenanceJobs) setMaintenanceJobs(data.maintenanceJobs);
+    if (data.expenses) setExpenses(data.expenses);
+    if (data.incomes) setIncomes(data.incomes);
+    if (data.customers) setCustomers(data.customers);
+    if (data.suppliers) setSuppliers(data.suppliers);
+    if (data.purchases) setPurchases(data.purchases);
+    if (data.transactions) setTransactions(data.transactions);
+    if (data.employees) setEmployees(data.employees);
+    if (data.logs) setLogs(data.logs);
+    if (data.settings) setSettings(data.settings);
+    
+    // Force immediate sync to firestore by setting syncStatus. Effect will pick up the populated arrays.
   };
 
   const addReturn = (returnItem: Omit<ReturnItem, "id">) => {
@@ -1320,11 +1411,46 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
+    const vault = transaction.vault || (settings.cashTransferMode === "auto" ? "main" : "daily");
     const newTransaction: Transaction = {
       ...transaction,
+      vault,
       id: `TRX-${crypto.randomUUID().slice(0, 8)}`,
     };
     setTransactions((prev) => [newTransaction, ...prev]);
+  };
+
+  const deleteTransaction = (id: string) => {
+    const transaction = transactions.find((t) => t.id === id);
+    if (!transaction) return;
+
+    setTransactions((prev) => prev.filter((t) => t.id !== id));
+
+    if (transaction.entityId) {
+      if (transaction.type === "payment_in") {
+        setCustomers((prev) =>
+          prev.map((c) =>
+            c.id === transaction.entityId
+              ? { ...c, balance: c.balance + transaction.amount }
+              : c,
+          ),
+        );
+      } else if (transaction.type === "payment_out") {
+        setSuppliers((prev) =>
+          prev.map((s) =>
+            s.id === transaction.entityId
+              ? { ...s, balance: s.balance + transaction.amount }
+              : s,
+          ),
+        );
+      }
+    }
+
+    addLog({
+      action: "إلغاء سند مالي",
+      details: `تم إلغاء حركة بمبلغ ${transaction.amount} - ${transaction.description}`,
+      type: "system",
+    });
   };
 
   const addPurchaseInvoice = (invoice: Omit<PurchaseInvoice, "id">) => {
@@ -1396,11 +1522,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const invoice = purchases.find((p) => p.id === id);
     if (!invoice) return;
 
-    // We only handle switching from pending to completed for simplicity
+    // Handle switching from pending to completed
     if (invoice.status === "pending" && status === "completed") {
-      // Do NOT call addPurchaseInvoice(invoice); as it creates a duplicate invoice.
-      // We process the logic inline here properly instead.
-
       setPurchases((prev) =>
         prev.map((p) => (p.id === id ? { ...p, status } : p)),
       );
@@ -1449,6 +1572,62 @@ export function AppProvider({ children }: { children: ReactNode }) {
           return p;
         });
       });
+
+      addLog({
+        action: "اعتماد مشتريات",
+        details: `تم اعتماد فاتورة مشتريات رقم ${invoice.id} وإضافة الأصناف للمخزون`,
+        type: "inventory",
+      });
+    } else if (invoice.status === "completed" && status === "cancelled") {
+      // Handle Reverse Transactions for Cancelled Invoices
+      setPurchases((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, status } : p)),
+      );
+
+      // Reverse payment out
+      if (invoice.amountPaid > 0) {
+        addTransaction({
+          type: "payment_in", // Refund from supplier
+          amount: invoice.amountPaid,
+          date: new Date().toISOString(),
+          description: `استرداد دفعة (إلغاء فاتورة مشتريات رقم ${invoice.id})`,
+          referenceId: invoice.id,
+          entityId: invoice.supplierId,
+          entityName: invoice.supplierName,
+        });
+      }
+
+      // Reverse supplier debt
+      const debt = invoice.total - invoice.amountPaid;
+      if (debt !== 0) {
+        setSuppliers((prev) =>
+          prev.map((s) =>
+            s.id === invoice.supplierId
+              ? { ...s, balance: s.balance - debt }
+              : s,
+          ),
+        );
+      }
+
+      // Reverse products stock
+      setProducts((prev) => {
+        return prev.map((p) => {
+          const purchasedItem = invoice.items.find((i) => i.productId === p.id);
+          if (purchasedItem) {
+            return {
+              ...p,
+              stock: Math.max(0, p.stock - purchasedItem.quantity),
+            };
+          }
+          return p;
+        });
+      });
+
+      addLog({
+        action: "إلغاء مشتريات",
+        details: `تم إلغاء فاتورة مشتريات رقم ${invoice.id} وتم التراجع عن المخزون والمالية`,
+        type: "system",
+      });
     } else {
       setPurchases((prev) =>
         prev.map((p) => (p.id === id ? { ...p, status } : p)),
@@ -1475,27 +1654,101 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const addExpense = (expense: Omit<Expense, "id">) => {
+    const vault = expense.vault || (settings.cashTransferMode === "auto" ? "main" : "daily");
     const newExpense: Expense = {
       ...expense,
+      vault,
       id: `EXP-${crypto.randomUUID().slice(0, 8)}`,
     };
     setExpenses((prev) => [newExpense, ...prev]);
+
+    addTransaction({
+      type: "payment_out",
+      amount: newExpense.amount,
+      date: new Date().toISOString(),
+      description: `مصروف: ${newExpense.description || newExpense.category}`,
+      referenceId: newExpense.id,
+      entityName: newExpense.category,
+      vault,
+    });
+
+    addLog({
+      action: "إضافة مصروف",
+      details: `تم إضافة مصروف بقيمة ${newExpense.amount} - ${newExpense.category}`,
+      type: "system"
+    });
   };
 
   const deleteExpense = (id: string) => {
+    const expense = expenses.find((e) => e.id === id);
+    if (!expense) return;
+
     setExpenses((prev) => prev.filter((e) => e.id !== id));
+
+    addTransaction({
+      type: "payment_in",
+      amount: expense.amount,
+      date: new Date().toISOString(),
+      description: `إلغاء مصروف (استرداد): ${expense.description || expense.category}`,
+      referenceId: expense.id,
+      entityName: expense.category,
+      vault: expense.vault || (settings.cashTransferMode === "auto" ? "main" : "daily"),
+    });
+
+    addLog({
+      action: "إلغاء مصروف",
+      details: `تم إلغاء مصروف بقيمة ${expense.amount} - ${expense.category}`,
+      type: "system"
+    });
   };
 
   const addIncome = (income: Omit<Income, "id">) => {
+    const vault = income.vault || (settings.cashTransferMode === "auto" ? "main" : "daily");
     const newIncome: Income = {
       ...income,
+      vault,
       id: `INC-${crypto.randomUUID().slice(0, 8)}`,
     };
     setIncomes((prev) => [newIncome, ...prev]);
+
+    addTransaction({
+      type: "payment_in",
+      amount: newIncome.amount,
+      date: new Date().toISOString(),
+      description: `إيراد: ${newIncome.description || newIncome.source}`,
+      referenceId: newIncome.id,
+      entityName: newIncome.source,
+      vault,
+    });
+
+    addLog({
+      action: "إضافة إيراد",
+      details: `تم إضافة إيراد بقيمة ${newIncome.amount} - ${newIncome.source}`,
+      type: "system"
+    });
   };
 
   const deleteIncome = (id: string) => {
+    const income = incomes.find((i) => i.id === id);
+    if (!income) return;
+
     setIncomes((prev) => prev.filter((i) => i.id !== id));
+
+    addTransaction({
+      type: "payment_out",
+      amount: income.amount,
+      date: new Date().toISOString(),
+      description: `إلغاء إيراد (خصم): ${income.description || income.source}`,
+      referenceId: income.id,
+      entityName: income.source,
+      vault: income.vault || (settings.cashTransferMode === "auto" ? "main" : "daily"),
+    });
+
+    addLog({
+      action: "إلغاء إيراد",
+      details: `تم إلغاء إيراد بقيمة ${income.amount} - ${income.source}`,
+      type: "system"
+    });
   };
 
   // Debt Reminder System
@@ -1584,6 +1837,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     upgradeToPro,
     playSound,
     resetApp,
+    exportData,
+    importData,
     addReturn,
     addMaintenanceJob,
     updateMaintenanceJob,
@@ -1602,6 +1857,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     deleteExpense,
     addIncome,
     deleteIncome,
+    deleteTransaction,
     addTransaction,
     deferredPrompt,
     setDeferredPrompt,

@@ -3,7 +3,7 @@
  * Validates orders and cart data before saving
  */
 
-import type { CartItem, Order, Product } from "../types";
+import type { CartItem, Order, Product, User } from "../types";
 import { roundMoney, multiplyMoney } from "../lib/moneyUtils";
 
 /**
@@ -12,7 +12,8 @@ import { roundMoney, multiplyMoney } from "../lib/moneyUtils";
  */
 export function validateCartPrices(
   cart: CartItem[],
-  products: Product[]
+  products: Product[],
+  user: User | null
 ): { valid: boolean; issues: string[] } {
   const issues: string[] = [];
 
@@ -31,6 +32,18 @@ export function validateCartPrices(
     // Check for negative quantities
     if (item.quantity <= 0) {
       issues.push(`كمية غير صالحة للمنتج "${item.name}"`);
+    }
+
+    // Protect against base price tampering
+    if (item.price !== product.price) {
+      issues.push(`تلاعب في السعر الأساسي للمنتج "${item.name}"`);
+    }
+
+    // Role-Based Access Control: only admins can apply custom prices
+    if (item.customPrice !== undefined && item.customPrice !== product.price) {
+      if (user?.role !== "admin") {
+        issues.push(`ليس لديك صلاحية لتعديل سعر المنتج "${item.name}"`);
+      }
     }
 
     // Check for negative prices

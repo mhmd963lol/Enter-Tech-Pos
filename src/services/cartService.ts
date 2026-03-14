@@ -59,6 +59,9 @@ export function buildOrder(params: {
   const today = new Date().toISOString().split("T")[0];
   const dailyNumber = orders.filter((o) => o.date.startsWith(today)).length + 1;
 
+  const isCash = paymentMethod === "cash" || paymentMethod === "split";
+  const vault = isCash ? (settings.cashTransferMode === "auto" ? "main" : "daily") : undefined;
+
   return {
     id: `ORD-${crypto.randomUUID().slice(0, 8)}`,
     dailyNumber,
@@ -76,5 +79,6 @@ export function buildOrder(params: {
     amountPaid: actualAmountPaid,
     cashierId: user?.id,
     cashierName: user?.name,
+    vault,
   };
 }

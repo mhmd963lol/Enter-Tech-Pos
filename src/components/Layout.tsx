@@ -84,9 +84,10 @@ const navItems: NavItem[] = [
   { icon: Users, label: "حسابات الموظفين", to: "/employees", roles: ["admin"] },
   {
     icon: Wallet,
-    label: "الإدارة المالية",
+    label: "إدارة الصندوق واليومية",
     roles: ["admin"],
     subItems: [
+      { label: "كشف حساب الصندوق", to: "/finance/vault" },
       { label: "المصروفات", to: "/finance/expenses" },
       { label: "الدخل", to: "/finance/income" },
     ],
@@ -123,8 +124,9 @@ const SidebarItem: React.FC<{
   isMobile: boolean;
   isCollapsed: boolean;
   closeMobile: () => void;
-}> = ({ item, isMobile, isCollapsed, closeMobile }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  isOpen?: boolean;
+  onToggle?: () => void;
+}> = ({ item, isMobile, isCollapsed, closeMobile, isOpen, onToggle }) => {
   const [isHovered, setIsHovered] = useState(false);
   const location = useLocation();
   const { user, settings } = useAppContext();
@@ -142,18 +144,13 @@ const SidebarItem: React.FC<{
     return (
       <div
         className="mb-1 relative group/item"
-        onMouseEnter={() => {
-          setIsHovered(true);
-          if (!isCollapsed) setIsOpen(true);
-        }}
-        onMouseLeave={() => {
-          setIsHovered(false);
-          if (isCollapsed) setIsOpen(false);
-          else setIsOpen(false); // Close on leave for expanded too as per user request "without clicking"
-        }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
         <button
-          onClick={() => !isCollapsed && setIsOpen(!isOpen)}
+          onClick={() => {
+            if (!isCollapsed && onToggle) onToggle();
+          }}
           className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 ${isActive || isOpen
             ? "bg-indigo-50/50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 border-r-4 border-indigo-600 dark:border-indigo-400"
             : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
@@ -269,23 +266,12 @@ const SidebarItem: React.FC<{
 };
 
 export default function Layout() {
-  const {
-    user,
-    settings,
-    logout,
-    playSound,
-    isPrivacyMode,
-    updateSettings,
-    notifications,
-    orders,
-    togglePrivacyMode,
-    deferredPrompt,
-    setDeferredPrompt
-  } = useAppContext();
+  const { user, settings, logout, playSound, isPrivacyMode, updateSettings, notifications, orders, togglePrivacyMode, deferredPrompt, setDeferredPrompt } = useAppContext();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isSidebarCollapsed, setIsSidebarCollapsed } = useAppContext();
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
+  const [activeAccordionIndex, setActiveAccordionIndex] = useState<number | null>(null);
   const location = useLocation();
   const sidebarRef = useRef<HTMLDivElement>(null);
 
@@ -387,13 +373,21 @@ export default function Layout() {
         </div>
 
         <nav className="flex-1 overflow-y-auto p-2 custom-scrollbar space-y-2">
-          {navItems.map((item) => (
+          {navItems.map((item, index) => (
             <SidebarItem
               key={item.label}
               item={item}
               isMobile={window.innerWidth < 1024}
               isCollapsed={isSidebarCollapsed}
               closeMobile={() => setIsMobileMenuOpen(false)}
+              isOpen={activeAccordionIndex === index}
+              onToggle={() => {
+                if (activeAccordionIndex === index) {
+                  setActiveAccordionIndex(null);
+                } else {
+                  setActiveAccordionIndex(index);
+                }
+              }}
             />
           ))}
         </nav>
