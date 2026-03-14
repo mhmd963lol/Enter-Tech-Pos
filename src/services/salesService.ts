@@ -144,7 +144,7 @@ export function reverseStockDeduction(
 ): Product[] {
   return products.map((product) => {
     const lineItem = (order.lineItems ?? order.items)?.find(
-      (item) => (item as any).productId === product.id || (item as any).id === product.id
+      (item) => ('productId' in item ? item.productId : item.id) === product.id
     );
     if (lineItem && product.trackInventory !== false) {
       return {
@@ -165,7 +165,7 @@ export function applyReturnStock(
 ): Product[] {
   return products.map((product) => {
     const returnedItem = returnItem.items?.find(
-      (i) => (i as any).productId === product.id || (i as any).id === product.id
+      (i) => ('productId' in i ? i.productId : i.id) === product.id
     );
     if (returnedItem && product.trackInventory !== false) {
       return {

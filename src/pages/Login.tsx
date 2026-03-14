@@ -168,9 +168,12 @@ export default function Login() {
 
   // ── Helpers ────────────────────────────────
   const syncNewUserToFirestore = async (uid: string, name: string, phone?: string) => {
+    // SECURITY: New users are created as "cashier" by default.
+    // The store owner must manually promote accounts to "admin" from Settings.
+    // No default PIN is set — the admin must configure it on first login.
     await setDoc(doc(db, "users", uid), {
       settings: settings,
-      profile: { name, role: "admin", pin: "0000", phone: phone || "" },
+      profile: { name, role: "cashier", pin: "", phone: phone || "" },
       email: registerData.email || `${phone}@cashier-tech.com`,
       phone: phone || "",
       createdAt: new Date().toISOString(),
@@ -202,21 +205,28 @@ export default function Login() {
   const handleAuthResult = async (firebaseUser: any) => {
     const userDocRef = doc(db, "users", firebaseUser.uid);
     const userDoc = await getDoc(userDocRef);
-    let role = "admin";
-    let pin = "0000";
+
+    // SECURITY: Safe fallbacks — never default to admin or 0000
+    let role: "admin" | "cashier" = "cashier";
+    let pin = "";
+    let displayName = firebaseUser.displayName || "مستخدم";
 
     if (!userDoc.exists()) {
-      await syncNewUserToFirestore(firebaseUser.uid, firebaseUser.displayName || "مستخدم");
+      // First-time login via Google/Phone not yet registered
+      await syncNewUserToFirestore(firebaseUser.uid, displayName);
     } else {
       const data = userDoc.data();
       if (data.settings) updateSettings(data.settings);
       if (data.profile) {
-        role = data.profile.role || "admin";
-        pin = data.profile.pin || "0000";
+        // Only accept known roles — reject anything else
+        const storedRole = data.profile.role;
+        role = storedRole === "admin" || storedRole === "cashier" ? storedRole : "cashier";
+        pin = typeof data.profile.pin === "string" ? data.profile.pin : "";
+        if (data.profile.name) displayName = data.profile.name;
       }
     }
 
-    login({ id: firebaseUser.uid, name: firebaseUser.displayName || "مستخدم", role: role as "admin" | "cashier", pin });
+    login({ id: firebaseUser.uid, name: displayName, role, pin });
   };
 
   // ── Google ──────────────────────────────────

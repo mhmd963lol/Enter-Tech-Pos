@@ -28,12 +28,18 @@ export function calcTotalExpenses(expenses: Expense[]): number {
   return roundMoney(expenses.reduce((sum, e) => sum + e.amount, 0));
 }
 
+/** Alias matching test import expectations */
+export const calcExpenseTotal = calcTotalExpenses;
+
 /**
  * Calculates total income recorded manually.
  */
 export function calcTotalIncome(incomes: Income[]): number {
   return roundMoney(incomes.reduce((sum, i) => sum + i.amount, 0));
 }
+
+/** Alias matching test import expectations */
+export const calcIncomeTotal = calcTotalIncome;
 
 /**
  * Determines the vault a cash transaction should go to.

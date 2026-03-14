@@ -62,7 +62,7 @@ export default function NewPurchase() {
       return [
         ...prev,
         {
-          id: `pi-${Math.random().toString(36).substring(7)}`,
+          id: `pi-${crypto.randomUUID().slice(0, 8)}`,
           productId: product.id,
           name: product.name,
           quantity: 1,

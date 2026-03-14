@@ -112,7 +112,7 @@ describe("salesService", () => {
       const result = validateSaleStock(cart, products);
       expect(result.valid).toBe(false);
       if (!result.valid) {
-        expect(result.error).toContain("Test Product");
+        expect((result as { valid: false; error: string }).error).toContain("Test Product");
       }
     });
 
@@ -188,21 +188,25 @@ describe("salesService", () => {
 describe("inventoryService", () => {
   describe("applyPurchaseStock", () => {
     it("increases stock correctly", () => {
-      const products = [makeProduct({ id: "prod-1", stock: 5 })];
+      const products = [makeProduct({ id: "prod-1", stock: 5, costPrice: 60 })];
       const purchaseItems = [
-        { id: "item-1", productId: "prod-1", name: "Test Product", quantity: 10, costPrice: 50, total: 500 },
+        { id: "item-1", productId: "prod-1", name: "Test Product", quantity: 10, costPrice: 60, total: 600 },
       ];
+      // When purchase costPrice == product costPrice, stock just increases
       const result = applyPurchaseStock(products, purchaseItems);
       expect(result[0].stock).toBe(15);
     });
 
-    it("updates cost price when purchase is cheaper", () => {
-      const products = [makeProduct({ id: "prod-1", costPrice: 80 })];
+    it("uses moving-average cost price on new purchase", () => {
+      // product: 10 units @ 80 = 800 total value
+      // purchase: 5 units @ 60 = 300 total value
+      // new avg = (800 + 300) / 15 = 73.33
+      const products = [makeProduct({ id: "prod-1", stock: 10, costPrice: 80 })];
       const purchaseItems = [
         { id: "item-1", productId: "prod-1", name: "Test Product", quantity: 5, costPrice: 60, total: 300 },
       ];
       const result = applyPurchaseStock(products, purchaseItems);
-      expect(result[0].costPrice).toBe(60);
+      expect(result[0].costPrice).toBeCloseTo(73.33, 2);
     });
   });
 

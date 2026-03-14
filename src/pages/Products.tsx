@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Product, Category } from "../types";
 import NumberInput from "../components/NumberInput";
 import { uploadImage, deleteImage } from "../lib/storageUtils";
+import * as XLSX from "xlsx";
 
 export default function Products() {
   const {
@@ -111,7 +112,8 @@ export default function Products() {
         category: categoryName,
         categoryId: newProduct.categoryId,
         barcode:
-          newProduct.barcode || Math.floor(Math.random() * 100000).toString(),
+          newProduct.barcode ||
+          `BC-${Date.now()}-${crypto.randomUUID().replace(/-/g,'').slice(0,6).toUpperCase()}`,
         image: newProduct.image,
         isActive: newProduct.isActive,
         trackInventory: newProduct.trackInventory,
@@ -126,7 +128,8 @@ export default function Products() {
         category: categoryName,
         categoryId: newProduct.categoryId,
         barcode:
-          newProduct.barcode || Math.floor(Math.random() * 100000).toString(),
+          newProduct.barcode ||
+          `BC-${Date.now()}-${crypto.randomUUID().replace(/-/g,'').slice(0,6).toUpperCase()}`,
         image: newProduct.image,
         isActive: newProduct.isActive,
         trackInventory: newProduct.trackInventory,
@@ -192,8 +195,44 @@ export default function Products() {
       upgradeToPro();
       return;
     }
-    setShowExportAlert(true);
-    setTimeout(() => setShowExportAlert(false), 3000);
+    
+    try {
+      // 1. Prepare data
+      const dataToExport = filteredProducts.map(p => ({
+        "اصم المنتج": p.name,
+        "الباركود": p.barcode,
+        "القسم": p.category,
+        "سعر التكلفة": p.costPrice || 0,
+        "سعر البيع": p.price,
+        "المخزون": p.trackInventory !== false ? p.stock : "غير محدود",
+        "الحالة": p.isActive ?? true ? "نشط" : "غير نشط"
+      }));
+
+      // 2. Create workbook and worksheet
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "المنتجات");
+
+      // 3. Setup RTL for worksheet (optional, basic xlsx doesn't fully support visual RTL but good for data layout)
+      if(!worksheet['!cols']) worksheet['!cols'] = [];
+      worksheet['!cols'][0] = { wch: 30 }; // Name width
+
+      // 4. Download file
+      XLSX.writeFile(workbook, `Products_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+      
+      addNotification({
+        title: "تم التصدير",
+        message: "تم تصدير المنتجات إلى ملف Excel بنجاح",
+        type: "success"
+      });
+    } catch (error) {
+      console.error("Export failed:", error);
+      addNotification({
+        title: "خطأ",
+        message: "فشل تصدير الملف",
+        type: "error"
+      });
+    }
   };
 
   const toggleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {

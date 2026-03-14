@@ -8,14 +8,88 @@ import {
   Package,
   Truck,
   ArrowUpRight,
+  Ban,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
+import { PurchaseInvoice } from "../types";
+
+/** Modal for confirming a void with an optional reason */
+function VoidConfirmModal({
+  invoice,
+  onConfirm,
+  onCancel,
+}: {
+  invoice: PurchaseInvoice;
+  onConfirm: (reason: string) => void;
+  onCancel: () => void;
+}) {
+  const [reason, setReason] = useState("");
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" dir="rtl">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-md border border-zinc-100 dark:border-zinc-800"
+      >
+        <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+            <Ban className="w-5 h-5 text-red-600 dark:text-red-400" />
+          </div>
+          <div>
+            <h3 className="font-bold text-zinc-900 dark:text-white">إلغاء محاسبي للفاتورة</h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">{invoice.id}</p>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 text-sm text-amber-800 dark:text-amber-300">
+            سيتم عكس تأثير الفاتورة بالكامل: إزالة الكميات من المخزون، تصحيح رصيد المورد، وتسجيل حركة استرداد مالي.
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              سبب الإلغاء <span className="text-zinc-400 font-normal">(اختياري)</span>
+            </label>
+            <input
+              type="text"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="مثال: بضاعة تالفة، خطأ في الكمية..."
+              className="w-full px-4 py-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-white"
+            />
+          </div>
+        </div>
+
+        <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium transition-colors"
+          >
+            تراجع
+          </button>
+          <button
+            onClick={() => onConfirm(reason || "إلغاء محاسبي")}
+            className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors"
+          >
+            تأكيد الإلغاء
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
 
 export default function Purchases() {
-  const { purchases, updatePurchaseInvoiceStatus, settings, user } = useAppContext();
+  const { purchases, updatePurchaseInvoiceStatus, voidPurchaseInvoice, settings, user } = useAppContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [voidTarget, setVoidTarget] = useState<PurchaseInvoice | null>(null);
 
   const filteredPurchases = purchases.filter((purchase) => {
     const matchesSearch =
@@ -30,20 +104,20 @@ export default function Purchases() {
     switch (status) {
       case "completed":
         return (
-          <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full text-xs font-medium">
-            مكتمل
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full text-xs font-medium">
+            <CheckCircle2 className="w-3 h-3" /> مكتمل
           </span>
         );
       case "pending":
         return (
-          <span className="px-2.5 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-full text-xs font-medium">
-            قيد الانتظار
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-full text-xs font-medium">
+            <Clock className="w-3 h-3" /> قيد الانتظار
           </span>
         );
       case "cancelled":
         return (
-          <span className="px-2.5 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full text-xs font-medium">
-            ملغي
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full text-xs font-medium">
+            <Ban className="w-3 h-3" /> ملغي
           </span>
         );
       default:
@@ -52,6 +126,15 @@ export default function Purchases() {
   };
 
   const totalPurchasesAmount = purchases.reduce((sum, p) => sum + p.total, 0);
+  const completedCount = purchases.filter((p) => p.status === "completed").length;
+  const pendingCount = purchases.filter((p) => p.status === "pending").length;
+
+  const handleVoidConfirm = (reason: string) => {
+    if (!voidTarget) return;
+    voidPurchaseInvoice(voidTarget.id, reason);
+    toast.success(`تم إلغاء الفاتورة ${voidTarget.id} محاسبياً`);
+    setVoidTarget(null);
+  };
 
   return (
     <div className="p-4 md:p-8 space-y-6" dir="rtl">
@@ -81,12 +164,9 @@ export default function Purchases() {
               <Receipt className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                إجمالي الفواتير
-              </p>
-              <h3 className="text-2xl font-bold text-zinc-900 dark:text-white">
-                {purchases.length}
-              </h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">إجمالي الفواتير</p>
+              <h3 className="text-2xl font-bold text-zinc-900 dark:text-white">{purchases.length}</h3>
+              <p className="text-xs text-zinc-400 mt-0.5">{completedCount} مكتملة · {pendingCount} قيد الانتظار</p>
             </div>
           </div>
         </div>
@@ -96,9 +176,7 @@ export default function Purchases() {
               <ArrowUpRight className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                قيمة المشتريات
-              </p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">قيمة المشتريات</p>
               <h3 className="text-2xl font-bold text-zinc-900 dark:text-white">
                 {totalPurchasesAmount.toFixed(2)} {settings.currency}
               </h3>
@@ -146,6 +224,7 @@ export default function Purchases() {
                 <th className="px-6 py-4 font-medium">الإجمالي</th>
                 <th className="px-6 py-4 font-medium">المدفوع</th>
                 <th className="px-6 py-4 font-medium">الحالة</th>
+                <th className="px-6 py-4 font-medium">الإجراءات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -158,7 +237,7 @@ export default function Purchases() {
                     key={purchase.id}
                     className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors"
                   >
-                    <td className="px-6 py-4 font-medium text-zinc-900 dark:text-white">
+                    <td className="px-6 py-4 font-medium text-zinc-900 dark:text-white font-mono text-sm">
                       {purchase.id}
                     </td>
                     <td className="px-6 py-4 text-zinc-500 dark:text-zinc-400 text-sm">
@@ -173,7 +252,7 @@ export default function Purchases() {
                     </td>
                     <td className="px-6 py-4 text-zinc-700 dark:text-zinc-300">
                       <div className="flex items-center gap-2">
-                        <Truck className="w-4 h-4 text-zinc-400" />
+                        <Truck className="w-4 h-4 text-zinc-400 shrink-0" />
                         {purchase.supplierName}
                       </div>
                     </td>
@@ -184,15 +263,12 @@ export default function Purchases() {
                             key={index}
                             className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400"
                           >
-                            <Package className="w-3 h-3" />
-                            <span
-                              className="truncate max-w-[150px]"
-                              title={item.name}
-                            >
+                            <Package className="w-3 h-3 shrink-0" />
+                            <span className="truncate max-w-[150px]" title={item.name}>
                               {item.name}
                             </span>
-                            <span className="text-xs bg-zinc-100 dark:bg-zinc-800 px-1.5 rounded">
-                              x{item.quantity}
+                            <span className="text-xs bg-zinc-100 dark:bg-zinc-800 px-1.5 rounded shrink-0">
+                              ×{item.quantity}
                             </span>
                           </div>
                         ))}
@@ -205,28 +281,47 @@ export default function Purchases() {
                       {purchase.amountPaid.toFixed(2)} {settings.currency}
                     </td>
                     <td className="px-6 py-4">
-                      <select
-                        className={`bg-transparent border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 focus:ring-2 focus:ring-indigo-500 cursor-pointer text-sm dark:text-white dark:bg-zinc-900 ${purchase.status === "completed" && user?.role !== "admin" ? "opacity-50 cursor-not-allowed" : ""}`}
-                        value={purchase.status}
-                        disabled={purchase.status === "completed" && user?.role !== "admin"}
-                        onChange={(e) =>
-                          updatePurchaseInvoiceStatus(
-                            purchase.id,
-                            e.target.value as any,
-                          )
-                        }
-                        title={
-                          purchase.status === "completed" && user?.role !== "admin"
-                            ? "صلاحية الإلغاء/التعديل للمسؤولين فقط"
-                            : ""
-                        }
-                      >
-                        <option value="pending">قيد الانتظار</option>
-                        <option value="completed">مكتمل (يُضاف للمخزون)</option>
-                        <option value="cancelled">ملغي</option>
-                      </select>
-                      <div className="mt-2">
-                        {getStatusBadge(purchase.status)}
+                      {getStatusBadge(purchase.status)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        {/* Pending → Completed: safe approve action */}
+                        {purchase.status === "pending" && (
+                          <button
+                            onClick={() =>
+                              updatePurchaseInvoiceStatus(purchase.id, "completed")
+                            }
+                            className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors"
+                            title="اعتماد الفاتورة وإضافة للمخزون"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            اعتماد
+                          </button>
+                        )}
+                        {/* Pending → Cancelled: soft cancel (no stock was added) */}
+                        {purchase.status === "pending" && (
+                          <button
+                            onClick={() =>
+                              updatePurchaseInvoiceStatus(purchase.id, "cancelled")
+                            }
+                            className="flex items-center gap-1 px-3 py-1.5 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-300 rounded-lg text-xs font-bold transition-colors"
+                            title="إلغاء الفاتورة (لم تُضف للمخزون)"
+                          >
+                            <Ban className="w-3.5 h-3.5" />
+                            إلغاء
+                          </button>
+                        )}
+                        {/* Completed → Void: requires admin + reason + full reversal */}
+                        {purchase.status === "completed" && user?.role === "admin" && (
+                          <button
+                            onClick={() => setVoidTarget(purchase)}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 rounded-lg text-xs font-bold transition-colors"
+                            title="إلغاء محاسبي — للمسؤولين فقط"
+                          >
+                            <Ban className="w-3.5 h-3.5" />
+                            إلغاء محاسبي
+                          </button>
+                        )}
                       </div>
                     </td>
                   </motion.tr>
@@ -242,6 +337,17 @@ export default function Purchases() {
           )}
         </div>
       </div>
+
+      {/* Void Confirmation Modal */}
+      <AnimatePresence>
+        {voidTarget && (
+          <VoidConfirmModal
+            invoice={voidTarget}
+            onConfirm={handleVoidConfirm}
+            onCancel={() => setVoidTarget(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

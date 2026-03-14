@@ -87,7 +87,8 @@ interface AppContextType {
   addCategory: (category: Omit<Category, "id">) => void;
   updateCategory: (id: string, category: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
-  addCustomer: (customer: Omit<Customer, "id" | "balance">) => void;
+  /** Returns the newly created Customer entity (including the generated id) */
+  addCustomer: (customer: Omit<Customer, "id" | "balance">) => Customer;
   updateCustomer: (id: string, customer: Partial<Customer>) => void;
   deleteCustomer: (id: string) => void;
   adjustCustomerBalance: (id: string, amount: number) => void;
@@ -120,6 +121,8 @@ interface AppContextType {
     id: string,
     status: PurchaseInvoice["status"],
   ) => void;
+  /** Void a completed purchase invoice — fully reverses stock, supplier balance, and logs to audit */
+  voidPurchaseInvoice: (id: string, reason?: string) => void;
   addEmployee: (employee: Omit<Employee, "id">) => void;
   updateEmployee: (id: string, employee: Partial<Employee>) => void;
   deleteEmployee: (id: string) => void;
@@ -297,48 +300,72 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
 
   // Handle Authentication and Real-time Snapshot listeners
+  // Ref to hold the active Firestore snapshot unsubscriber so we can clean it up
+  // whenever the authenticated user changes or logs out.
+  const snapshotUnsubRef = useRef<(() => void) | null>(null);
+
   useEffect(() => {
     if (!auth) {
       setIsAuthLoading(false);
       return;
     }
-    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        // Real-time listener for user data
-        const unsubscribeSnapshot = onSnapshot(doc(db, "users", firebaseUser.uid), (snapshot) => {
-          if (snapshot.exists()) {
-            const data = snapshot.data();
-            if (data.products) setProducts(data.products);
-            if (data.categories) setCategories(data.categories);
-            if (data.orders) setOrders(data.orders);
-            if (data.cart) setCart(data.cart);
-            if (data.settings) setSettings(data.settings);
-            if (data.returns) setReturns(data.returns);
-            if (data.maintenanceJobs) setMaintenanceJobs(data.maintenanceJobs);
-            if (data.expenses) setExpenses(data.expenses);
-            if (data.incomes) setIncomes(data.incomes);
-            if (data.customers) setCustomers(data.customers);
-            if (data.notifications) setNotifications(data.notifications);
-            if (data.suppliers) setSuppliers(data.suppliers);
-            if (data.purchases) setPurchases(data.purchases);
-            if (data.employees) setEmployees(data.employees);
-            if (data.transactions) setTransactions(data.transactions);
-            if (data.logs) setLogs(data.logs);
-            setSyncStatus('synced');
-          }
-          setIsAuthLoading(false); // <--- Important: loading state must end
-        }, (error) => {
-          console.error("Firestore snapshot error:", error);
-          setSyncStatus('error');
-          setIsAuthLoading(false); // <--- Also end loading on error
-        });
 
-        return () => unsubscribeSnapshot();
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      // Always clean up the previous snapshot listener before creating a new one
+      if (snapshotUnsubRef.current) {
+        snapshotUnsubRef.current();
+        snapshotUnsubRef.current = null;
+      }
+
+      if (firebaseUser) {
+        // Real-time listener for this user's data in Firestore
+        const unsub = onSnapshot(
+          doc(db, "users", firebaseUser.uid),
+          (snapshot) => {
+            if (snapshot.exists()) {
+              const data = snapshot.data();
+              if (data.products) setProducts(data.products);
+              if (data.categories) setCategories(data.categories);
+              if (data.orders) setOrders(data.orders);
+              if (data.cart) setCart(data.cart);
+              if (data.settings) setSettings(data.settings);
+              if (data.returns) setReturns(data.returns);
+              if (data.maintenanceJobs) setMaintenanceJobs(data.maintenanceJobs);
+              if (data.expenses) setExpenses(data.expenses);
+              if (data.incomes) setIncomes(data.incomes);
+              if (data.customers) setCustomers(data.customers);
+              if (data.notifications) setNotifications(data.notifications);
+              if (data.suppliers) setSuppliers(data.suppliers);
+              if (data.purchases) setPurchases(data.purchases);
+              if (data.employees) setEmployees(data.employees);
+              if (data.transactions) setTransactions(data.transactions);
+              if (data.logs) setLogs(data.logs);
+              setSyncStatus('synced');
+            }
+            setIsAuthLoading(false);
+          },
+          (error) => {
+            console.error("Firestore snapshot error:", error);
+            setSyncStatus('error');
+            setIsAuthLoading(false);
+          }
+        );
+
+        // Store the unsubscriber in the ref so we can clean up on next auth change
+        snapshotUnsubRef.current = unsub;
       } else {
         setIsAuthLoading(false);
       }
     });
-    return () => unsubscribeAuth();
+
+    return () => {
+      unsubscribeAuth();
+      // Also clean up any active snapshot when the component unmounts
+      if (snapshotUnsubRef.current) {
+        snapshotUnsubRef.current();
+        snapshotUnsubRef.current = null;
+      }
+    };
   }, []);
 
   // ─── Firebase Sync (extracted to hook) ────────────────────────────────────────
@@ -746,7 +773,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setProducts((prev) =>
         prev.map((p) => {
           const item = (order.lineItems ?? order.items).find(
-            (i) => (i as any).productId === p.id || (i as any).id === p.id
+            (i) => ('productId' in i ? i.productId : i.id) === p.id
           );
           if (item && p.trackInventory !== false) {
             return { ...p, stock: p.stock + item.quantity };
@@ -782,13 +809,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const addCustomer = (customer: Omit<Customer, "id" | "balance">) => {
+  const addCustomer = (customer: Omit<Customer, "id" | "balance">): Customer => {
     const newCustomer: Customer = {
       ...customer,
       id: `cust-${crypto.randomUUID().slice(0, 8)}`,
       balance: 0,
     };
     setCustomers((prev) => [...prev, newCustomer]);
+    return newCustomer;
   };
 
   const updateCustomer = (id: string, updatedFields: Partial<Customer>) => {
@@ -1314,6 +1342,71 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  /**
+   * Void a completed purchase invoice.
+   * Fully reverses: stock removed, supplier balance corrected, payment-in reversal created.
+   * Writes an audit log entry with the provided reason.
+   */
+  const voidPurchaseInvoice = (id: string, reason = "إلغاء محاسبي") => {
+    const invoice = purchases.find((p) => p.id === id);
+    if (!invoice) return;
+    if (invoice.status === "cancelled") return; // already voided
+
+    const wasCompleted = invoice.status === "completed";
+
+    // Step 1: Mark as cancelled
+    setPurchases((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, status: "cancelled" as PurchaseInvoice["status"] } : p))
+    );
+
+    if (wasCompleted) {
+      // Step 2: Reverse stock
+      setProducts((prev) =>
+        prev.map((p) => {
+          const item = invoice.items.find((i) => i.productId === p.id);
+          if (item) return { ...p, stock: Math.max(0, p.stock - item.quantity) };
+          return p;
+        })
+      );
+
+      // Step 3: Reverse supplier debt
+      const debt = invoice.total - invoice.amountPaid;
+      if (debt !== 0) {
+        setSuppliers((prev) =>
+          prev.map((s) =>
+            s.id === invoice.supplierId ? { ...s, balance: s.balance - debt } : s
+          )
+        );
+      }
+
+      // Step 4: Create reversal transaction for amount already paid
+      if (invoice.amountPaid > 0) {
+        addTransaction({
+          type: "payment_in",
+          amount: invoice.amountPaid,
+          date: new Date().toISOString(),
+          description: `استرداد دفعة — إلغاء فاتورة ${invoice.id} — السبب: ${reason}`,
+          referenceId: invoice.id,
+          entityId: invoice.supplierId,
+          entityName: invoice.supplierName,
+        });
+      }
+    }
+
+    // Step 5: Audit log
+    addLog({
+      action: "إلغاء محاسبي - مشتريات",
+      details: `إلغاء فاتورة ${invoice.id}. السبب: ${reason}. الإجمالي: ${invoice.total}`,
+      type: "security",
+    });
+
+    addNotification({
+      title: "تم الإلغاء المحاسبي",
+      message: `فاتورة المشتريات ${invoice.id} تم إلغاؤها والمخزون استُعيد.`,
+      type: "warning",
+    });
+  };
+
   const addEmployee = (employee: Omit<Employee, "id">) => {
     const newEmployee: Employee = {
       ...employee,
@@ -1530,6 +1623,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     deleteSupplier,
     addPurchaseInvoice,
     updatePurchaseInvoiceStatus,
+    voidPurchaseInvoice,
     addEmployee,
     updateEmployee,
     deleteEmployee,

@@ -5,11 +5,11 @@ import { Store, DollarSign, Package, CheckCircle, Database } from "lucide-react"
 import toast from "react-hot-toast";
 
 export default function SetupWizardModal() {
-    const { settings, updateSettings, resetApp, isAuthLoading, user } = useAppContext();
+    const { settings, updateSettings, resetApp, isAuthLoading, user, importData } = useAppContext();
     const [step, setStep] = useState(1);
-    const [storeName, setStoreName] = useState(settings.storeName || "كاشير تك");
+    const [storeName, setStoreName] = useState(settings.storeName || "");
     const [currency, setCurrency] = useState(settings.currency || "ر.س");
-    const [importDemo, setImportDemo] = useState(false);
+    const [importDemo, setImportDemo] = useState(true);
     const [isFinishing, setIsFinishing] = useState(false);
 
     // If already setup, don't show, or if not logged in
@@ -18,20 +18,50 @@ export default function SetupWizardModal() {
     const handleFinish = async () => {
         setIsFinishing(true);
 
-        // If they chose starting from scratch instead of demo
-        if (!importDemo) {
-            resetApp();
+        try {
+            if (importDemo) {
+                // Generate demo data
+                const dateIso = new Date().toISOString();
+                const demoCategories = [
+                  { id: "cat_1", name: "مشروبات" },
+                  { id: "cat_2", name: "وجبات خفيفة" },
+                  { id: "cat_3", name: "أجهزة إلكترونية" }
+                ];
+                
+                const demoProducts = [
+                  { id: "prod_1", name: "قهوة سوداء", price: 15, costPrice: 5, stock: 100, categoryId: "cat_1", category: "مشروبات", isActive: true, trackInventory: true, minStockAlert: 10, barcode: "10001" },
+                  { id: "prod_2", name: "عصير برتقال", price: 12, costPrice: 4, stock: 50, categoryId: "cat_1", category: "مشروبات", isActive: true, trackInventory: true, minStockAlert: 5, barcode: "10002" },
+                  { id: "prod_3", name: "شيبس بطاطس", price: 5, costPrice: 2, stock: 200, categoryId: "cat_2", category: "وجبات خفيفة", isActive: true, trackInventory: true, minStockAlert: 20, barcode: "10003" },
+                  { id: "prod_4", name: "سماعات بلوتوث", price: 150, costPrice: 80, stock: 15, categoryId: "cat_3", category: "أجهزة إلكترونية", isActive: true, trackInventory: true, minStockAlert: 3, barcode: "10004" }
+                ];
+
+                await importData({
+                   categories: demoCategories,
+                   products: demoProducts,
+                   settings: {
+                     ...settings,
+                     storeName,
+                     currency,
+                     setupCompleted: true
+                   }
+                });
+            } else {
+                // If they chose starting from scratch instead of demo
+                await resetApp();
+                // Save settings
+                updateSettings({
+                    storeName,
+                    currency,
+                    setupCompleted: true,
+                });
+            }
+            toast.success("تم إعداد النظام بنجاح! مرحباً بك في " + storeName);
+        } catch (err) {
+            console.error(err);
+            toast.error("حدث خطأ أثناء الإعداد");
+        } finally {
+            setIsFinishing(false);
         }
-
-        // Save settings
-        updateSettings({
-            storeName,
-            currency,
-            setupCompleted: true,
-        });
-
-        toast.success("تم إعداد النظام بنجاح! مرحباً بك في " + storeName);
-        setIsFinishing(false);
     };
 
     return (

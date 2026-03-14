@@ -72,7 +72,8 @@ export const IdempotencyService = {
    * Format: "type_timestamp_random"
    */
   generateId(type: string): string {
-    return `${type}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    // crypto.randomUUID() is collision-resistant and doesn't require Math.random
+    return `${type}_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').slice(0, 9)}`;
   },
 
   /**

@@ -6,6 +6,7 @@ import { useAppContext } from "../context/AppContext";
 interface QuickAddCustomerModalProps {
   isOpen: boolean;
   onClose: () => void;
+  // onSuccess receives the real entity id and name — no more hacks
   onSuccess: (id: string, name: string) => void;
 }
 
@@ -14,7 +15,7 @@ export default function QuickAddCustomerModal({
   onClose,
   onSuccess,
 }: QuickAddCustomerModalProps) {
-  const { addCustomer, customers } = useAppContext();
+  const { addCustomer } = useAppContext();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
 
@@ -24,19 +25,15 @@ export default function QuickAddCustomerModal({
     e.preventDefault();
     if (!name.trim()) return;
 
-    // A hack to instantly get the newly created customer ID since addCustomer doesn't return it
-    const newId = `cust-${Math.random().toString(36).substring(7)}`;
-    addCustomer({ id: newId, name, phone, balance: 0 } as any); // Ignoring the 'id' strict rule for instant access
+    // addCustomer now returns the created Customer entity with a real UUID-based id
+    const newCustomer = addCustomer({ name: name.trim(), phone: phone.trim() });
 
-    // In actual implementation AppContext addCustomer doesn't accept ID, it generates it.
-    // Instead, we just trust the component state or let the user select it from the dropdown manually after it's added.
-    // Let's fire onSuccess with name to just pre-fill customerName text field for now or find it.
-    setTimeout(() => {
-      onSuccess("", name);
-      setName("");
-      setPhone("");
-      onClose();
-    }, 100);
+    // Pass the real id and name back to the caller — no Math.random, no setTimeout, no hacks
+    onSuccess(newCustomer.id, newCustomer.name);
+
+    setName("");
+    setPhone("");
+    onClose();
   };
 
   return (

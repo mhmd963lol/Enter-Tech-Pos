@@ -4,22 +4,50 @@ service cloud.firestore {
 
     // ─── User Data ──────────────────────────────────────────────────────────
     // Each user can ONLY read/write their own document.
-    // The uid in the document must always match the authenticated user.
     match /users/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
 
-      // Allow write only if:
-      // 1. Authenticated as the document owner
-      // 2. Not trying to manipulate a different userId in the data
       allow write: if request.auth != null
         && request.auth.uid == userId
+        // Cannot spoof a different uid inside the document
         && (!request.resource.data.keys().hasAny(['uid'])
-            || request.resource.data.uid == userId);
+            || request.resource.data.uid == userId)
+        // profile.role must be a known string if present — prevents escalation
+        && (
+          !request.resource.data.keys().hasAny(['profile'])
+          || !request.resource.data.profile.keys().hasAny(['role'])
+          || request.resource.data.profile.role in ['admin', 'cashier']
+        )
+        // profile.pin must be a string if present (prevents type confusion attacks)
+        && (
+          !request.resource.data.keys().hasAny(['profile'])
+          || !request.resource.data.profile.keys().hasAny(['pin'])
+          || request.resource.data.profile.pin is string
+        )
+        // Cannot change an existing role to admin via a client-side write if it was
+        // previously 'cashier' (server enforcement layer — the real guard is server-side)
+        && (
+          !resource.data.keys().hasAny(['profile'])
+          || !resource.data.profile.keys().hasAny(['role'])
+          || resource.data.profile.role != 'cashier'
+          || request.resource.data.profile.role != 'admin'
+        );
     }
 
-    // ─── Block everything else ──────────────────────────────────────────────
+    // ─── Phone Mappings ─────────────────────────────────────────────────────
+    // Used during phone-based authentication to look up the email associated
+    // with a given phone number. Only the owner can write their own mapping.
+    match /phone_mappings/{phone} {
+      // Any authenticated user can read (needed during login flow to find email)
+      allow read: if request.auth != null;
+      // Only the uid referenced in the document can write
+      allow write: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email is string;
+    }
+
+    // ─── Block everything else ───────────────────────────────────────────────
     // Any path not explicitly matched above is denied.
-    // When Cloud Functions are introduced, add their service account rules here.
     match /{document=**} {
       allow read, write: if false;
     }

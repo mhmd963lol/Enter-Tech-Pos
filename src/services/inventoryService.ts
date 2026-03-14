@@ -1,20 +1,31 @@
-import { Product, PurchaseInvoice, SystemLog } from "../types";
+import { Product, PurchaseInvoice, PurchaseItem } from "../types";
 
 /**
  * Applies stock increases from a purchase invoice.
+ * Accepts either a full PurchaseInvoice or a raw PurchaseItem array for flexibility.
+ * Also recalculates the moving-average cost price.
  */
 export function applyPurchaseStock(
   products: Product[],
-  invoice: PurchaseInvoice
+  invoiceOrItems: PurchaseInvoice | PurchaseItem[]
 ): Product[] {
+  const items = Array.isArray(invoiceOrItems) ? invoiceOrItems : invoiceOrItems.items;
   return products.map((product) => {
-    const lineItem = invoice.items?.find(
+    const lineItem = items?.find(
       (item) => item.productId === product.id || item.id === product.id
     );
     if (lineItem && product.trackInventory !== false) {
+      // Moving average cost price
+      const currentTotalValue = product.stock * product.costPrice;
+      const newTotalValue = lineItem.quantity * lineItem.costPrice;
+      const newTotalCount = product.stock + lineItem.quantity;
+      const newAvgCost = newTotalCount > 0
+        ? (currentTotalValue + newTotalValue) / newTotalCount
+        : lineItem.costPrice;
       return {
         ...product,
         stock: product.stock + lineItem.quantity,
+        costPrice: Number(newAvgCost.toFixed(2)),
       };
     }
     return product;
