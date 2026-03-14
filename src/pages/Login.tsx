@@ -133,12 +133,23 @@ export default function Login() {
     getRedirectResult(auth)
       .then(async (result) => {
         if (result?.user) {
+          // Only prompt for password if this is a BRAND NEW account (no Firestore doc yet)
           const hasPassword = result.user.providerData.some(p => p.providerId === 'password');
-          if (!hasPassword) {
+          const userDocRef = doc(db, "users", result.user.uid);
+          const existingDoc = await getDoc(userDocRef);
+          const isExistingEmployee = await (async () => {
+            const snap = await getDocs(query(collection(db, "employee_access"), where("authUid", "==", result.user.uid)));
+            return !snap.empty;
+          })();
+
+          if (!hasPassword && !existingDoc.exists() && !isExistingEmployee) {
+            // New Google user - ask them to set a password
             setPendingGoogleUser(result.user);
             setLoading(false);
             return;
           }
+
+          // Existing user - log them in directly
           await handleAuthResult(result.user);
           playSound("login_success");
           toast.success("تم تسجيل الدخول بـ Google بنجاح!");
@@ -374,7 +385,9 @@ export default function Login() {
     setLoading(true);
     try {
       const cred = await signInWithEmailAndPassword(auth, loginData.email, loginData.password);
-      if (!cred.user.emailVerified) {
+      // Only block on unverified email for pure email/password accounts (Google-linked accounts bypass this)
+      const hasGoogleProvider = cred.user.providerData.some(p => p.providerId === 'google.com');
+      if (!cred.user.emailVerified && !hasGoogleProvider) {
         playSound("error");
         toast.error("يجب تأكيد بريدك الإلكتروني أولاً. تحقق من صندوق الوارد.");
         await sendEmailVerification(cred.user);
@@ -384,9 +397,13 @@ export default function Login() {
       await handleAuthResult(cred.user);
       playSound("login_success");
       toast.success("تم تسجيل الدخول بنجاح");
-    } catch {
+    } catch (err: any) {
       playSound("error");
-      toast.error("البريد الإلكتروني أو كلمة المرور غير صحيحة");
+      if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
+        toast.error("البريد الإلكتروني أو كلمة المرور غير صحيحة");
+      } else {
+        toast.error("حدث خطأ. تأكد من بياناتك وأعد المحاولة.");
+      }
     } finally {
       setLoading(false);
     }
@@ -505,6 +522,17 @@ export default function Login() {
           setLoading(false);
           return;
         }
+      } else {
+        // In LOGIN mode: verify phone exists before sending OTP (avoid leaking OTP to unknown numbers)
+        const qMap = query(collection(db, "phone_mappings"), where("__name__", "==", phoneNum));
+        const snapMap = await getDocs(qMap);
+        const qUsr = query(collection(db, "users"), where("phone", "==", phoneNum));
+        const snapUsr = await getDocs(qUsr);
+        if (snapMap.empty && snapUsr.empty) {
+          toast.error("لا يوجد حساب مرتبط بهذا الرقم. يرجى إنشاء حساب جديد.");
+          setLoading(false);
+          return;
+        }
       }
 
       const appVerifier = setupRecaptcha();
@@ -605,14 +633,28 @@ export default function Login() {
     if (!forgotEmail) { toast.error("أدخل بريدك الإلكتروني أولاً"); return; }
     setLoading(true);
     try {
+      // First verify that this email is actually registered so we don't send reset mails blindly
+      const q = query(collection(db, "users"), where("email", "==", forgotEmail));
+      const snap = await getDocs(q);
+      const eq = query(collection(db, "employee_access"), where("email", "==", forgotEmail));
+      const esnap = await getDocs(eq);
+      if (snap.empty && esnap.empty) {
+        toast.error("لا يوجد حساب مسجّل بهذا البريد الإلكتروني.");
+        setLoading(false);
+        return;
+      }
       await sendPasswordResetEmail(auth, forgotEmail);
       playSound("success");
-      toast.success("إذا كان البريد مسجلاً لدينا، سيتم إرسال رابط إعادة التعيين.");
+      toast.success("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك.");
       setShowForgotPassword(false);
       setForgotEmail("");
-    } catch {
+    } catch (err: any) {
       playSound("error");
-      toast.error("تعذّر إرسال رابط الاستعادة. تحقق من البريد وأعد المحاولة.");
+      if (err.code === "auth/user-not-found") {
+        toast.error("لا يوجد حساب مسجّل بهذا البريد.");
+      } else {
+        toast.error("تعذّر إرسال رابط الاستعادة. تحقق من البريد وأعد المحاولة.");
+      }
     } finally {
       setLoading(false);
     }
