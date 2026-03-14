@@ -6,6 +6,7 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager
 } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -37,4 +38,6 @@ const analyticsPromise = isSupported().then((supported) =>
   supported ? getAnalytics(app) : null
 );
 
-export { app, auth, db, analyticsPromise };
+const storage = getStorage(app);
+
+export { app, auth, db, storage, analyticsPromise };

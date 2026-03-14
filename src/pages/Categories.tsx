@@ -3,18 +3,21 @@ import { useAppContext } from "../context/AppContext";
 import { Plus, Search, Edit, Trash2, FolderTree, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Category } from "../types";
+import { uploadImage, deleteImage } from "../lib/storageUtils";
 
 export default function Categories() {
-  const { categories, addCategory, updateCategory, deleteCategory } =
+  const { categories, addCategory, updateCategory, deleteCategory, addNotification } =
     useAppContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [newCategory, setNewCategory] = useState({
     name: "",
     isActive: true,
+    image: "",
   });
 
   const filteredCategories = categories.filter((c) =>
@@ -27,11 +30,13 @@ export default function Categories() {
       updateCategory(editingCategory.id, {
         name: newCategory.name,
         isActive: newCategory.isActive,
+        image: newCategory.image,
       });
     } else {
       addCategory({
         name: newCategory.name,
         isActive: newCategory.isActive,
+        image: newCategory.image,
       });
     }
     closeModal();
@@ -42,6 +47,7 @@ export default function Categories() {
     setNewCategory({
       name: category.name,
       isActive: category.isActive,
+      image: category.image || "",
     });
     setIsAddModalOpen(true);
   };
@@ -49,7 +55,7 @@ export default function Categories() {
   const closeModal = () => {
     setIsAddModalOpen(false);
     setEditingCategory(null);
-    setNewCategory({ name: "", isActive: true });
+    setNewCategory({ name: "", isActive: true, image: "" });
   };
 
   const handleDelete = (id: string) => {
@@ -207,6 +213,56 @@ export default function Categories() {
                     }
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    صورة القسم (اختياري)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border border-zinc-200 dark:border-zinc-700">
+                      {isUploading ? (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                      ) : (
+                        <img 
+                          src={newCategory.image || "https://picsum.photos/seed/category/200/200"} 
+                          alt="preview" 
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="w-full px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900/30 dark:file:text-indigo-400"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          
+                          try {
+                            setIsUploading(true);
+                            if (newCategory.image && newCategory.image.includes('firebasestorage')) {
+                              deleteImage(newCategory.image).catch(() => {});
+                            }
+                            const url = await uploadImage(file, "categories");
+                            setNewCategory({ ...newCategory, image: url });
+                          } catch (error) {
+                            addNotification({
+                              title: "خطأ",
+                              message: "فشل رفع الصورة، يرجى المحاولة مرة أخرى",
+                              type: "error"
+                            });
+                          } finally {
+                            setIsUploading(false);
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-3 pt-2">
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input

@@ -38,6 +38,7 @@ import { roundMoney, calcSubtotal, calcTax, calcProfit } from "../lib/moneyUtils
 import { buildOrder, validateStock } from "../services/cartService";
 import { validateOrderIntegrity, validateCartPrices } from "../services/validationService";
 import { enqueueOperation, getQueuedOperations, clearQueue } from "../services/offlineQueue";
+import { deleteImage } from "../lib/storageUtils";
 
 
 interface AppContextType {
@@ -1010,6 +1011,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteProduct = (id: string) => {
     const product = products.find(p => p.id === id);
+    if (product?.image && product.image.includes('firebasestorage')) {
+      deleteImage(product.image).catch(() => {});
+    }
     setProducts((prev) => prev.filter((p) => p.id !== id));
     if (product) {
       addLog({
@@ -1054,6 +1058,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteCategory = (id: string) => {
+    const category = categories.find((c) => c.id === id);
+    if (category?.image && category.image.includes('firebasestorage')) {
+      deleteImage(category.image).catch(() => {});
+    }
     setCategories((prev) => prev.filter((c) => c.id !== id));
   };
 

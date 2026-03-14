@@ -17,6 +17,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { Product, Category } from "../types";
 import NumberInput from "../components/NumberInput";
+import { uploadImage, deleteImage } from "../lib/storageUtils";
 
 export default function Products() {
   const {
@@ -37,6 +38,7 @@ export default function Products() {
 
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [showExportAlert, setShowExportAlert] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Batch actions state
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
@@ -728,17 +730,51 @@ export default function Products() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                    رابط الصورة (اختياري)
+                    صورة المنتج (اختياري)
                   </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white text-left"
-                    dir="ltr"
-                    value={newProduct.image}
-                    onChange={(e) =>
-                      setNewProduct({ ...newProduct, image: e.target.value })
-                    }
-                  />
+                  <div className="flex items-center gap-3">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border border-zinc-200 dark:border-zinc-700">
+                      {isUploading ? (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                      ) : (
+                        <img 
+                          src={newProduct.image || "https://picsum.photos/seed/product/200/200"} 
+                          alt="preview" 
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="w-full px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900/30 dark:file:text-indigo-400"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          
+                          try {
+                            setIsUploading(true);
+                            if (newProduct.image && newProduct.image.includes('firebasestorage')) {
+                              deleteImage(newProduct.image).catch(() => {});
+                            }
+                            const url = await uploadImage(file, "products");
+                            setNewProduct({ ...newProduct, image: url });
+                          } catch (error) {
+                            addNotification({
+                              title: "خطأ",
+                              message: "فشل رفع الصورة، يرجى المحاولة مرة أخرى",
+                              type: "error"
+                            });
+                          } finally {
+                            setIsUploading(false);
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
                 <div className="pt-4 flex gap-3">
                   <button
