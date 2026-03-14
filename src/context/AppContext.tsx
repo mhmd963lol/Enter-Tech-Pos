@@ -39,6 +39,10 @@ import { buildOrder, validateStock } from "../services/cartService";
 import { validateOrderIntegrity, validateCartPrices } from "../services/validationService";
 import { enqueueOperation, getQueuedOperations, clearQueue } from "../services/offlineQueue";
 import { deleteImage } from "../lib/storageUtils";
+import { useTheme } from "../hooks/useTheme";
+import { useSoundSystem } from "../hooks/useSoundSystem";
+import { useFirebaseSync } from "../hooks/useFirebaseSync";
+import { buildSaleOrder, applyStockDeduction } from "../services/salesService";
 
 
 interface AppContextType {
@@ -161,7 +165,7 @@ const defaultSettings: Settings = {
   animationSpeed: "normal",
   enableSounds: true,
   preventBelowCost: true,
-  adminPin: "0000",
+  adminPin: "",  // No default PIN — admin must set from Settings on first use
   disableAnimations: false,
   dashboardLayout: {
     showSales: true,
@@ -336,437 +340,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => unsubscribeAuth();
   }, []);
 
-  // Utility to remove undefined values for Firestore (which doesn't support them)
-  const deepClean = (obj: any): any => {
-    if (obj === null || typeof obj !== 'object') return obj;
-    if (Array.isArray(obj)) return obj.map(deepClean);
-    return Object.fromEntries(
-      Object.entries(obj)
-        .filter(([_, v]) => v !== undefined)
-        .map(([k, v]) => [k, deepClean(v)])
-    );
-  };
-
-  // Debounced Sync to Firestore (with offline queue)
-  useEffect(() => {
-    if (!user?.id) return;
-
-    setSyncStatus('syncing');
-    const timeoutId = setTimeout(async () => {
-      const dataToSync = deepClean({
-        products,
-        categories,
-        orders,
-        cart,
-        settings,
-        returns,
-        maintenanceJobs,
-        expenses,
-        incomes,
-        customers,
-        notifications,
-        suppliers,
-        purchases,
-        employees,
-        transactions,
-        logs: logs || []
-      });
-
-      if (!navigator.onLine) {
-        // Offline: queue the operation for later
-        enqueueOperation({ type: 'sync_data', data: dataToSync });
-        setSyncStatus('error');
-        return;
-      }
-
-      try {
-        // Process any queued operations first
-        const queued = getQueuedOperations();
-        if (queued.length > 0) {
-          // Use latest queued data merged with current
-          clearQueue();
-        }
-
-        await setDoc(doc(db, "users", user.id), dataToSync, { merge: true });
-        setSyncStatus('synced');
-      } catch (error) {
-        // On failure, queue for retry
-        enqueueOperation({ type: 'sync_data', data: dataToSync });
-        setSyncStatus('error');
-      }
-    }, 2000);
-
-    return () => clearTimeout(timeoutId);
-  }, [
+  // ─── Firebase Sync (extracted to hook) ────────────────────────────────────────
+  const syncData = useMemo(() => ({
     products, categories, orders, cart, settings, returns,
     maintenanceJobs, expenses, incomes, customers,
-    notifications, suppliers, purchases, employees, transactions, user?.id
+    notifications, suppliers, purchases, employees, transactions,
+    logs: logs || []
+  }), [
+    products, categories, orders, cart, settings, returns,
+    maintenanceJobs, expenses, incomes, customers,
+    notifications, suppliers, purchases, employees, transactions, logs
   ]);
 
-  // Auto-sync queued operations when coming back online
-  useEffect(() => {
-    if (isOnline && user?.id) {
-      const queued = getQueuedOperations();
-      if (queued.length > 0) {
-        const latestOp = queued[queued.length - 1];
-        setDoc(doc(db, "users", user.id), deepClean(latestOp.data), { merge: true })
-          .then(() => {
-            clearQueue();
-            setSyncStatus('synced');
-          })
-          .catch(() => setSyncStatus('error'));
-      }
-    }
-  }, [isOnline, user?.id]);
+  useFirebaseSync({
+    userId: user?.id,
+    isOnline,
+    data: syncData,
+    setSyncStatus,
+  });
 
-  // (Duplicate useEffects removed — single onAuthStateChanged and single Firestore sync above)
+  // ─── Theme Management ─────────────────────────────────────────────────────
+  useTheme(settings);
 
-  // Handle Theme
-  useEffect(() => {
-    const root = document.documentElement;
-    const body = document.body;
-    const isDark =
-      settings.theme === "dark" ||
-      (settings.theme === "system" &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches);
-
-    if (isDark) {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-
-    // Apply color theme
-    body.classList.remove(
-      "theme-emerald",
-      "theme-rose",
-      "theme-amber",
-      "theme-cyan",
-      "theme-violet",
-      "theme-gaming",
-      "theme-custom"
-    );
-    if (settings.activeTheme && settings.activeTheme !== "indigo") {
-      body.classList.add(`theme-${settings.activeTheme}`);
-    }
-
-    // Apply Custom Colors & Styles
-    if (settings.primaryColor) {
-      root.style.setProperty("--custom-primary", settings.primaryColor);
-    }
-    if (settings.sidebarColor) {
-      root.style.setProperty("--custom-sidebar", settings.sidebarColor);
-    }
-    if (settings.navbarColor) {
-      root.style.setProperty("--custom-navbar", settings.navbarColor);
-    }
-    if (settings.backgroundColor) {
-      root.style.setProperty("--custom-bg", settings.backgroundColor);
-    }
-    if (settings.glassOpacity !== undefined) {
-      root.style.setProperty("--glass-opacity", settings.glassOpacity.toString());
-    }
-    if (settings.animationSpeed) {
-      const durationMap = { slow: "0.6s", normal: "0.3s", fast: "0.15s" };
-      root.style.setProperty("--anim-duration", settings.disableAnimations ? "0s" : durationMap[settings.animationSpeed]);
-    }
-
-    if (settings.disableAnimations) {
-      body.classList.add('no-animations');
-    } else {
-      body.classList.remove('no-animations');
-    }
-
-    // Apply shape theme
-    body.classList.remove("shape-flat", "shape-rounded");
-    if (settings.borderRadius === "none") {
-      body.classList.add("shape-flat");
-    } else if (settings.borderRadius === "full") {
-      body.classList.add("shape-rounded");
-    }
-
-    // Apply Master Theme class
-    body.classList.remove(
-      "theme-master-default",
-      "theme-master-gaming",
-      "theme-master-carbon",
-      "theme-master-luxury",
-      "theme-master-cashier-tech"
-    );
-    if (settings.masterTheme && settings.masterTheme !== "default") {
-      body.classList.add(`theme-master-${settings.masterTheme}`);
-      // Master themes will now adapt to light/dark mode via CSS adjustments
-    }
-
-    // Apply Font Family
-    if (settings.fontFamily) {
-      body.style.fontFamily = settings.fontFamily;
-      // Also override Tailwind's CSS var
-      document.documentElement.style.setProperty("--font-sans", settings.fontFamily);
-    } else {
-      body.style.fontFamily = "";
-      document.documentElement.style.removeProperty("--font-sans");
-    }
-  }, [
-    settings.theme, settings.activeTheme, settings.borderRadius,
-    settings.masterTheme, settings.fontFamily, settings.primaryColor,
-    settings.sidebarColor, settings.navbarColor, settings.backgroundColor,
-    settings.glassOpacity, settings.animationSpeed
-  ]);
-
-  const audioCtxRef = useRef<AudioContext | null>(null);
-
-  const playSound = (type: "success" | "error" | "click" | "login_success" | "logout") => {
-    if (!settings.enableSounds) return;
-    try {
-      if (!audioCtxRef.current) {
-        audioCtxRef.current = new (
-          window.AudioContext || (window as any).webkitAudioContext
-        )();
-      }
-      const audioCtx = audioCtxRef.current;
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-
-      const t = audioCtx.currentTime;
-      const master = settings.masterTheme || "default";
-
-      // ----------------------------------------------------
-      // SYSTEM SOUNDS (Login/Logout across all themes)
-      // ----------------------------------------------------
-      if (type === "login_success") {
-        oscillator.type = "sine";
-        oscillator.frequency.setValueAtTime(440, t);
-        oscillator.frequency.exponentialRampToValueAtTime(880, t + 0.1);
-        oscillator.frequency.exponentialRampToValueAtTime(1200, t + 0.3);
-        gainNode.gain.setValueAtTime(0, t);
-        gainNode.gain.linearRampToValueAtTime(0.2, t + 0.1);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.6);
-        oscillator.start(t);
-        oscillator.stop(t + 0.6);
-        return;
-      }
-      if (type === "logout") {
-        oscillator.type = "sine";
-        oscillator.frequency.setValueAtTime(800, t);
-        oscillator.frequency.exponentialRampToValueAtTime(400, t + 0.2);
-        gainNode.gain.setValueAtTime(0, t);
-        gainNode.gain.linearRampToValueAtTime(0.1, t + 0.05);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
-        oscillator.start(t);
-        oscillator.stop(t + 0.3);
-        return;
-      }
-
-      // ----------------------------------------------------
-      // GAMING THEME SOUNDS (Sci-Fi, 8-bit, Sharp)
-      // ----------------------------------------------------
-      if (master === "gaming") {
-        if (type === "success") {
-          oscillator.type = "square";
-          oscillator.frequency.setValueAtTime(440, t);
-          oscillator.frequency.setValueAtTime(880, t + 0.1);
-          gainNode.gain.setValueAtTime(0.1, t);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
-          oscillator.start(t);
-          oscillator.stop(t + 0.2);
-        } else if (type === "click") {
-          oscillator.type = "square";
-          oscillator.frequency.setValueAtTime(600, t);
-          oscillator.frequency.exponentialRampToValueAtTime(800, t + 0.05);
-          gainNode.gain.setValueAtTime(0.05, t);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-          oscillator.start(t);
-          oscillator.stop(t + 0.1);
-        } else {
-          // Error
-          oscillator.type = "sawtooth";
-          oscillator.frequency.setValueAtTime(150, t);
-          oscillator.frequency.linearRampToValueAtTime(100, t + 0.3);
-          gainNode.gain.setValueAtTime(0.1, t);
-          gainNode.gain.linearRampToValueAtTime(0.01, t + 0.3);
-          oscillator.start(t);
-          oscillator.stop(t + 0.3);
-        }
-      }
-      // ----------------------------------------------------
-      // iOS GLASS THEME SOUNDS (Crystalline, Airy, Premium)
-      // ----------------------------------------------------
-      else if (master === "ios-glass") {
-        if (type === "success") {
-          // Double crystalline beep
-          oscillator.type = "sine";
-          oscillator.frequency.setValueAtTime(1200, t);
-          oscillator.frequency.exponentialRampToValueAtTime(1600, t + 0.1);
-          gainNode.gain.setValueAtTime(0, t);
-          gainNode.gain.linearRampToValueAtTime(0.08, t + 0.05);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-          oscillator.start(t);
-          oscillator.stop(t + 0.3);
-
-          const osc2 = audioCtx.createOscillator();
-          const gain2 = audioCtx.createGain();
-          osc2.connect(gain2);
-          gain2.connect(audioCtx.destination);
-          osc2.type = "sine";
-          osc2.frequency.setValueAtTime(1800, t + 0.1);
-          gain2.gain.setValueAtTime(0, t + 0.1);
-          gain2.gain.linearRampToValueAtTime(0.05, t + 0.15);
-          gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-          osc2.start(t + 0.1);
-          osc2.stop(t + 0.4);
-        } else if (type === "click") {
-          // Soft "pop/bubble" sound
-          oscillator.type = "sine";
-          oscillator.frequency.setValueAtTime(800, t);
-          oscillator.frequency.exponentialRampToValueAtTime(100, t + 0.05);
-          gainNode.gain.setValueAtTime(0.02, t);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-          oscillator.start(t);
-          oscillator.stop(t + 0.05);
-        } else {
-          // Error: Soft dual-tone
-          oscillator.type = "triangle";
-          oscillator.frequency.setValueAtTime(440, t);
-          oscillator.frequency.linearRampToValueAtTime(330, t + 0.2);
-          gainNode.gain.setValueAtTime(0.05, t);
-          gainNode.gain.linearRampToValueAtTime(0.01, t + 0.3);
-          oscillator.start(t);
-          oscillator.stop(t + 0.3);
-        }
-      }
-      // ----------------------------------------------------
-      // CASHIER TECH THEME SOUNDS (Fintech, Clean, Digital)
-      // ----------------------------------------------------
-      else if (master === "cashier-tech") {
-        if (type === "success") {
-          oscillator.type = "sine";
-          oscillator.frequency.setValueAtTime(523, t);
-          oscillator.frequency.exponentialRampToValueAtTime(784, t + 0.08);
-          oscillator.frequency.exponentialRampToValueAtTime(1047, t + 0.2);
-          gainNode.gain.setValueAtTime(0, t);
-          gainNode.gain.linearRampToValueAtTime(0.12, t + 0.05);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.35);
-          oscillator.start(t);
-          oscillator.stop(t + 0.35);
-        } else if (type === "click") {
-          oscillator.type = "sine";
-          oscillator.frequency.setValueAtTime(700, t);
-          oscillator.frequency.exponentialRampToValueAtTime(900, t + 0.04);
-          gainNode.gain.setValueAtTime(0.04, t);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-          oscillator.start(t);
-          oscillator.stop(t + 0.08);
-        } else {
-          // Error: two-tone descending beep
-          oscillator.type = "triangle";
-          oscillator.frequency.setValueAtTime(400, t);
-          oscillator.frequency.exponentialRampToValueAtTime(200, t + 0.25);
-          gainNode.gain.setValueAtTime(0.1, t);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
-          oscillator.start(t);
-          oscillator.stop(t + 0.3);
-        }
-      }
-      // ----------------------------------------------------
-      // LUXURY THEME SOUNDS (Soft, Bells, Smooth)
-      // ----------------------------------------------------
-      else if (master === "luxury") {
-        if (type === "success") {
-          oscillator.type = "sine";
-          oscillator.frequency.setValueAtTime(600, t);
-          oscillator.frequency.exponentialRampToValueAtTime(1200, t + 0.4);
-          gainNode.gain.setValueAtTime(0, t);
-          gainNode.gain.linearRampToValueAtTime(0.1, t + 0.1);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
-          oscillator.start(t);
-          oscillator.stop(t + 0.8);
-        } else if (type === "click") {
-          oscillator.type = "sine";
-          oscillator.frequency.setValueAtTime(800, t);
-          gainNode.gain.setValueAtTime(0, t);
-          gainNode.gain.linearRampToValueAtTime(0.03, t + 0.02);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-          oscillator.start(t);
-          oscillator.stop(t + 0.3);
-        } else {
-          // Error
-          oscillator.type = "triangle";
-          oscillator.frequency.setValueAtTime(300, t);
-          oscillator.frequency.exponentialRampToValueAtTime(250, t + 0.3);
-          gainNode.gain.setValueAtTime(0, t);
-          gainNode.gain.linearRampToValueAtTime(0.05, t + 0.1);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
-          oscillator.start(t);
-          oscillator.stop(t + 0.5);
-        }
-      }
-      // ----------------------------------------------------
-      // CARBON THEME SOUNDS (Mechanical, Punchy, Deep)
-      // ----------------------------------------------------
-      else if (master === "carbon") {
-        if (type === "success") {
-          oscillator.type = "triangle";
-          oscillator.frequency.setValueAtTime(300, t);
-          oscillator.frequency.exponentialRampToValueAtTime(600, t + 0.1);
-          gainNode.gain.setValueAtTime(0.2, t);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
-          oscillator.start(t);
-          oscillator.stop(t + 0.15);
-        } else if (type === "click") {
-          // A short mechanical "click"
-          oscillator.type = "triangle";
-          oscillator.frequency.setValueAtTime(200, t);
-          gainNode.gain.setValueAtTime(0.1, t);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-          oscillator.start(t);
-          oscillator.stop(t + 0.05);
-        } else {
-          // Error: deep buzzer
-          oscillator.type = "sawtooth";
-          oscillator.frequency.setValueAtTime(120, t);
-          gainNode.gain.setValueAtTime(0.15, t);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
-          oscillator.start(t);
-          oscillator.stop(t + 0.2);
-        }
-      }
-      // ----------------------------------------------------
-      // DEFAULT THEME SOUNDS (Original clean sounds)
-      // ----------------------------------------------------
-      else {
-        if (type === "success") {
-          oscillator.type = "sine";
-          oscillator.frequency.setValueAtTime(800, t);
-          oscillator.frequency.exponentialRampToValueAtTime(1200, t + 0.1);
-          gainNode.gain.setValueAtTime(0.1, t);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-          oscillator.start(t);
-          oscillator.stop(t + 0.1);
-        } else if (type === "click") {
-          oscillator.type = "triangle";
-          oscillator.frequency.setValueAtTime(400, t);
-          gainNode.gain.setValueAtTime(0.05, t);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
-          oscillator.start(t);
-          oscillator.stop(t + 0.05);
-        } else if (type === "error") {
-          oscillator.type = "sawtooth";
-          oscillator.frequency.setValueAtTime(200, t);
-          oscillator.frequency.exponentialRampToValueAtTime(150, t + 0.2);
-          gainNode.gain.setValueAtTime(0.1, t);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
-          oscillator.start(t);
-          oscillator.stop(t + 0.2);
-        }
-      }
-    } catch (e) {
-      console.error("Audio context error", e);
-    }
-  };
+  // ─── Sound System ──────────────────────────────────────────────────────────
+  const { playSound } = useSoundSystem(settings);
 
   const login = (userData: User) => setUser(userData);
   const logout = async () => {

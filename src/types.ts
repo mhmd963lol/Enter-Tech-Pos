@@ -44,14 +44,29 @@ export interface User {
   pin?: string; // For admin overrides
 }
 
+/** Historical snapshot of a product at time of sale — prevents data corruption if product is later edited. */
+export interface LineItemSnapshot {
+  productId: string;
+  name: string;
+  barcode: string;
+  category: string;
+  categoryId?: string;
+  quantity: number;
+  unitPrice: number;
+  costPrice: number;
+  customPrice?: number;
+  totalPrice: number;
+}
+
 export interface Order {
   id: string;
-  dailyNumber?: number; // Daily sequence number (e.g. 1, 2, 3...)
+  dailyNumber?: number;
   date: string;
   total: number;
   subtotal: number;
   tax: number;
   profit?: number;
+  taxRate?: number;
   status:
   | "pending"
   | "processing"
@@ -59,15 +74,20 @@ export interface Order {
   | "shipped"
   | "completed"
   | "cancelled"
-  | "returned";
+  | "returned"
+  | "void";
   items: CartItem[];
+  /** Historical price snapshots — use this for reports/reprints instead of items */
+  lineItems?: LineItemSnapshot[];
   customerName?: string;
   customerId?: string;
   amountPaid: number;
+  change?: number;
   paymentMethod: "cash" | "card" | "online" | "debt" | "split";
   splitDetails?: { cash: number; card: number };
   cashierId?: string;
-  cashierName?: string; // New field for transparency
+  cashierName?: string;
+  createdBy?: string;
   isReturn?: boolean;
   returnReason?: string;
   vault?: "daily" | "main";
@@ -86,7 +106,8 @@ export interface SystemLog {
 export interface ReturnItem {
   id: string;
   orderId: string;
-  productId: string;
+  productId?: string;
+  items?: (CartItem | LineItemSnapshot)[];
   quantity: number;
   date: string;
   type: "inventory" | "defective";
@@ -240,12 +261,17 @@ export interface Transaction {
   | "income"
   | "payment_in"
   | "payment_out"
-  | "transfer";
+  | "transfer"
+  | "transfer_in"
+  | "transfer_out";
   amount: number;
   date: string;
   description: string;
-  referenceId?: string; // Order ID, Purchase ID, etc.
+  referenceId?: string;
   vault?: "daily" | "main";
-  entityId?: string; // Customer ID, Supplier ID, Employee ID
+  entityId?: string;
   entityName?: string;
+  /** User who created this transaction — critical for audit trail */
+  userId?: string;
+  userName?: string;
 }
