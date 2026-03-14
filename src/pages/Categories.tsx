@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { useAppContext } from "../context/AppContext";
 import { Plus, Search, Edit, Trash2, FolderTree, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { createPortal } from "react-dom";
 import { Category } from "../types";
 import { uploadImage, deleteImage } from "../lib/storageUtils";
+import ImageCropperModal from "../components/ImageCropperModal";
 
 export default function Categories() {
   const { categories, addCategory, updateCategory, deleteCategory, addNotification } =
@@ -13,6 +15,8 @@ export default function Categories() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+  const [cropperImageSrc, setCropperImageSrc] = useState("");
 
   const [newCategory, setNewCategory] = useState({
     name: "",
@@ -237,27 +241,19 @@ export default function Categories() {
                         type="file"
                         accept="image/*"
                         className="w-full px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900/30 dark:file:text-indigo-400"
-                        onChange={async (e) => {
+                        onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (!file) return;
+
+                          const reader = new FileReader();
+                          reader.readAsDataURL(file);
+                          reader.onload = () => {
+                            setCropperImageSrc(reader.result as string);
+                            setIsCropperOpen(true);
+                          };
                           
-                          try {
-                            setIsUploading(true);
-                            if (newCategory.image && newCategory.image.includes('firebasestorage')) {
-                              deleteImage(newCategory.image).catch(() => {});
-                            }
-                            const url = await uploadImage(file, "categories");
-                            setNewCategory({ ...newCategory, image: url });
-                          } catch (error: any) {
-                            console.error("Image upload failed:", error);
-                            addNotification({
-                              title: "خطأ",
-                              message: "فشل رفع الصورة: " + (error?.message || "يرجى المحاولة مرة أخرى"),
-                              type: "error"
-                            });
-                          } finally {
-                            setIsUploading(false);
-                          }
+                          // Reset file input so the same file can be selected again if canceled
+                          e.target.value = '';
                         }}
                       />
                     </div>
@@ -303,6 +299,40 @@ export default function Categories() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Image Cropper Modal */}
+      {isCropperOpen && createPortal(
+        <ImageCropperModal
+          isOpen={isCropperOpen}
+          imageSrc={cropperImageSrc}
+          onClose={() => {
+            setIsCropperOpen(false);
+            setCropperImageSrc("");
+          }}
+          onCropComplete={async (croppedFile) => {
+             try {
+               setIsUploading(true);
+               if (newCategory.image && newCategory.image.includes('firebasestorage')) {
+                 deleteImage(newCategory.image).catch(() => {});
+               }
+               const url = await uploadImage(croppedFile, "categories");
+               setNewCategory({ ...newCategory, image: url });
+             } catch (error: any) {
+               console.error("Image upload failed:", error);
+               addNotification({
+                 title: "خطأ",
+                 message: "فشل رفع الصورة: " + (error?.message || "يرجى المحاولة مرة أخرى"),
+                 type: "error"
+               });
+             } finally {
+               setIsUploading(false);
+               setIsCropperOpen(false);
+               setCropperImageSrc("");
+             }
+          }}
+        />,
+        document.body
+      )}
 
       {/* Delete Confirmation Modal */}
       <AnimatePresence>

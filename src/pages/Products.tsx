@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Product, Category } from "../types";
 import NumberInput from "../components/NumberInput";
 import { uploadImage, deleteImage } from "../lib/storageUtils";
+import ImageCropperModal from "../components/ImageCropperModal";
 import * as XLSX from "xlsx";
 
 export default function Products() {
@@ -40,6 +41,8 @@ export default function Products() {
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [showExportAlert, setShowExportAlert] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+  const [cropperImageSrc, setCropperImageSrc] = useState("");
 
   // Batch actions state
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
@@ -790,27 +793,19 @@ export default function Products() {
                         type="file"
                         accept="image/*"
                         className="w-full px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900/30 dark:file:text-indigo-400"
-                        onChange={async (e) => {
+                        onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (!file) return;
+
+                          const reader = new FileReader();
+                          reader.readAsDataURL(file);
+                          reader.onload = () => {
+                            setCropperImageSrc(reader.result as string);
+                            setIsCropperOpen(true);
+                          };
                           
-                          try {
-                            setIsUploading(true);
-                            if (newProduct.image && newProduct.image.includes('firebasestorage')) {
-                              deleteImage(newProduct.image).catch(() => {});
-                            }
-                            const url = await uploadImage(file, "products");
-                            setNewProduct({ ...newProduct, image: url });
-                          } catch (error: any) {
-                            console.error("Image upload failed:", error);
-                            addNotification({
-                              title: "خطأ",
-                              message: "فشل رفع الصورة: " + (error?.message || "يرجى المحاولة مرة أخرى"),
-                              type: "error"
-                            });
-                          } finally {
-                            setIsUploading(false);
-                          }
+                          // Reset file input so the same file can be selected again if canceled
+                          e.target.value = '';
                         }}
                       />
                     </div>
@@ -836,6 +831,40 @@ export default function Products() {
           </div>
           )}
         </AnimatePresence>,
+        document.body
+      )}
+
+      {/* Image Cropper Modal */}
+      {isCropperOpen && createPortal(
+        <ImageCropperModal
+          isOpen={isCropperOpen}
+          imageSrc={cropperImageSrc}
+          onClose={() => {
+            setIsCropperOpen(false);
+            setCropperImageSrc("");
+          }}
+          onCropComplete={async (croppedFile) => {
+             try {
+               setIsUploading(true);
+               if (newProduct.image && newProduct.image.includes('firebasestorage')) {
+                 deleteImage(newProduct.image).catch(() => {});
+               }
+               const url = await uploadImage(croppedFile, "products");
+               setNewProduct({ ...newProduct, image: url });
+             } catch (error: any) {
+               console.error("Image upload failed:", error);
+               addNotification({
+                 title: "خطأ",
+                 message: "فشل رفع الصورة: " + (error?.message || "يرجى المحاولة مرة أخرى"),
+                 type: "error"
+               });
+             } finally {
+               setIsUploading(false);
+               setIsCropperOpen(false);
+               setCropperImageSrc("");
+             }
+          }}
+        />,
         document.body
       )}
 
