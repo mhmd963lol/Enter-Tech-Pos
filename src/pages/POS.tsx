@@ -451,8 +451,8 @@ export default function POS() {
                 <div className={`grid gap-[clamp(0.25rem,1vw,1rem)] h-fit ${gridSize === "large"
                   ? "grid-cols-[repeat(auto-fill,minmax(clamp(150px,25vw,350px),1fr))]"
                   : gridSize === "small"
-                    ? "grid-cols-[repeat(auto-fill,minmax(clamp(110px,15vw,180px),1fr))]"
-                    : "grid-cols-[repeat(auto-fill,minmax(clamp(80px,10vw,120px),1fr))]"
+                    ? "grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7"
+                    : "grid-cols-2 xs:grid-cols-4 md:grid-cols-6 xl:grid-cols-9"
                   }`}>
                   {filteredProducts.map((product) => (
                     <motion.div

@@ -193,13 +193,6 @@ body {
 html {
   font-size: clamp(12px, 0.8vw + 0.5rem, 16px);
   scroll-behavior: smooth;
-  height: 100svh;
-  overflow: hidden;
-}
-
-body {
-  height: 100svh;
-  overflow: auto;
 }
 
 /* 200% Zoom Protection & High Density Screens */
@@ -1159,12 +1152,7 @@ aside {
 /* Transparent Idea: Applying to all cards */
 .glass-effect {
   backdrop-filter: blur(8px) !important;
-  background-color: rgba(255, 255, 255, 0.6) !important;
-}
-
-.no-animations .glass-effect {
-  backdrop-filter: none !important;
-  background-color: rgba(255, 255, 255, 0.95) !important;
+  background-color: rgba(255, 255, 255, 0.4) !important;
 }
 
 .dark .glass-effect {

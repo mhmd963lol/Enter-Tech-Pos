@@ -175,8 +175,8 @@ const SidebarItem: React.FC<{
           </div>
           {!isCollapsed && (
             <motion.div
-              animate={settings.disableAnimations ? { rotate: isOpen ? 180 : 0 } : { rotate: isOpen ? 180 : 0 }}
-              transition={{ duration: settings.disableAnimations ? 0 : 0.3 }}
+              animate={{ rotate: isOpen ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
             >
               <ChevronDown className="w-4 h-4" />
             </motion.div>
@@ -196,10 +196,10 @@ const SidebarItem: React.FC<{
         <AnimatePresence>
           {(isOpen || (isCollapsed && isHovered)) && (
             <motion.div
-              initial={settings.disableAnimations ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }}
+              initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
-              exit={settings.disableAnimations ? { height: 0, opacity: 0 } : { height: 0, opacity: 0 }}
-              transition={{ duration: settings.disableAnimations ? 0 : 0.1, ease: "easeOut" }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
               className={`overflow-hidden ${isCollapsed
                 ? "flex flex-col items-center gap-1.5 py-1.5"
                 : "mt-1 ml-4 pr-6 space-y-1 border-r-2 border-dashed border-zinc-200 dark:border-zinc-800"
@@ -297,8 +297,8 @@ export default function Layout() {
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch((err) => {
-        console.log(`Error attempting to enable fullscreen: ${err.message}`);
+      document.documentElement.requestFullscreen().catch(() => {
+        // Fullscreen not supported or denied
       });
     } else {
       document.exitFullscreen();
@@ -321,12 +321,7 @@ export default function Layout() {
   const handleInstallApp = async () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === "accepted") {
-        console.log("User accepted the install prompt");
-      } else {
-        console.log("User dismissed the install prompt");
-      }
+      await deferredPrompt.userChoice;
       setDeferredPrompt(null);
     }
   };
@@ -477,9 +472,9 @@ export default function Layout() {
 
         <div
           key={location.pathname} // Hardware reflow trigger
-          className="flex-1 overflow-x-hidden overflow-y-auto p-4 lg:p-8 min-h-0 bg-transparent"
+          className="flex-1 overflow-auto p-4 lg:p-8 min-h-0 bg-transparent"
         >
-          <ThemePageTransition disabled={settings.disableAnimations}>
+          <ThemePageTransition>
             <Outlet />
           </ThemePageTransition>
         </div>

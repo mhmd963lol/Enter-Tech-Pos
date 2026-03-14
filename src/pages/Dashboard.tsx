@@ -24,9 +24,11 @@ import {
   XCircle,
 } from "lucide-react";
 import { motion } from "motion/react";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const { orders, products, settings, logs, transactions } = useAppContext();
+  const navigate = useNavigate();
 
   const totalSales = useMemo(() => {
     // Total income = (Orders amountPaid) + (Payment In Transactions)
@@ -79,6 +81,7 @@ const Dashboard = () => {
       icon: DollarSign,
       color: "text-emerald-600 dark:text-emerald-400",
       bg: "bg-emerald-100 dark:bg-emerald-900/30",
+      link: "/orders"
     },
     {
       title: "إجمالي الطلبات",
@@ -86,6 +89,7 @@ const Dashboard = () => {
       icon: ShoppingBag,
       color: "text-blue-600 dark:text-blue-400",
       bg: "bg-blue-100 dark:bg-blue-900/30",
+      link: "/orders"
     },
     {
       title: "المنتجات المتاحة",
@@ -93,6 +97,7 @@ const Dashboard = () => {
       icon: Package,
       color: "text-indigo-600 dark:text-indigo-400",
       bg: "bg-indigo-100 dark:bg-indigo-900/30",
+      link: "/products"
     },
     {
       title: "قيمة المخزون",
@@ -100,6 +105,7 @@ const Dashboard = () => {
       icon: TrendingUp,
       color: "text-orange-600 dark:text-orange-400",
       bg: "bg-orange-100 dark:bg-orange-900/30",
+      link: "/products"
     },
   ];
 
@@ -120,6 +126,7 @@ const Dashboard = () => {
             transition={{ delay: index * 0.1 }}
             whileHover={{ y: -5 }}
             key={index}
+            onClick={() => navigate(stat.link)}
             className="bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center gap-4 cursor-pointer"
           >
             <div className={`p-4 rounded-xl ${stat.bg}`}>

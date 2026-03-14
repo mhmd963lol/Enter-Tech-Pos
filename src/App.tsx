@@ -125,12 +125,22 @@ import { Toaster } from "react-hot-toast";
 import SetupWizardModal from "./components/SetupWizardModal";
 import { useLocation } from "react-router-dom";
 
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
-  public state = { hasError: false, error: null };
-  static getDerivedStateFromError(error: any) {
+  declare props: Readonly<{ children: React.ReactNode }>;
+  state = { hasError: false, error: null as any };
+  static getDerivedStateFromError(error: unknown) {
     return { hasError: true, error };
   }
-  componentDidCatch(error: any, errorInfo: any) {
+  componentDidCatch(error: unknown, errorInfo: React.ErrorInfo) {
     console.error("ErrorBoundary caught an error", error, errorInfo);
   }
   render() {
@@ -206,7 +216,7 @@ function AppContent() {
           }
         >
           <Route index element={<Dashboard />} />
-          {/* <Route path="pos" element={<POS />} /> */}
+          <Route path="pos" element={<POS />} />
           <Route path="products" element={<Products />} />
           <Route path="categories" element={<Categories />} />
           <Route path="orders" element={<Orders />} />
@@ -237,7 +247,6 @@ function AppContent() {
           <Route path="payments" element={<PaymentsCenter />} />
           <Route path="inbox" element={<Inbox />} />
           <Route path="tools/barcode" element={<BarcodeGenerator />} />
-          <Route path="settings" element={<SettingsPage />} />
         </Route>
         {/* Public Static Pages (Moved outside for Google Verification) */}
         <Route path="/support" element={<StaticPages />} />

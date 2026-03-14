@@ -4,6 +4,7 @@ import React, {
   ReactNode,
   useEffect,
   useState,
+  useRef,
 } from "react";
 import {
   Product,
@@ -417,9 +418,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     if (settings.disableAnimations) {
-      body.classList.add('no-animations', 'performance-mode');
+      body.classList.add('no-animations');
     } else {
-      body.classList.remove('no-animations', 'performance-mode');
+      body.classList.remove('no-animations');
     }
 
     // Apply shape theme
@@ -459,12 +460,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     settings.glassOpacity, settings.animationSpeed
   ]);
 
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
   const playSound = (type: "success" | "error" | "click" | "login_success" | "logout") => {
     if (!settings.enableSounds) return;
     try {
-      const audioCtx = new (
-        window.AudioContext || (window as any).webkitAudioContext
-      )();
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (
+          window.AudioContext || (window as any).webkitAudioContext
+        )();
+      }
+      const audioCtx = audioCtxRef.current;
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
 
@@ -825,7 +831,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const dailyNumber = orders.filter(o => o.date.startsWith(today)).length + 1;
 
     const newOrder: Order = {
-      id: `ORD-${Math.floor(Math.random() * 10000) + 1000}`,
+      id: `ORD-${crypto.randomUUID().slice(0, 8)}`,
       dailyNumber,
       date: new Date().toISOString(),
       subtotal,
@@ -932,7 +938,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addProduct = (product: Omit<Product, "id">) => {
     const newProduct: Product = {
       ...product,
-      id: Math.random().toString(36).substring(7),
+      id: crypto.randomUUID(),
     };
     setProducts((prev) => [...prev, newProduct]);
     addLog({
@@ -971,7 +977,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addCategory = (category: Omit<Category, "id">) => {
     const newCategory: Category = {
       ...category,
-      id: `cat-${Math.random().toString(36).substring(7)}`,
+      id: `cat-${crypto.randomUUID().slice(0, 8)}`,
     };
     setCategories((prev) => [...prev, newCategory]);
   };
@@ -1058,7 +1064,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addCustomer = (customer: Omit<Customer, "id" | "balance">) => {
     const newCustomer: Customer = {
       ...customer,
-      id: `cust-${Math.random().toString(36).substring(7)}`,
+      id: `cust-${crypto.randomUUID().slice(0, 8)}`,
       balance: 0,
     };
     setCustomers((prev) => [...prev, newCustomer]);
@@ -1101,7 +1107,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addReturn = (returnItem: Omit<ReturnItem, "id">) => {
     const newItem: ReturnItem = {
       ...returnItem,
-      id: `RET-${Math.floor(Math.random() * 10000) + 1000}`,
+      id: `RET-${crypto.randomUUID().slice(0, 8)}`,
     };
     setReturns((prev) => [newItem, ...prev]);
 
@@ -1123,14 +1129,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const { usedPartId, ...jobData } = job;
     const newJob: MaintenanceJob = {
       ...jobData,
-      id: `MNT-${Math.floor(Math.random() * 10000) + 1000}`,
+      id: `MNT-${crypto.randomUUID().slice(0, 8)}`,
     };
     setMaintenanceJobs((prev) => [newJob, ...prev]);
 
     // Deduct parts cost from cash box (create expense)
     if (newJob.partsCost > 0 && !usedPartId) {
       const newExpense: Expense = {
-        id: `EXP-${Math.floor(Math.random() * 10000) + 1000}`,
+        id: `EXP-${crypto.randomUUID().slice(0, 8)}`,
         amount: newJob.partsCost,
         category: "تكاليف صيانة",
         description: `تكلفة قطع غيار لصيانة ${newJob.device} - العميل: ${newJob.customerName}`,
@@ -1180,7 +1186,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // If status changed to paid, create an order to record the sale
     if (job.status !== "paid" && newJob.status === "paid") {
       const newOrder: Order = {
-        id: `ORD-MNT-${Math.floor(Math.random() * 10000) + 1000}`,
+        id: `ORD-MNT-${crypto.randomUUID().slice(0, 8)}`,
         date: new Date().toISOString(),
         subtotal: newJob.cost,
         tax: 0,
@@ -1228,7 +1234,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   ) => {
     const newNotification: AppNotification = {
       ...notification,
-      id: `NOT-${Math.random().toString(36).substr(2, 9)}`,
+      id: `NOT-${crypto.randomUUID().slice(0, 8)}`,
       date: new Date().toISOString(),
       read: false,
     };
@@ -1243,7 +1249,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addLog = (logData: Omit<SystemLog, "id" | "date" | "userId" | "userName">) => {
     const newLog: SystemLog = {
       ...logData,
-      id: `LOG-${Math.random().toString(36).substring(7)}`,
+      id: `LOG-${crypto.randomUUID().slice(0, 8)}`,
       date: new Date().toISOString(),
       userId: user?.id || "system",
       userName: user?.name || "النظام",
@@ -1264,7 +1270,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addSupplier = (supplier: Omit<Supplier, "id" | "balance">) => {
     const newSupplier: Supplier = {
       ...supplier,
-      id: `sup-${Math.random().toString(36).substring(7)}`,
+      id: `sup-${crypto.randomUUID().slice(0, 8)}`,
       balance: 0,
     };
     setSuppliers((prev) => [...prev, newSupplier]);
@@ -1283,7 +1289,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
     const newTransaction: Transaction = {
       ...transaction,
-      id: `TRX-${Math.floor(Math.random() * 10000) + 1000}`,
+      id: `TRX-${crypto.randomUUID().slice(0, 8)}`,
     };
     setTransactions((prev) => [newTransaction, ...prev]);
   };
@@ -1291,7 +1297,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addPurchaseInvoice = (invoice: Omit<PurchaseInvoice, "id">) => {
     const newInvoice: PurchaseInvoice = {
       ...invoice,
-      id: `PUR-${Math.floor(Math.random() * 10000) + 1000}`,
+      id: `PUR-${crypto.randomUUID().slice(0, 8)}`,
     };
     setPurchases((prev) => [newInvoice, ...prev]);
 
@@ -1420,7 +1426,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addEmployee = (employee: Omit<Employee, "id">) => {
     const newEmployee: Employee = {
       ...employee,
-      id: `emp-${Math.random().toString(36).substring(7)}`,
+      id: `emp-${crypto.randomUUID().slice(0, 8)}`,
     };
     setEmployees((prev) => [...prev, newEmployee]);
   };
@@ -1438,7 +1444,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addExpense = (expense: Omit<Expense, "id">) => {
     const newExpense: Expense = {
       ...expense,
-      id: `EXP-${Math.floor(Math.random() * 10000) + 1000}`,
+      id: `EXP-${crypto.randomUUID().slice(0, 8)}`,
     };
     setExpenses((prev) => [newExpense, ...prev]);
   };
@@ -1450,7 +1456,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addIncome = (income: Omit<Income, "id">) => {
     const newIncome: Income = {
       ...income,
-      id: `INC-${Math.floor(Math.random() * 10000) + 1000}`,
+      id: `INC-${crypto.randomUUID().slice(0, 8)}`,
     };
     setIncomes((prev) => [newIncome, ...prev]);
   };

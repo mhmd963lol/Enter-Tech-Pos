@@ -111,5 +111,5 @@ export async function migrateUserData(userId: string) {
   await batch.commit();
 
   // 12. Logging
-  console.log('Migration completed for user:', userId);
+  // Migration complete
 }
