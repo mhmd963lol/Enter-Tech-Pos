@@ -1029,6 +1029,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const updateCategory = (id: string, updatedFields: Partial<Category>) => {
+    if (updatedFields.name) {
+      const oldCategory = categories.find((c) => c.id === id);
+      if (oldCategory && oldCategory.name !== updatedFields.name) {
+        // Update the category string and categoryId in all corresponding products
+        setProducts((prev) =>
+          prev.map((p) => {
+            if (p.categoryId === id || p.category === oldCategory.name) {
+              return {
+                ...p,
+                categoryId: id,
+                category: updatedFields.name!,
+              };
+            }
+            return p;
+          })
+        );
+      }
+    }
+
     setCategories((prev) =>
       prev.map((c) => (c.id === id ? { ...c, ...updatedFields } : c)),
     );

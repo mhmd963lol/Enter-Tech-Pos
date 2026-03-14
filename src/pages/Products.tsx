@@ -11,6 +11,8 @@ import {
   X,
   AlertTriangle,
   XCircle,
+  CheckCircle2,
+  ArrowRightLeft,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Product, Category } from "../types";
@@ -27,6 +29,7 @@ export default function Products() {
     isPro,
     upgradeToPro,
     addNotification,
+    addLog,
   } = useAppContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -34,6 +37,11 @@ export default function Products() {
 
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [showExportAlert, setShowExportAlert] = useState(false);
+
+  // Batch actions state
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
+  const [isBatchMoveModalOpen, setIsBatchMoveModalOpen] = useState(false);
+  const [batchTargetCategoryId, setBatchTargetCategoryId] = useState("");
 
   const [newProduct, setNewProduct] = useState({
     name: "",
@@ -186,6 +194,55 @@ export default function Products() {
     setTimeout(() => setShowExportAlert(false), 3000);
   };
 
+  const toggleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedProductIds(new Set(filteredProducts.map((p) => p.id)));
+    } else {
+      setSelectedProductIds(new Set());
+    }
+  };
+
+  const toggleSelectProduct = (id: string) => {
+    const newSet = new Set(selectedProductIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedProductIds(newSet);
+  };
+
+  const handleBatchMove = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedProductIds.size === 0 || !batchTargetCategoryId) return;
+
+    const targetCategory = categories.find((c) => c.id === batchTargetCategoryId);
+    if (!targetCategory) return;
+
+    selectedProductIds.forEach((id) => {
+      updateProduct(id, {
+        categoryId: targetCategory.id,
+        category: targetCategory.name,
+      });
+    });
+
+    addLog({
+      action: "نقل أصناف",
+      details: `تم نقل ${selectedProductIds.size} أصناف إلى قسم ${targetCategory.name}`,
+      type: "inventory",
+    });
+
+    addNotification({
+      title: "تم النقل بنجاح",
+      message: `تم نقل ${selectedProductIds.size} أصناف بنجاح.`,
+      type: "success",
+    });
+
+    setSelectedProductIds(new Set());
+    setIsBatchMoveModalOpen(false);
+    setBatchTargetCategoryId("");
+  };
+
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -252,12 +309,43 @@ export default function Products() {
               </button>
             )}
           </div>
+          
+          <AnimatePresence>
+            {selectedProductIds.size > 0 && (
+              <motion.div
+                initial={{ opacity: 0, height: 0, y: -10 }}
+                animate={{ opacity: 1, height: "auto", y: 0 }}
+                exit={{ opacity: 0, height: 0, y: -10 }}
+                className="mt-4 flex items-center justify-between bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-xl border border-indigo-100 dark:border-indigo-800"
+              >
+                <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-400 font-medium text-sm">
+                  <CheckCircle2 className="w-5 h-5" />
+                  تم تحديد {selectedProductIds.size} أصناف
+                </div>
+                <button
+                  onClick={() => setIsBatchMoveModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors font-medium text-sm shadow-sm"
+                >
+                  <ArrowRightLeft className="w-4 h-4 cursor-pointer" />
+                  نقل للأقسام المحددة
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-right">
             <thead>
               <tr className="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 text-sm">
+                <th className="px-6 py-4 font-medium w-12 text-center">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                    checked={filteredProducts.length > 0 && selectedProductIds.size === filteredProducts.length}
+                    onChange={toggleSelectAll}
+                  />
+                </th>
                 <th className="px-6 py-4 font-medium">المنتج</th>
                 <th className="px-6 py-4 font-medium">الباركود</th>
                 <th className="px-6 py-4 font-medium">القسم</th>
@@ -321,8 +409,20 @@ export default function Products() {
                       exit="exit"
                       variants={masterVariants}
                       key={product.id}
-                      className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors"
+                      className={
+                        selectedProductIds.has(product.id)
+                          ? "bg-indigo-50/50 dark:bg-indigo-900/20 transition-colors"
+                          : "hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors"
+                      }
                     >
+                      <td className="px-6 py-4 w-12 text-center">
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                          checked={selectedProductIds.has(product.id)}
+                          onChange={() => toggleSelectProduct(product.id)}
+                        />
+                      </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0">
