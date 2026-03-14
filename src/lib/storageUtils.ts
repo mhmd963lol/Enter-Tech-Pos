@@ -1,3 +1,4 @@
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { storage } from "./firebase";
 
 /**
@@ -66,32 +67,27 @@ export const compressImage = async (
 };
 
 /**
- * Converts a File to a Base64 Data URI string.
+ * Uploads an image to Firebase Storage and returns its public download URL.
  */
-export const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
-  });
+export const uploadImage = async (file: File, folder: string): Promise<string> => {
+  const compressedFile = await compressImage(file);
+  const ext = compressedFile.name.split(".").pop();
+  const filename = `${Date.now()}_${crypto.randomUUID().slice(0, 8)}.${ext}`;
+  const storageRef = ref(storage, `${folder}/${filename}`);
+
+  await uploadBytes(storageRef, compressedFile);
+  return await getDownloadURL(storageRef);
 };
 
 /**
- * Uploads an image by compressing it extremely well, then converting to Base64.
- * This completely bypasses the need for Firebase Storage manual setup in the console.
- * Firestore supports up to 1MB per document, so this fits perfectly.
- */
-export const uploadImage = async (file: File, _folder: string): Promise<string> => {
-  // Compress to maximum 400x400 to keep Base64 size tiny (usually under 30KB)
-  const compressedFile = await compressImage(file, 400, 400, 0.6);
-  return await fileToBase64(compressedFile);
-};
-
-/**
- * Empty stub since Base64 strings deleted automatically when document updates/deletes.
+ * Deletes an image from Firebase Storage by its Download URL.
  */
 export const deleteImage = async (url: string) => {
-  // No-op for Base64 encoded images.
-  return;
+  if (!url || !url.includes("firebasestorage.googleapis.com")) return;
+  try {
+    const storageRef = ref(storage, url);
+    await deleteObject(storageRef);
+  } catch (error) {
+    console.error("Failed to delete image: ", error);
+  }
 };
