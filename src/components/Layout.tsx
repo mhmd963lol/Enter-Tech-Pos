@@ -35,7 +35,7 @@ import { useAppContext } from "../context/AppContext";
 import NotificationPanel from "./NotificationPanel";
 import ThemePageTransition from "./ThemePageTransition";
 import StatusBar from "./StatusBar";
-import { APP_VERSION } from "../version";
+import { APP_VERSION, APP_VERSION_SHORT } from "../version";
 
 interface NavItem {
   icon: React.ElementType;
@@ -348,7 +348,7 @@ export default function Layout() {
           {isSidebarCollapsed && (
             <div className="flex flex-col items-center mx-auto gap-0.5">
               <CashierTechLogo className="w-8 h-8 shrink-0" showText={false} />
-              <span className="text-[6px] text-indigo-500 font-mono tracking-tight">{APP_VERSION.replace('ver : ', '')}</span>
+              <span className="text-[6px] text-indigo-500 font-mono tracking-tight">{APP_VERSION_SHORT}</span>
             </div>
           )}
 

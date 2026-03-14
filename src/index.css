@@ -182,6 +182,69 @@ body {
   min-height: 100vh;
 }
 
+/* Dark mode default body background */
+.dark body:not([class*="theme-master-"]) {
+  background-color: #09090b; /* zinc-950 */
+  color: #e4e4e7; /* zinc-200 */
+}
+
+/* Dark mode — consistent form control styling across all pages */
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(.no-dark),
+.dark select:not(.no-dark),
+.dark textarea:not(.no-dark) {
+  color-scheme: dark;
+}
+
+/* Dark mode table enhancements */
+.dark table tbody tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.015);
+}
+
+.dark table thead th {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Mobile bottom safe area support (iOS notch, etc.) */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .mobile-bottom-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  /* POS mobile cart FAB — account for home bar */
+  .lg\\:hidden.fixed.bottom-4 {
+    bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* POS product grid — touch-optimized tap targets on mobile */
+@media (max-width: 1023px) {
+  .product-card-hover {
+    min-height: 80px;
+  }
+}
+
+/* Focus visible improvements for keyboard navigation */
+:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Dark mode scrollbar */
+.dark * {
+  scrollbar-color: rgba(63, 63, 70, 0.6) transparent;
+  scrollbar-width: thin;
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background-color: rgba(63, 63, 70, 0.6);
+  border-radius: 4px;
+}
+
+.dark *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 /* Utility for forced text wrapping */
 .text-wrap-break {
   overflow-wrap: anywhere;

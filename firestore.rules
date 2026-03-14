@@ -1,12 +1,25 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Each user can only read/write their own document
+
+    // ─── User Data ──────────────────────────────────────────────────────────
+    // Each user can ONLY read/write their own document.
+    // The uid in the document must always match the authenticated user.
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Allow write only if:
+      // 1. Authenticated as the document owner
+      // 2. Not trying to manipulate a different userId in the data
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && (!request.resource.data.keys().hasAny(['uid'])
+            || request.resource.data.uid == userId);
     }
 
-    // Block all other access
+    // ─── Block everything else ──────────────────────────────────────────────
+    // Any path not explicitly matched above is denied.
+    // When Cloud Functions are introduced, add their service account rules here.
     match /{document=**} {
       allow read, write: if false;
     }

@@ -138,6 +138,7 @@ interface AppContextType {
   isSidebarCollapsed: boolean;
   setIsSidebarCollapsed: (collapsed: boolean) => void;
   collectDebt: (customerId: string, amount: number, paymentMethod: "cash" | "card") => void;
+  voidOrder: (orderId: string, reason?: string) => void;
   isOnline: boolean;
   syncStatus: 'synced' | 'syncing' | 'error';
 }
@@ -730,6 +731,55 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setOrders((prev) =>
       prev.map((o) => (o.id === orderId ? { ...o, status } : o)),
     );
+  };
+
+  /**
+   * Soft-delete: marks an order as 'void' preserving the audit trail.
+   * Restores stock and reverses customer balance automatically.
+   */
+  const voidOrder = (orderId: string, reason = "إلغاء محاسبي") => {
+    const order = orders.find((o) => o.id === orderId);
+    if (!order || order.status === "void") return;
+
+    // Restore stock if previously completed
+    if (order.status === "completed" || order.status === "processing") {
+      setProducts((prev) =>
+        prev.map((p) => {
+          const item = (order.lineItems ?? order.items).find(
+            (i) => (i as any).productId === p.id || (i as any).id === p.id
+          );
+          if (item && p.trackInventory !== false) {
+            return { ...p, stock: p.stock + item.quantity };
+          }
+          return p;
+        })
+      );
+    }
+
+    // Reverse customer debt if needed
+    if (order.customerId && order.status === "completed") {
+      const debt = roundMoney(order.total - order.amountPaid);
+      if (debt !== 0) adjustCustomerBalance(order.customerId, -debt);
+    }
+
+    // Mark as void (soft-delete — data is preserved for audit)
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === orderId ? { ...o, status: "void" as Order["status"], returnReason: reason } : o
+      )
+    );
+
+    addLog({
+      action: "إلغاء محاسبي",
+      details: `تم إلغاء الطلب ${orderId} محاسبياً. السبب: ${reason}`,
+      type: "security",
+    });
+
+    addNotification({
+      title: "تم الإلغاء المحاسبي",
+      message: `الطلب ${orderId} تم إلغاؤه والمخزون استُعيد.`,
+      type: "warning",
+    });
   };
 
   const addCustomer = (customer: Omit<Customer, "id" | "balance">) => {
@@ -1501,6 +1551,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     isSidebarCollapsed,
     setIsSidebarCollapsed,
     collectDebt,
+    voidOrder,
     logs,
     addLog,
     isOnline,

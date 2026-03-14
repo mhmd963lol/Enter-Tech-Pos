@@ -901,33 +901,54 @@ export default function POS() {
           </div>
 
           {/* Mobile Cart Toggle Floating Button */}
-          {
-            !isCartOpen && (
-              <div className="lg:hidden fixed bottom-4 left-4 right-4 z-30 pointer-events-none">
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    if (playSound) playSound("click");
-                    setIsCartOpen(true);
-                  }}
-                  className={`w-full py-4 bg-indigo-600 shadow-xl rounded-2xl text-white font-bold flex items-center justify-between px-6 pointer-events-auto shadow-indigo-500/30 ${settings.masterTheme === "ios-glass" ? "liquid-morph" : ""}`}
-                >
-                  <div className="flex items-center gap-2">
+          {!isCartOpen && (
+            <div className="lg:hidden fixed bottom-4 left-4 right-4 z-30 pointer-events-none">
+              <motion.button
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => {
+                  if (playSound) playSound("click");
+                  setIsCartOpen(true);
+                }}
+                className={`w-full min-h-[64px] bg-gradient-to-l from-indigo-700 to-indigo-600 dark:from-indigo-800 dark:to-indigo-700 shadow-2xl shadow-indigo-600/40 rounded-2xl text-white font-bold flex items-center justify-between px-5 pointer-events-auto active:shadow-indigo-600/20 border border-indigo-500/30 ${
+                  settings.masterTheme === "ios-glass" ? "liquid-morph" : ""
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="relative">
                     <ShoppingCart className="w-6 h-6" />
-                    <span>عرض السلة</span>
+                    {cart.length > 0 && (
+                      <motion.span
+                        key={cart.length}
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute -top-2 -right-2 w-5 h-5 bg-rose-500 rounded-full text-[10px] font-black flex items-center justify-center shadow-md"
+                      >
+                        {cart.length}
+                      </motion.span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">
-                      {cart.length}  أصناف
-                    </div>
-                    <span className="text-lg">
-                      {grandTotal.toFixed(2)} {settings.currency}
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm font-bold leading-tight">
+                      {cart.length === 0 ? "السلة فارغة" : "عرض السلة"}
+                    </span>
+                    <span className="text-xs text-indigo-200 leading-tight">
+                      {cart.length} {cart.length === 1 ? "صنف" : "أصناف"}
                     </span>
                   </div>
-                </motion.button>
-              </div>
-            )
-          }
+                </div>
+                <div className="flex flex-col items-end">
+                  <span className="text-xl font-black tabular-nums">
+                    {grandTotal.toFixed(2)}
+                  </span>
+                  <span className="text-xs text-indigo-200">
+                    {settings.currency}
+                  </span>
+                </div>
+              </motion.button>
+            </div>
+          )}
 
           {/* PIN Modal */}
           <AnimatePresence>
