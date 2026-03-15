@@ -19,6 +19,8 @@ import {
   reload,
   signOut,
   updatePassword,
+  EmailAuthProvider,
+  linkWithCredential,
 } from "firebase/auth";
 import { doc, setDoc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import toast from "react-hot-toast";
@@ -787,7 +789,15 @@ export default function Login() {
               e.preventDefault();
               setLoading(true);
               try {
-                await updatePassword(pendingPhoneUser, phonePassword);
+                // linkWithCredential adds email/password as an auth provider
+                // so future signInWithEmailAndPassword works correctly
+                const phoneNum = pendingPhoneUser.phoneNumber || "";
+                const phoneEmail = `${phoneNum.replace('+', '')}@cashier-tech.com`;
+                // Use the email stored in phone_mappings if available
+                const mappingSnap = await getDoc(doc(db, "phone_mappings", phoneNum));
+                const linkEmail = mappingSnap.exists() ? mappingSnap.data().email : phoneEmail;
+                const credential = EmailAuthProvider.credential(linkEmail, phonePassword);
+                await linkWithCredential(pendingPhoneUser, credential);
                 await handleAuthResult(pendingPhoneUser);
                 playSound("login_success");
                 toast.success("تم تعيين كلمة المرور وتسجيل الدخول بنجاح!");
@@ -796,6 +806,11 @@ export default function Login() {
               } catch (err: any) {
                 if (err.code === "auth/requires-recent-login") {
                   toast.error("يرجى الضغط على زر تخطي أو تسجيل الدخول مرة أخرى.");
+                } else if (err.code === "auth/provider-already-linked") {
+                  // Already linked, just log in directly
+                  await handleAuthResult(pendingPhoneUser);
+                  setPendingPhoneUser(null);
+                  setPhonePassword("");
                 } else {
                   toast.error("حدث خطأ أثناء حفظ كلمة المرور: " + (err.message || ""));
                 }
@@ -956,7 +971,13 @@ export default function Login() {
                       className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] dark:text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
                       {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><LogIn className="w-5 h-5" /> دخول بكلمة المرور</>}
                     </motion.button>
-                    <button type="button" onClick={() => setPhoneStep("number")} className="w-full text-center text-sm font-bold text-gray-400 dark:text-zinc-500 hover:text-[#00E676] transition-colors">العودة</button>
+                    <div className="flex items-center justify-between text-sm font-bold mt-1">
+                      <button type="button" onClick={() => setPhoneStep("number")} className="text-gray-400 dark:text-zinc-500 hover:text-[#00E676] transition-colors">العودة</button>
+                      <button type="button" onClick={async () => {
+                        setPhoneStep("number");
+                        toast("أرسل رمز OTP لإعادة تعيين كلمة المرور", { icon: '📱' });
+                      }} className="text-[#00E676] hover:underline">نسيت كلمة المرور؟‏</button>
+                    </div>
                   </form>
                 )}
 
