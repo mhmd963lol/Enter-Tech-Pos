@@ -10,16 +10,15 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
   GoogleAuthProvider,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   sendPasswordResetEmail,
   sendEmailVerification,
   signInWithPhoneNumber,
   RecaptchaVerifier,
-  updatePassword,
-  updateEmail,
   signOut,
   reload,
+  linkWithCredential,
+  EmailAuthProvider,
 } from "firebase/auth";
 import { doc, setDoc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import toast from "react-hot-toast";
@@ -136,47 +135,7 @@ export default function Login() {
     return () => { if (cooldownTimer.current) clearInterval(cooldownTimer.current); };
   }, [otpCooldown]);
 
-  // Handle Google Redirect result on mount
-  useEffect(() => {
-    setLoading(true);
-    getRedirectResult(auth)
-      .then(async (result) => {
-        if (result?.user) {
-          // Only prompt for password if this is a BRAND NEW account (no Firestore doc yet)
-          const hasPassword = result.user.providerData.some(p => p.providerId === 'password');
-          const userDocRef = doc(db, "users", result.user.uid);
-          const existingDoc = await getDoc(userDocRef);
-          const isExistingEmployee = await (async () => {
-            const snap = await getDocs(query(collection(db, "employee_access"), where("authUid", "==", result.user.uid)));
-            return !snap.empty;
-          })();
-
-          if (!hasPassword && !existingDoc.exists() && !isExistingEmployee) {
-            // New Google user - ask them to set a password
-            setPendingGoogleUser(result.user);
-            setLoading(false);
-            return;
-          }
-
-          // Existing user - log them in directly
-          await handleAuthResult(result.user);
-          playSound("login_success");
-          toast.success("تم تسجيل الدخول بـ Google بنجاح!");
-        }
-      })
-      .catch((err) => {
-        console.error("Google Auth Error:", err);
-        if (err.code && err.code !== "auth/no-current-user") {
-          playSound("error");
-          if (err.code === "auth/unauthorized-domain") {
-            toast.error("هذا النطاق غير مصرح به في Firebase. يرجى إضافته في الإعدادات.");
-          } else {
-            toast.error("خطأ في تسجيل الدخول بـ Google: " + (err.message || "حدث خطأ غير معروف"));
-          }
-        }
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  // Google sign-in is handled directly in handleGoogleLogin via signInWithPopup
 
   const clearForms = () => {
     setLoginData({ email: "", phone: "", password: "", rememberMe: false });
@@ -230,10 +189,14 @@ export default function Login() {
   };
 
   const syncNewUserToFirestore = async (uid: string, name: string, phone?: string, role: "admin" | "cashier" = "admin") => {
+    // Prevent overwriting existing user data
+    const existingDoc = await getDoc(doc(db, "users", uid));
+    if (existingDoc.exists()) return;
+
     const userEmail = registerData.email?.trim() || (phone ? `${phone.replace('+', '')}@cashier-tech.com` : "");
     await setDoc(doc(db, "users", uid), {
       settings: settings,
-      profile: { name, role, pin: "", phone: phone || "" },
+      profile: { name, role, phone: phone || "" },
       email: userEmail,
       phone: phone || "",
       createdAt: new Date().toISOString(),
@@ -365,10 +328,44 @@ export default function Login() {
     setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithRedirect(auth, provider);
-      // Result is handled in useEffect above after redirect
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Check if this is a new user (no Firestore doc yet)
+      const userDocRef = doc(db, "users", user.uid);
+      const existingDoc = await getDoc(userDocRef);
+      const hasPassword = user.providerData.some(p => p.providerId === 'password');
+      const isExistingEmployee = await (async () => {
+        const snap = await getDocs(query(collection(db, "employee_access"), where("authUid", "==", user.uid)));
+        return !snap.empty;
+      })();
+
+      if (!hasPassword && !existingDoc.exists() && !isExistingEmployee) {
+        // New Google user — ask them to set a password
+        setPendingGoogleUser(user);
+        setLoading(false);
+        return;
+      }
+
+      // Existing user — log them in directly
+      await handleAuthResult(user);
+      playSound("login_success");
+      toast.success("تم تسجيل الدخول بنجاح!");
     } catch (err: any) {
-      toast.error("حدث خطأ أثناء تسجيل الدخول بـ Google");
+      console.error("Google Auth Error:", err);
+      if (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request") {
+        // User closed popup — no error needed
+      } else if (err.code === "auth/unauthorized-domain") {
+        playSound("error");
+        toast.error("هذا النطاق غير مصرح به في Firebase. يرجى إضافته في الإعدادات.");
+      } else if (err.code === "auth/account-exists-with-different-credential") {
+        playSound("error");
+        toast.error("هذا البريد الإلكتروني مسجل مسبقاً بطريقة أخرى. يرجى تسجيل الدخول بالطريقة الأصلية.");
+      } else {
+        playSound("error");
+        toast.error("فشل تسجيل الدخول عبر Google");
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -513,17 +510,27 @@ export default function Login() {
     const phoneNum = getCleanPhone(registerData.countryCode, rawInputPhone);
 
     try {
+      // In register mode, check if phone is already registered
+      if (mode === "register") {
+        const mappingSnap = await getDoc(doc(db, "phone_mappings", phoneNum));
+        if (mappingSnap.exists()) {
+          toast.error("رقم الهاتف مسجل مسبقاً. يرجى تسجيل الدخول بدلاً من التسجيل.");
+          setLoading(false);
+          return;
+        }
+      }
+
       const appVerifier = setupRecaptcha();
       const result = await signInWithPhoneNumber(auth, phoneNum, appVerifier);
       setConfirmationResult(result);
       setPhoneStep("otp");
-      setOtpCooldown(60); // 60 seconds rate limiting
+      setOtpCooldown(60);
       toast.success("تم إرسال رمز التحقق عبر الرسائل القصيرة");
     } catch (err: any) {
       console.error("SMS Error:", err);
       let errorMsg = "حدث خطأ في إرسال الرمز";
       if (err.code === "auth/invalid-phone-number") errorMsg = "رقم الهاتف غير صالح";
-      if (err.code === "auth/too-many-requests") errorMsg = "تم إرسال طلبات كثيرة جداً. حاول لاحقاً.";
+      if (err.code === "auth/too-many-requests") errorMsg = "محاولات كثيرة جداً. حاول لاحقاً.";
       if (err.code === "auth/captcha-check-failed") errorMsg = "فشل التحقق من الكابتشا";
 
       toast.error(errorMsg);
@@ -582,26 +589,39 @@ export default function Login() {
       const userDocRef = doc(db, "users", cred.user.uid);
       const userDocSnap = await getDoc(userDocRef);
       
-      if (!userDocSnap.exists()) {
-        if (mode === "register") {
-          const phoneNum = getCleanPhone(registerData.countryCode, registerData.phone);
-          await updateProfile(cred.user, { displayName: registerData.name });
-          await syncNewUserToFirestore(cred.user.uid, registerData.name, phoneNum);
-          // Ask them to set a password so they can log in without OTP in the future
-          setPendingPhoneUser(cred.user);
-          toast.success("تم إنشاء الحساب! يرجى إنشاء كلمة مرور لتسجيل دخولك بسهولة في المرة القادمة.", { duration: 5000 });
+      if (mode === "register") {
+        if (userDocSnap.exists()) {
+          // Account already exists — just log them in
+          toast.success("يوجد حساب مرتبط بهذا الرقم. تم تسجيل الدخول مباشرة.");
+          await handleAuthResult(cred.user);
+          playSound("login_success");
           setLoading(false);
           return;
-        } else {
-          // If login via phone and first time (no profile), create a basic one so app doesn't crash
-          const phoneNum = getCleanPhone(registerData.countryCode, loginData.phone);
-          await syncNewUserToFirestore(cred.user.uid, "Customer", phoneNum);
         }
+        // New phone registration
+        const phoneNum = getCleanPhone(registerData.countryCode, registerData.phone);
+        await updateProfile(cred.user, { displayName: registerData.name });
+        await syncNewUserToFirestore(cred.user.uid, registerData.name, phoneNum);
+        // Ask them to set a password
+        setPendingPhoneUser(cred.user);
+        toast.success("تم إنشاء الحساب! يرجى إنشاء كلمة مرور.", { duration: 5000 });
+        setLoading(false);
+        return;
+      } else {
+        // Login mode
+        if (!userDocSnap.exists()) {
+          // No account exists — reject
+          toast.error("لا يوجد حساب مرتبط بهذا الرقم. يرجى التسجيل أولاً.");
+          await signOut(auth);
+          setPhoneStep("number");
+          setLoading(false);
+          return;
+        }
+        // Existing account — log in
+        await handleAuthResult(cred.user);
+        playSound("login_success");
+        toast.success("تم التحقق وتسجيل الدخول بنجاح!");
       }
-
-      await handleAuthResult(cred.user);
-      playSound("login_success");
-      toast.success("تم التحقق وتسجيل الدخول بنجاح!");
     } catch {
       playSound("error");
       toast.error("رمز التحقق غير صحيح أو منتهي الصلاحية");
@@ -739,15 +759,27 @@ export default function Login() {
               e.preventDefault();
               setLoading(true);
               try {
-                await updatePassword(pendingGoogleUser, googlePassword);
+                const email = pendingGoogleUser.email;
+                if (!email) { toast.error("لا يوجد بريد إلكتروني مرتبط بحساب Google"); setLoading(false); return; }
+                const credential = EmailAuthProvider.credential(email, googlePassword);
+                await linkWithCredential(pendingGoogleUser, credential);
                 await handleAuthResult(pendingGoogleUser);
                 playSound("login_success");
-                toast.success("تم تحديد كلمة المرور وتسجيل الدخول بنجاح!");
+                toast.success("تم تعيين كلمة المرور وتسجيل الدخول بنجاح!");
                 setPendingGoogleUser(null);
                 setGooglePassword("");
               } catch (err: any) {
+                console.error("Google password link error:", err);
                 if (err.code === "auth/requires-recent-login") {
-                   toast.error("يرجى الضغط على زر تخطي أو تسجيل الدخول مرة أخرى.");
+                   toast.error("يرجى الضغط على زر تخطي وتسجيل الدخول مرة أخرى.");
+                } else if (err.code === "auth/provider-already-linked") {
+                   await handleAuthResult(pendingGoogleUser);
+                   playSound("login_success");
+                   toast.success("تم تسجيل الدخول بنجاح!");
+                   setPendingGoogleUser(null);
+                   setGooglePassword("");
+                } else if (err.code === "auth/email-already-in-use") {
+                   toast.error("هذا البريد الإلكتروني مرتبط بحساب آخر.");
                 } else {
                    toast.error("حدث خطأ أثناء حفظ كلمة المرور: " + (err.message || ""));
                 }
@@ -799,8 +831,6 @@ export default function Login() {
               e.preventDefault();
               setLoading(true);
               try {
-                // To allow signInWithEmailAndPassword later, we must associate an email
-                // with this phone-based auth account and then set the password.
                 const phoneNum = pendingPhoneUser.phoneNumber || "";
                 const phoneEmail = `${phoneNum.replace('+', '')}@cashier-tech.com`;
                 
@@ -808,12 +838,12 @@ export default function Login() {
                 const mappingSnap = await getDoc(doc(db, "phone_mappings", phoneNum));
                 let linkEmail = mappingSnap.exists() ? mappingSnap.data().email : phoneEmail;
                 
-                // Fix leading '+' in email if it was generated by older buggy code
+                // Fix leading '+' in email if from older code
                 if (linkEmail.startsWith('+')) {
                   linkEmail = linkEmail.replace('+', '');
                   if (mappingSnap.exists()) {
                     try {
-                      await setDoc(doc(db, "phone_mappings", phoneNum), { uid: mappingSnap.data().uid, email: linkEmail }, { merge: true });
+                      await setDoc(doc(db, "phone_mappings", phoneNum), { email: linkEmail }, { merge: true });
                       await setDoc(doc(db, "users", mappingSnap.data().uid), { email: linkEmail }, { merge: true });
                     } catch (e) {
                       console.warn("Failed to patch old email format:", e);
@@ -821,10 +851,14 @@ export default function Login() {
                   }
                 }
                 
-                // 1. Set the email on the Auth user
-                await updateEmail(pendingPhoneUser, linkEmail);
-                // 2. Set the password
-                await updatePassword(pendingPhoneUser, phonePassword);
+                // Link email/password provider to this phone user
+                const credential = EmailAuthProvider.credential(linkEmail, phonePassword);
+                await linkWithCredential(pendingPhoneUser, credential);
+                
+                // Update phone_mappings with correct email
+                if (mappingSnap.exists()) {
+                  await setDoc(doc(db, "phone_mappings", phoneNum), { email: linkEmail }, { merge: true });
+                }
                 
                 await handleAuthResult(pendingPhoneUser);
                 playSound("login_success");
@@ -834,9 +868,13 @@ export default function Login() {
               } catch (err: any) {
                 if (err.code === "auth/requires-recent-login") {
                   toast.error("يرجى الضغط على زر تخطي أو تسجيل الدخول مرة أخرى.");
-                } else if (err.code === "auth/email-already-in-use") {
-                  // Email is already used by another account, just skip the email update and login
-                  await handleAuthResult(pendingPhoneUser);
+                } else if (err.code === "auth/email-already-in-use" || err.code === "auth/provider-already-linked") {
+                  // Already linked — just log them in
+                  try {
+                    await handleAuthResult(pendingPhoneUser);
+                    playSound("login_success");
+                    toast.success("تم تسجيل الدخول بنجاح!");
+                  } catch {}
                   setPendingPhoneUser(null);
                   setPhonePassword("");
                 } else {
