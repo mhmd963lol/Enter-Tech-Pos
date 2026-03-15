@@ -436,7 +436,7 @@ export default function Login() {
       // Manager registration: create store document
       await syncNewUserToFirestore(cred.user.uid, registerData.name);
       await sendEmailVerification(cred.user);
-      setAwaitingVerification(true);
+      setAwaitingVerification(true); // ONLY set this if we reached here successfully
       toast.success("تم إرسال رابط التحقق إلى بريدك الإلكتروني!");
     } catch (err: any) {
       if (err.code === "auth/email-already-in-use") {
@@ -540,10 +540,13 @@ export default function Login() {
       console.error("SMS Error:", err);
       let errorMsg = "حدث خطأ في إرسال الرمز";
       if (err.code === "auth/invalid-phone-number") errorMsg = "رقم الهاتف غير صالح";
-      if (err.code === "auth/too-many-requests") errorMsg = "محاولات كثيرة جداً. حاول لاحقاً.";
-      if (err.code === "auth/captcha-check-failed") errorMsg = "فشل التحقق من الكابتشا";
+      else if (err.code === "auth/too-many-requests") errorMsg = "محاولات كثيرة جداً. حاول لاحقاً.";
+      else if (err.code === "auth/captcha-check-failed") errorMsg = "فشل التحقق من الكابتشا";
+      else if (err.message?.includes("permissions") || err.code === "auth/unauthorized-domain") {
+        errorMsg = "عذراً، خدمة تسجيل الدخول برقم الهاتف غير مفعلة أو النطاق غير مصرح به. يرجى تفعيلها من إعدادات Firebase.";
+      }
 
-      toast.error(`${errorMsg} ${err.message ? `(${err.code})` : ''}`);
+      toast.error(errorMsg);
       if ((window as any).recaptchaVerifier) {
         try { (window as any).recaptchaVerifier.clear(); } catch { }
         (window as any).recaptchaVerifier = null;
