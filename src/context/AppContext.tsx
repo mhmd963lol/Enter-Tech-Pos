@@ -31,7 +31,7 @@ import { mockProducts, mockOrders } from "../data/mockData";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { auth, db } from "../lib/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc, setDoc, onSnapshot, collection } from "firebase/firestore";
+import { doc, getDoc, getDocs, setDoc, onSnapshot, collection, query, where } from "firebase/firestore";
 import { useExchangeRate } from "../hooks/useExchangeRate";
 import { Wifi, WifiOff, RefreshCcw } from "lucide-react";
 import { roundMoney, calcSubtotal, calcTax, calcProfit } from "../lib/moneyUtils";
@@ -310,6 +310,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       // Always clean up the previous snapshot listener before creating a new one
       if (snapshotUnsubRef.current) {
@@ -318,6 +319,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       if (firebaseUser) {
+        // ── Restore session from Firestore on page reload ──────────────
+        try {
+          // Check if this is an approved employee first
+          const empSnap = await getDocs(query(collection(db, "employee_access"), where("authUid", "==", firebaseUser.uid)));
+          if (!empSnap.empty) {
+            const empData = empSnap.docs[0].data();
+            setUser({
+              id: empData.storeId,
+              authUid: firebaseUser.uid,
+              name: firebaseUser.displayName || empData.name || "موظف",
+              role: empData.role || "cashier",
+              permissions: empData.permissions,
+            });
+          } else {
+            // Check main user document (manager/admin)
+            const userDocSnap = await getDoc(doc(db, "users", firebaseUser.uid));
+            if (userDocSnap.exists()) {
+              const data = userDocSnap.data();
+              const profile = data.profile || {};
+              setUser({
+                id: firebaseUser.uid,
+                authUid: firebaseUser.uid,
+                name: firebaseUser.displayName || profile.name || "مستخدم",
+                role: profile.role || "admin",
+                pin: profile.pin || "",
+                permissions: undefined,
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Session restore error:", err);
+        }
+
         // Real-time listener for this user's data in Firestore
         const unsub = onSnapshot(
           doc(db, "users", firebaseUser.uid),
@@ -354,6 +388,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // Store the unsubscriber in the ref so we can clean up on next auth change
         snapshotUnsubRef.current = unsub;
       } else {
+        // User is signed out — clear user state
+        setUser(null);
         setIsAuthLoading(false);
       }
     });

@@ -105,6 +105,8 @@ export default function Login() {
 
   const [pendingGoogleUser, setPendingGoogleUser] = useState<any>(null);
   const [googlePassword, setGooglePassword] = useState("");
+  const [pendingPhoneUser, setPendingPhoneUser] = useState<any>(null);
+  const [phonePassword, setPhonePassword] = useState("");
 
   const [loginData, setLoginData] = useState({ email: "", phone: "", password: "", rememberMe: false });
   const [registerData, setRegisterData] = useState<{
@@ -585,6 +587,11 @@ export default function Login() {
         if (mode === "register") {
           await updateProfile(cred.user, { displayName: registerData.name });
           await syncNewUserToFirestore(cred.user.uid, registerData.name, `${registerData.countryCode}${registerData.phone}`);
+          // Ask them to set a password so they can log in without OTP in the future
+          setPendingPhoneUser(cred.user);
+          toast.success("تم إنشاء الحساب! يرجى إنشاء كلمة مرور لتسجيل دخولك بسهولة في المرة القادمة.", { duration: 5000 });
+          setLoading(false);
+          return;
         } else {
           // If login via phone and first time (no profile), create a basic one so app doesn't crash
           await syncNewUserToFirestore(cred.user.uid, "Customer", `${registerData.countryCode}${loginData.phone}`);
@@ -763,8 +770,68 @@ export default function Login() {
           </motion.div>
         )}
 
+        {/* ─── Set Phone Password ─── */}
+        {pendingPhoneUser && (
+          <motion.div key="phonePassword" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+            className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 p-8">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-[#00E676]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Lock className="w-8 h-8 text-[#00E676]" />
+              </div>
+              <h2 className="text-xl font-bold text-[#2C3A47] dark:text-white">إنشاء كلمة مرور</h2>
+              <p className="text-gray-500 dark:text-zinc-400 text-sm mt-2 leading-relaxed">
+                تم التحقق من رقمك بنجاح! أنشئ كلمة مرور لتسجيل الدخول بدون SMS في المرة القادمة.
+              </p>
+            </div>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              setLoading(true);
+              try {
+                await updatePassword(pendingPhoneUser, phonePassword);
+                await handleAuthResult(pendingPhoneUser);
+                playSound("login_success");
+                toast.success("تم تعيين كلمة المرور وتسجيل الدخول بنجاح!");
+                setPendingPhoneUser(null);
+                setPhonePassword("");
+              } catch (err: any) {
+                if (err.code === "auth/requires-recent-login") {
+                  toast.error("يرجى الضغط على زر تخطي أو تسجيل الدخول مرة أخرى.");
+                } else {
+                  toast.error("حدث خطأ أثناء حفظ كلمة المرور: " + (err.message || ""));
+                }
+              } finally {
+                setLoading(false);
+              }
+            }} className="space-y-4">
+              <div className="relative">
+                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 w-5 h-5 pointer-events-none" />
+                <input type={showPassword ? "text" : "password"} required placeholder="كلمة مرور جديدة (6 أحرف على الأقل)" minLength={6} value={phonePassword}
+                  onChange={(e) => setPhonePassword(e.target.value)}
+                  className="w-full pr-10 pl-10 py-3 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 dark:text-white text-left" dir="ltr" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 hover:text-gray-600">
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading || phonePassword.length < 6}
+                className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] dark:text-white py-3.5 rounded-full font-bold text-base transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
+                {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><Check className="w-5 h-5" /> حفظ ومتابعة</>}
+              </motion.button>
+              <button type="button" onClick={() => {
+                handleAuthResult(pendingPhoneUser).then(() => {
+                  playSound("login_success");
+                  toast.success("مرحباً! يمكنك إعداد كلمة المرور لاحقاً من الإعدادات.");
+                  setPendingPhoneUser(null);
+                  setPhonePassword("");
+                });
+              }} className="w-full text-center text-sm font-bold text-gray-500 hover:text-gray-700 dark:hover:text-zinc-300 mt-4 transition-colors">
+                تخطي في الوقت الحالي
+              </button>
+            </form>
+          </motion.div>
+        )}
+
         {/* ─── LOGIN ─── */}
-        {!showForgotPassword && mode === "login" && !pendingGoogleUser && (
+        {!showForgotPassword && mode === "login" && !pendingGoogleUser && !pendingPhoneUser && (
           <motion.div key="login" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
             className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 p-8">
 
