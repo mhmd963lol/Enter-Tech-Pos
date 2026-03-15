@@ -16,11 +16,10 @@ import {
   sendEmailVerification,
   signInWithPhoneNumber,
   RecaptchaVerifier,
-  reload,
-  signOut,
   updatePassword,
-  EmailAuthProvider,
-  linkWithCredential,
+  updateEmail,
+  signOut,
+  reload,
 } from "firebase/auth";
 import { doc, setDoc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import toast from "react-hot-toast";
@@ -789,15 +788,20 @@ export default function Login() {
               e.preventDefault();
               setLoading(true);
               try {
-                // linkWithCredential adds email/password as an auth provider
-                // so future signInWithEmailAndPassword works correctly
+                // To allow signInWithEmailAndPassword later, we must associate an email
+                // with this phone-based auth account and then set the password.
                 const phoneNum = pendingPhoneUser.phoneNumber || "";
                 const phoneEmail = `${phoneNum.replace('+', '')}@cashier-tech.com`;
+                
                 // Use the email stored in phone_mappings if available
                 const mappingSnap = await getDoc(doc(db, "phone_mappings", phoneNum));
                 const linkEmail = mappingSnap.exists() ? mappingSnap.data().email : phoneEmail;
-                const credential = EmailAuthProvider.credential(linkEmail, phonePassword);
-                await linkWithCredential(pendingPhoneUser, credential);
+                
+                // 1. Set the email on the Auth user
+                await updateEmail(pendingPhoneUser, linkEmail);
+                // 2. Set the password
+                await updatePassword(pendingPhoneUser, phonePassword);
+                
                 await handleAuthResult(pendingPhoneUser);
                 playSound("login_success");
                 toast.success("تم تعيين كلمة المرور وتسجيل الدخول بنجاح!");
@@ -806,8 +810,8 @@ export default function Login() {
               } catch (err: any) {
                 if (err.code === "auth/requires-recent-login") {
                   toast.error("يرجى الضغط على زر تخطي أو تسجيل الدخول مرة أخرى.");
-                } else if (err.code === "auth/provider-already-linked") {
-                  // Already linked, just log in directly
+                } else if (err.code === "auth/email-already-in-use") {
+                  // Email is already used by another account, just skip the email update and login
                   await handleAuthResult(pendingPhoneUser);
                   setPendingPhoneUser(null);
                   setPhonePassword("");
