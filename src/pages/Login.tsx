@@ -58,7 +58,7 @@ function ForgotPasswordPanel({
       className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 p-8">
 
       {/* Back button */}
-      <button onClick={onBack} className="flex items-center gap-1 text-sm text-gray-400 dark:text-zinc-500 hover:text-[#00E676] transition-colors mb-4">
+      <button type="button" onClick={onBack} className="flex items-center gap-1 text-sm text-gray-400 dark:text-zinc-500 hover:text-[#00E676] transition-colors mb-4">
         <ArrowRight className="w-4 h-4" /> العودة لتسجيل الدخول
       </button>
 
@@ -67,21 +67,21 @@ function ForgotPasswordPanel({
           <Lock className="w-8 h-8 text-[#00E676]" />
         </div>
         <h1 className="text-xl font-bold text-[#2C3A47] dark:text-white">استعادة كلمة المرور</h1>
-        <p className="text-gray-500 dark:text-zinc-400 text-sm mt-1">سنرسل لك رابط إعادة التعيين</p>
+        <p className="text-gray-500 dark:text-zinc-400 text-sm mt-1">أدخل بريدك الإلكتروني أو رقم هاتفك</p>
       </div>
       <form onSubmit={onSubmit} className="space-y-5">
         <div>
-          <label className="block text-sm font-bold text-[#2C3A47] dark:text-zinc-200 mb-2">البريد الإلكتروني</label>
+          <label className="block text-sm font-bold text-[#2C3A47] dark:text-zinc-200 mb-2">البريد الإلكتروني / رقم الهاتف</label>
           <div className="relative">
             <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 w-5 h-5" />
-            <input type="email" required placeholder="example@mail.com" value={forgotEmail}
+            <input type="text" inputMode="email" required placeholder="example@mail.com أو 05..." value={forgotEmail}
               onChange={(e) => setForgotEmail(e.target.value)}
               className="w-full pr-10 pl-4 py-3 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-[#00E676] text-gray-700 dark:text-white text-left" dir="ltr" />
           </div>
         </div>
         <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading}
           className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70">
-          {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" /> إرسال رابط الاستعادة</>}
+          {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" /> إرسال</>}
         </motion.button>
         <button type="button" onClick={onBack} className="w-full text-center text-sm text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 mt-2">
           العودة لتسجيل الدخول
@@ -103,6 +103,12 @@ export default function Login() {
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const recaptchaRef = useRef<any>(null);
+
+  const getCleanPhone = (countryCode: string, phone: string) => {
+    let rawPhone = phone.replace(/\s+/g, '');
+    if (rawPhone.startsWith('0')) rawPhone = rawPhone.substring(1);
+    return `${countryCode}${rawPhone}`;
+  };
 
   const [pendingGoogleUser, setPendingGoogleUser] = useState<any>(null);
   const [googlePassword, setGooglePassword] = useState("");
@@ -503,14 +509,8 @@ export default function Login() {
 
     setLoading(true);
 
-    // Clean phone number: remove spaces and leading zeros if country code is present
-    let rawPhone = mode === "login" ? loginData.phone : registerData.phone;
-    rawPhone = rawPhone.replace(/\s+/g, '');
-    if (rawPhone.startsWith('0')) {
-      rawPhone = rawPhone.substring(1);
-    }
-
-    const phoneNum = `${registerData.countryCode}${rawPhone}`;
+    const rawInputPhone = mode === "login" ? loginData.phone : registerData.phone;
+    const phoneNum = getCleanPhone(registerData.countryCode, rawInputPhone);
 
     try {
       const appVerifier = setupRecaptcha();
@@ -540,9 +540,7 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
 
-    let rawPhone = loginData.phone.replace(/\s+/g, '');
-    if (rawPhone.startsWith('0')) rawPhone = rawPhone.substring(1);
-    const phoneNum = `${registerData.countryCode}${rawPhone}`;
+    const phoneNum = getCleanPhone(registerData.countryCode, loginData.phone);
 
     try {
       // Find the associated email for this phone directly from the mappings document
@@ -586,8 +584,9 @@ export default function Login() {
       
       if (!userDocSnap.exists()) {
         if (mode === "register") {
+          const phoneNum = getCleanPhone(registerData.countryCode, registerData.phone);
           await updateProfile(cred.user, { displayName: registerData.name });
-          await syncNewUserToFirestore(cred.user.uid, registerData.name, `${registerData.countryCode}${registerData.phone}`);
+          await syncNewUserToFirestore(cred.user.uid, registerData.name, phoneNum);
           // Ask them to set a password so they can log in without OTP in the future
           setPendingPhoneUser(cred.user);
           toast.success("تم إنشاء الحساب! يرجى إنشاء كلمة مرور لتسجيل دخولك بسهولة في المرة القادمة.", { duration: 5000 });
@@ -595,7 +594,8 @@ export default function Login() {
           return;
         } else {
           // If login via phone and first time (no profile), create a basic one so app doesn't crash
-          await syncNewUserToFirestore(cred.user.uid, "Customer", `${registerData.countryCode}${loginData.phone}`);
+          const phoneNum = getCleanPhone(registerData.countryCode, loginData.phone);
+          await syncNewUserToFirestore(cred.user.uid, "Customer", phoneNum);
         }
       }
 
@@ -613,9 +613,20 @@ export default function Login() {
   // ── Forgot Password ─────────────────────────
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!forgotEmail) { toast.error("أدخل بريدك الإلكتروني أولاً"); return; }
+    if (!forgotEmail) { toast.error("أدخل بريدك الإلكتروني أو رقم الهاتف"); return; }
     setLoading(true);
     try {
+      // If user typed a phone number, tell them to use OTP
+      if (!forgotEmail.includes('@') && /[0-9]/.test(forgotEmail)) {
+        toast("لإعادة تعيين كلمة مرور رقم الهاتف، يرجى تسجيل الدخول عبر (تأكيد عبر SMS) ثم تغيير كلمة المرور من الإعدادات.", { icon: '📱', duration: 6000 });
+        setShowForgotPassword(false);
+        setMode("login");
+        setAuthMethod("phone");
+        setPhoneStep("number");
+        setLoading(false);
+        return;
+      }
+
       await sendPasswordResetEmail(auth, forgotEmail);
       playSound("success");
       toast.success("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك.");

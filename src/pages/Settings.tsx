@@ -132,18 +132,23 @@ export default function SettingsPage() {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     const cu = auth.currentUser;
-    if (!cu || !cu.email) { toast.error("يجب تسجيل الدخول بالبريد الإلكتروني لتغيير كلمة المرور"); return; }
+    if (!cu) return;
     if (pwForm.newPw !== pwForm.confirm) { toast.error("كلمتا المرور غير متطابقتين"); return; }
     if (pwForm.newPw.length < 6) { toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل"); return; }
     setLoading(true);
     try {
-      const cred = EmailAuthProvider.credential(cu.email, pwForm.current);
-      await reauthenticateWithCredential(cu, cred);
+      if (pwForm.current) {
+        if (!cu.email) { toast.error("يجب تسجيل الدخول بالبريد الإلكتروني لتأكيد كلمة المرور الحالية"); return; }
+        const cred = EmailAuthProvider.credential(cu.email, pwForm.current);
+        await reauthenticateWithCredential(cu, cred);
+      }
       await updatePassword(cu, pwForm.newPw);
       setPwForm({ current: "", newPw: "", confirm: "" });
-      toast.success("تم تغيير كلمة المرور بنجاح");
+      toast.success("تم حفظ كلمة المرور بنجاح");
+      await refreshProviders();
     } catch (err: any) {
       if (err.code === "auth/invalid-credential") toast.error("كلمة المرور الحالية غير صحيحة");
+      else if (err.code === "auth/requires-recent-login") toast.error("يرجى تسجيل الخروج والدخول مجدداً لتأكيد هويتك قبل تغيير كلمة المرور");
       else if (err.code === "auth/weak-password") toast.error("كلمة المرور الجديدة ضعيفة جداً");
       else toast.error("حدث خطأ، حاول مجدداً");
     } finally { setLoading(false); }
@@ -466,36 +471,39 @@ export default function SettingsPage() {
 
               {/* Password */}
               <Section title="تغيير كلمة المرور" icon={<Key className="w-5 h-5" />}>
-                {!providers.includes("password") ? (
-                  <p className="text-xs text-zinc-500 pt-2 bg-zinc-50 dark:bg-zinc-900/50 p-3 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800">حسابك لا يستخدم كلمة مرور (تسجيل دخول عبر Google أو هاتفك). يمكنك ربط بريد إلكتروني في قسم الحسابات المرتبطة.</p>
-                ) : (
-                  <form onSubmit={handleChangePassword} className="space-y-3">
+                <form onSubmit={handleChangePassword} className="space-y-3">
+                  {providers.includes("password") && (
                     <div className="relative">
-                      <input type={showCurrentPw ? "text" : "password"} required placeholder="كلمة المرور الحالية"
+                      <input type={showCurrentPw ? "text" : "password"} placeholder="كلمة المرور الحالية (اتركها فارغة إذا سجلت الدخول للتو بـ SMS)"
                         value={pwForm.current} onChange={(e) => setPwForm({ ...pwForm, current: e.target.value })}
                         className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-sm pl-10" dir="ltr" />
                       <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
                         {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
-                    <div className="relative">
-                      <input type={showNewPw ? "text" : "password"} required placeholder="كلمة المرور الجديدة (6+ أحرف)"
-                        value={pwForm.newPw} onChange={(e) => setPwForm({ ...pwForm, newPw: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-sm pl-10" dir="ltr" />
-                      <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
-                        {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                    <input type="password" required placeholder="تأكيد كلمة المرور الجديدة"
-                      value={pwForm.confirm} onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })}
-                      className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-sm" dir="ltr" />
-                    <div className="flex justify-end pt-2">
-                      <button type="submit" disabled={loading} className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-colors text-sm">
-                        {loading ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><Check className="w-4 h-4" /> تحديث كلمة المرور</>}
-                      </button>
-                    </div>
-                  </form>
-                )}
+                  )}
+                  {!providers.includes("password") && (
+                     <div className="bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 p-3 rounded-lg text-xs leading-relaxed border border-indigo-100 dark:border-indigo-800">
+                        حسابك لا يمتلك كلمة مرور. قم بإنشاء واحدة الآن لتتمكن من الدخول بسهولة في المستقبل.
+                     </div>
+                  )}
+                  <div className="relative">
+                    <input type={showNewPw ? "text" : "password"} required placeholder="كلمة المرور الجديدة (6+ أحرف)"
+                      value={pwForm.newPw} onChange={(e) => setPwForm({ ...pwForm, newPw: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-sm pl-10" dir="ltr" />
+                    <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
+                      {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <input type="password" required placeholder="تأكيد كلمة المرور الجديدة"
+                    value={pwForm.confirm} onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-sm" dir="ltr" />
+                  <div className="flex justify-end pt-2">
+                    <button type="submit" disabled={loading} className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-colors text-sm">
+                      {loading ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><Check className="w-4 h-4" /> حفظ كلمة المرور</>}
+                    </button>
+                  </div>
+                </form>
               </Section>
 
               {/* Email */}
