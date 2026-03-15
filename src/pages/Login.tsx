@@ -98,7 +98,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [awaitingVerification, setAwaitingVerification] = useState(false);
   const [verificationCheckLoading, setVerificationCheckLoading] = useState(false);
-  const [phoneStep, setPhoneStep] = useState<"number" | "otp">("number");
+  const [phoneStep, setPhoneStep] = useState<"number" | "otp" | "password">("number");
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const recaptchaRef = useRef<any>(null);
@@ -221,17 +221,18 @@ export default function Login() {
   };
 
   const syncNewUserToFirestore = async (uid: string, name: string, phone?: string, role: "admin" | "cashier" = "admin") => {
+    const userEmail = registerData.email?.trim() || (phone ? `${phone}@cashier-tech.com` : "");
     await setDoc(doc(db, "users", uid), {
       settings: settings,
       profile: { name, role, pin: "", phone: phone || "" },
-      email: registerData.email || `${phone}@cashier-tech.com`,
+      email: userEmail,
       phone: phone || "",
       createdAt: new Date().toISOString(),
     });
     if (phone) {
       await setDoc(doc(db, "phone_mappings", phone), {
         uid,
-        email: registerData.email || `${phone}@cashier-tech.com`
+        email: userEmail
       });
     }
   };
@@ -423,6 +424,24 @@ export default function Login() {
 
       const cred = await createUserWithEmailAndPassword(auth, registerData.email, registerData.password);
       await updateProfile(cred.user, { displayName: registerData.name });
+
+      // Handle cashier registration: send access request instead of creating store doc
+      if (registerData.userType === "cashier") {
+        await requestCashierAccess(
+          cred.user.uid,
+          registerData.name,
+          registerData.email,
+          "",
+          registerData.ownerPhone
+        );
+        await sendEmailVerification(cred.user);
+        toast.success("تم إنشاء الحساب وإرسال طلب الانضمام. يرجى تأكيد بريدك وانتظار موافقة المدير.", { duration: 6000 });
+        await signOut(auth);
+        switchMode("login");
+        return;
+      }
+
+      // Manager registration: create store document
       await syncNewUserToFirestore(cred.user.uid, registerData.name);
       await sendEmailVerification(cred.user);
       setAwaitingVerification(true);
@@ -865,8 +884,9 @@ export default function Login() {
             {/* Phone Login Form */}
             {authMethod === "phone" && (
               <>
-                {phoneStep === "number" ? (
-                  <form onSubmit={handleSendOtp} className="space-y-4">
+                {phoneStep === "number" && (
+                  /* Step 1: Enter phone number → choose password or OTP */
+                  <div className="space-y-4">
                     <div className="flex border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl overflow-hidden focus-within:border-[#00E676] transition-colors" dir="ltr">
                       <select value={registerData.countryCode} onChange={(e) => setRegisterData({ ...registerData, countryCode: e.target.value })}
                         className="bg-gray-50 dark:bg-zinc-800 text-gray-700 dark:text-white px-3 py-3 text-sm font-bold outline-none border-r border-gray-300" dir="ltr">
@@ -880,12 +900,22 @@ export default function Login() {
                         onChange={(e) => setLoginData({ ...loginData, phone: e.target.value })}
                         className="flex-1 pl-4 pr-3 py-3 font-bold text-gray-700 dark:text-white outline-none text-left" dir="ltr" />
                     </div>
-                    <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading || otpCooldown > 0}
+                    <motion.button whileTap={{ scale: 0.97 }} type="button" disabled={loading || !loginData.phone.trim()}
+                      onClick={() => setPhoneStep("password")}
                       className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] dark:text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
-                      {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" /> {otpCooldown > 0 ? `إعادة الإرسال بعد (${otpCooldown}ث)` : "إرسال رمز التحقق"}</>}
+                      <LogIn className="w-5 h-5" /> دخول بكلمة المرور
                     </motion.button>
-                  </form>
-                ) : (
+                    <form onSubmit={handleSendOtp}>
+                      <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading || otpCooldown > 0 || !loginData.phone.trim()}
+                        className="w-full bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-zinc-300 py-3 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70">
+                        {loading ? <div className="w-5 h-5 border-2 border-gray-400/40 border-t-gray-600 rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" /> {otpCooldown > 0 ? `إعادة الإرسال بعد (${otpCooldown}ث)` : "أو دخول عبر رمز التحقق (OTP)"}</>}
+                      </motion.button>
+                    </form>
+                  </div>
+                )}
+
+                {phoneStep === "password" && (
+                  /* Step 2a: Password login */
                   <form onSubmit={handlePhonePasswordLogin} className="space-y-4">
                     <div className="flex border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl overflow-hidden focus-within:border-[#00E676] transition-colors" dir="ltr">
                       <select value={registerData.countryCode} onChange={(e) => setRegisterData({ ...registerData, countryCode: e.target.value })}
@@ -913,7 +943,22 @@ export default function Login() {
                       className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] dark:text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
                       {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><LogIn className="w-5 h-5" /> دخول بكلمة المرور</>}
                     </motion.button>
-                    <button type="button" onClick={() => setPhoneStep("otp")} className="w-full text-center text-sm font-bold text-[#00E676] hover:underline">أو تسجيل الدخول عبر OTP</button>
+                    <button type="button" onClick={() => setPhoneStep("number")} className="w-full text-center text-sm font-bold text-gray-400 dark:text-zinc-500 hover:text-[#00E676] transition-colors">العودة</button>
+                  </form>
+                )}
+
+                {phoneStep === "otp" && (
+                  /* Step 2b: OTP verification (after SMS sent) */
+                  <form onSubmit={handleVerifyOtp} className="space-y-4">
+                    <p className="text-sm text-gray-500 dark:text-zinc-400 font-bold text-center">أدخل رمز التحقق المرسل إلى هاتفك</p>
+                    <input type="text" required placeholder="_ _ _ _ _ _" maxLength={6} value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-900/50 rounded-xl focus:outline-none focus:border-[#00E676] text-center text-2xl tracking-[0.5em] font-bold" dir="ltr" />
+                    <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={loading || !otpCode.trim()}
+                      className="w-full bg-[#00E676] hover:bg-[#00C853] text-[#2C3A47] dark:text-white py-3.5 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md">
+                      {loading ? <div className="w-5 h-5 border-2 border-[#2C3A47]/40 border-t-[#2C3A47] rounded-full animate-spin" /> : <><Check className="w-5 h-5" /> تأكيد الرمز</>}
+                    </motion.button>
+                    <button type="button" onClick={() => { setPhoneStep("number"); setOtpCode(""); }} className="w-full text-center text-sm font-bold text-gray-400 dark:text-zinc-500 hover:text-[#00E676] transition-colors">تغيير رقم الهاتف</button>
                   </form>
                 )}
               </>
