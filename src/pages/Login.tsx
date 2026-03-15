@@ -100,8 +100,8 @@ export default function Login() {
   const [verificationCheckLoading, setVerificationCheckLoading] = useState(false);
   const [phoneStep, setPhoneStep] = useState<"number" | "otp" | "password">("number");
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  // Removed recaptchaRef as we are using window.recaptchaVerifier
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const recaptchaRef = useRef<any>(null);
 
   const getCleanPhone = (countryCode: string, phone: string) => {
     let rawPhone = phone.replace(/\s+/g, '');
@@ -149,9 +149,9 @@ export default function Login() {
     setForgotEmail("");
     setShowPassword(false);
     setAwaitingVerification(false);
-    if (recaptchaRef.current) {
-      try { recaptchaRef.current.clear(); } catch { }
-      recaptchaRef.current = null;
+    if ((window as any).recaptchaVerifier) {
+      try { (window as any).recaptchaVerifier.clear(); } catch { }
+      (window as any).recaptchaVerifier = null;
     }
   };
 
@@ -347,6 +347,15 @@ export default function Login() {
         return;
       }
 
+      // If user purposely clicked "Register" but already has an account
+      if (mode === "register") {
+        toast.error("هذا البريد الإلكتروني مسجل مسبقاً. يرجى تسجيل الدخول.");
+        await signOut(auth); // prevent login
+        setMode("login");
+        setLoading(false);
+        return;
+      }
+
       // Existing user — log them in directly
       await handleAuthResult(user);
       playSound("login_success");
@@ -431,8 +440,7 @@ export default function Login() {
       toast.success("تم إرسال رابط التحقق إلى بريدك الإلكتروني!");
     } catch (err: any) {
       if (err.code === "auth/email-already-in-use") {
-        toast.error("لديك حساب بالفعل، الرجاء تسجيل الدخول.");
-        setMode("login");
+        toast.error("هذا البريد الإلكتروني مسجل مسبقاً، الرجاء تسجيل الدخول.");
       } else if (err.code === "auth/weak-password") {
         toast.error("كلمة المرور ضعيفة جداً (6 أحرف على الأقل)");
       } else {
@@ -478,13 +486,15 @@ export default function Login() {
 
   // ── Phone ───────────────────────────────────
   const setupRecaptcha = () => {
-    if (!recaptchaRef.current) {
-      recaptchaRef.current = new RecaptchaVerifier(auth, "recaptcha-container", {
+    if (!(window as any).recaptchaVerifier) {
+      const container = document.getElementById("recaptcha-container");
+      if (container) container.innerHTML = ""; // Clear stale iframes
+      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
         size: "invisible",
         callback: () => { },
       });
     }
-    return recaptchaRef.current;
+    return (window as any).recaptchaVerifier;
   };
 
   const handleInstallApp = async () => {
@@ -533,10 +543,10 @@ export default function Login() {
       if (err.code === "auth/too-many-requests") errorMsg = "محاولات كثيرة جداً. حاول لاحقاً.";
       if (err.code === "auth/captcha-check-failed") errorMsg = "فشل التحقق من الكابتشا";
 
-      toast.error(errorMsg);
-      if (recaptchaRef.current) {
-        try { recaptchaRef.current.clear(); } catch { }
-        recaptchaRef.current = null;
+      toast.error(`${errorMsg} ${err.message ? `(${err.code})` : ''}`);
+      if ((window as any).recaptchaVerifier) {
+        try { (window as any).recaptchaVerifier.clear(); } catch { }
+        (window as any).recaptchaVerifier = null;
       }
     } finally {
       setLoading(false);
@@ -591,10 +601,11 @@ export default function Login() {
       
       if (mode === "register") {
         if (userDocSnap.exists()) {
-          // Account already exists — just log them in
-          toast.success("يوجد حساب مرتبط بهذا الرقم. تم تسجيل الدخول مباشرة.");
-          await handleAuthResult(cred.user);
-          playSound("login_success");
+          // Account already exists — show error and prevent auto-login
+          toast.error("هذا الرقم مسجل مسبقاً. الرجاء تسجيل الدخول.");
+          await signOut(auth);
+          setMode("login");
+          setPhoneStep("number");
           setLoading(false);
           return;
         }
