@@ -237,23 +237,7 @@ export default function Login() {
     }
   };
 
-  const checkDuplicate = async (email: string, phone: string) => {
-    if (email) {
-      const q = query(collection(db, "users"), where("email", "==", email));
-      const snap = await getDocs(q);
-      const eq = query(collection(db, "employee_access"), where("email", "==", email));
-      const esnap = await getDocs(eq);
-      if (!snap.empty || !esnap.empty) return "البريد الإلكتروني مسجل بالفعل. لديك حساب بالفعل، الرجاء تسجيل الدخول.";
-    }
-    if (phone) {
-      const q = query(collection(db, "users"), where("phone", "==", phone));
-      const snap = await getDocs(q);
-      const eq = query(collection(db, "employee_access"), where("phone", "==", phone));
-      const esnap = await getDocs(eq);
-      if (!snap.empty || !esnap.empty) return "رقم الهاتف مسجل بالفعل. لديك حساب بالفعل، الرجاء تسجيل الدخول.";
-    }
-    return null;
-  };
+
 
   const handleAuthResult = async (firebaseUser: any) => {
     let employeeAccessData = null;
@@ -415,13 +399,6 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      const duplicateError = await checkDuplicate(registerData.email, "");
-      if (duplicateError) {
-        toast.error(duplicateError);
-        setMode("login");
-        return;
-      }
-
       const cred = await createUserWithEmailAndPassword(auth, registerData.email, registerData.password);
       await updateProfile(cred.user, { displayName: registerData.name });
 
@@ -533,27 +510,6 @@ export default function Login() {
     const phoneNum = `${registerData.countryCode}${rawPhone}`;
 
     try {
-      if (mode === "register") {
-        const duplicateError = await checkDuplicate("", phoneNum);
-        if (duplicateError) {
-          toast.error(duplicateError);
-          setMode("login");
-          setLoading(false);
-          return;
-        }
-      } else {
-        // In LOGIN mode: verify phone exists before sending OTP (avoid leaking OTP to unknown numbers)
-        const qMap = query(collection(db, "phone_mappings"), where("__name__", "==", phoneNum));
-        const snapMap = await getDocs(qMap);
-        const qUsr = query(collection(db, "users"), where("phone", "==", phoneNum));
-        const snapUsr = await getDocs(qUsr);
-        if (snapMap.empty && snapUsr.empty) {
-          toast.error("لا يوجد حساب مرتبط بهذا الرقم. يرجى إنشاء حساب جديد.");
-          setLoading(false);
-          return;
-        }
-      }
-
       const appVerifier = setupRecaptcha();
       const result = await signInWithPhoneNumber(auth, phoneNum, appVerifier);
       setConfirmationResult(result);
@@ -586,29 +542,19 @@ export default function Login() {
     const phoneNum = `${registerData.countryCode}${rawPhone}`;
 
     try {
-      // Find the associated email for this phone
-      const q = query(collection(db, "phone_mappings"), where("__name__", "==", phoneNum));
-      const snap = await getDocs(q);
+      // Find the associated email for this phone directly from the mappings document
+      const docRef = doc(db, "phone_mappings", phoneNum);
+      const docSnap = await getDoc(docRef);
 
-      if (snap.empty) {
-        // Fallback or secondary check in users collection
-        const qu = query(collection(db, "users"), where("phone", "==", phoneNum));
-        const snapU = await getDocs(qu);
-        if (snapU.empty) {
-          toast.error("لا يوجد حساب مرتب بذا الرقم. يرجى المتابعة عبر OTP لأول مرة.");
-          setPhoneStep("otp"); // Fallback to OTP if no password record found
-          setLoading(false);
-          return;
-        }
-        const userData = snapU.docs[0].data();
-        const email = userData.email || `${phoneNum}@cashier-tech.com`;
-        const cred = await signInWithEmailAndPassword(auth, email, loginData.password);
-        await handleAuthResult(cred.user);
-      } else {
-        const mapping = snap.docs[0].data();
-        const cred = await signInWithEmailAndPassword(auth, mapping.email, loginData.password);
-        await handleAuthResult(cred.user);
+      if (!docSnap.exists()) {
+        toast.error("لا يوجد حساب مرتبط بهذا الرقم. يرجى التأكد من الرقم أو الدخول عبر OTP.");
+        setLoading(false);
+        return;
       }
+      
+      const mapping = docSnap.data();
+      const cred = await signInWithEmailAndPassword(auth, mapping.email, loginData.password);
+      await handleAuthResult(cred.user);
 
       playSound("login_success");
       toast.success("تم تسجيل الدخول بنجاح");
@@ -631,10 +577,20 @@ export default function Login() {
     setLoading(true);
     try {
       const cred = await confirmationResult.confirm(otpCode);
-      if (mode === "register") {
-        await updateProfile(cred.user, { displayName: registerData.name });
-        await syncNewUserToFirestore(cred.user.uid, registerData.name, `${registerData.countryCode}${registerData.phone}`);
+      
+      const userDocRef = doc(db, "users", cred.user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      
+      if (!userDocSnap.exists()) {
+        if (mode === "register") {
+          await updateProfile(cred.user, { displayName: registerData.name });
+          await syncNewUserToFirestore(cred.user.uid, registerData.name, `${registerData.countryCode}${registerData.phone}`);
+        } else {
+          // If login via phone and first time (no profile), create a basic one so app doesn't crash
+          await syncNewUserToFirestore(cred.user.uid, "Customer", `${registerData.countryCode}${loginData.phone}`);
+        }
       }
+
       await handleAuthResult(cred.user);
       playSound("login_success");
       toast.success("تم التحقق وتسجيل الدخول بنجاح!");
@@ -652,16 +608,6 @@ export default function Login() {
     if (!forgotEmail) { toast.error("أدخل بريدك الإلكتروني أولاً"); return; }
     setLoading(true);
     try {
-      // First verify that this email is actually registered so we don't send reset mails blindly
-      const q = query(collection(db, "users"), where("email", "==", forgotEmail));
-      const snap = await getDocs(q);
-      const eq = query(collection(db, "employee_access"), where("email", "==", forgotEmail));
-      const esnap = await getDocs(eq);
-      if (snap.empty && esnap.empty) {
-        toast.error("لا يوجد حساب مسجّل بهذا البريد الإلكتروني.");
-        setLoading(false);
-        return;
-      }
       await sendPasswordResetEmail(auth, forgotEmail);
       playSound("success");
       toast.success("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك.");
