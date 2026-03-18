@@ -970,30 +970,135 @@ export default function SettingsPage() {
                       <option value="₺">ليرة تركية (₺)</option>
                       <option value="$">دولار أمريكي ($)</option>
                       <option value="€">يورو (€)</option>
+                      <option value="TL">ليرة تركية TL</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">نسبة الضريبة (%)</label>
-                    <div className="flex items-center gap-4">
-                      <NumberInput
-                        value={localSettings.taxRate}
-                        onChange={(val) => setLocalSettings({ ...localSettings, taxRate: Number(val) })}
-                        disabled={!localSettings.enableTax}
-                        className="flex-1 px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 dark:text-white transition-all"
-                        allowDecimal
-                      />
-                      <label className="flex items-center gap-2 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          name="enableTax"
-                          checked={localSettings.enableTax}
-                          onChange={handleChange}
-                          className="w-5 h-5 text-indigo-600 rounded border-zinc-300 focus:ring-indigo-500 cursor-pointer"
-                        />
-                        <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">تفعيل الضريبة</span>
-                      </label>
+                </div>
+
+                {/* Tax Settings Sub-Section */}
+                <div className="mt-8 p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-bold text-zinc-900 dark:text-white text-base">تفعيل الضرائب</h4>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">تفعيل أو تعطيل احتساب الضريبة على المبيعات</p>
                     </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={localSettings.enableTax}
+                        onChange={(e) => setLocalSettings({ ...localSettings, enableTax: e.target.checked })}
+                      />
+                      <div className="w-11 h-6 bg-zinc-300 dark:bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div>
+                    </label>
                   </div>
+
+                  {localSettings.enableTax && (
+                    <div className="space-y-5 pt-2">
+                      {/* Tax Rate */}
+                      <div>
+                        <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">نسبة الضريبة (%)</label>
+                        <div className="flex items-center gap-3">
+                          <NumberInput
+                            value={localSettings.taxRate}
+                            onChange={(val) => {
+                              const numVal = Number(val);
+                              if (numVal > 100) {
+                                toast.error("نسبة الضريبة لا يمكن أن تتجاوز 100%");
+                                setLocalSettings({ ...localSettings, taxRate: 100 });
+                              } else {
+                                setLocalSettings({ ...localSettings, taxRate: numVal });
+                              }
+                            }}
+                            className="flex-1 px-4 py-3 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all"
+                            allowDecimal
+                          />
+                          <span className="text-sm font-bold text-zinc-500 dark:text-zinc-400">% (حد أقصى 100%)</span>
+                        </div>
+                        {localSettings.taxRate > 50 && (
+                          <div className="flex items-center gap-2 mt-2 p-2 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-lg text-xs">
+                            <AlertTriangle className="w-4 h-4 shrink-0" />
+                            <span>نسبة ضريبة مرتفعة ({localSettings.taxRate}%) — تأكد من صحة القيمة</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Tax Mode */}
+                      <div>
+                        <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">طريقة احتساب الضريبة</label>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">حدد هل الضريبة تُضاف فوق السعر أم أن السعر يشمل الضريبة</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            onClick={() => setLocalSettings({ ...localSettings, taxMode: 'exclusive' })}
+                            className={`p-3 rounded-xl border-2 text-right transition-all ${(localSettings.taxMode || 'exclusive') === 'exclusive'
+                              ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300'
+                              : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400'}`}
+                          >
+                            <p className="font-bold text-sm">تُضاف فوق السعر</p>
+                            <p className="text-[10px] mt-1">السعر + الضريبة = الإجمالي</p>
+                          </button>
+                          <button
+                            onClick={() => setLocalSettings({ ...localSettings, taxMode: 'inclusive' })}
+                            className={`p-3 rounded-xl border-2 text-right transition-all ${localSettings.taxMode === 'inclusive'
+                              ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300'
+                              : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400'}`}
+                          >
+                            <p className="font-bold text-sm">السعر شامل الضريبة</p>
+                            <p className="text-[10px] mt-1">الضريبة مستخرجة من السعر</p>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Default Tax State */}
+                      <div className="flex items-center justify-between p-3 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                        <div>
+                          <p className="font-bold text-sm text-zinc-900 dark:text-white">تفعيل الضريبة افتراضياً عند البيع</p>
+                          <p className="text-[10px] text-zinc-500 dark:text-zinc-400">هل تُطبق الضريبة تلقائياً على كل بيعة جديدة</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="sr-only peer"
+                            checked={localSettings.taxDefaultEnabled !== false}
+                            onChange={(e) => setLocalSettings({ ...localSettings, taxDefaultEnabled: e.target.checked })}
+                          />
+                          <div className="w-11 h-6 bg-zinc-300 dark:bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div>
+                        </label>
+                      </div>
+
+                      {/* Per-Payment Method Defaults */}
+                      <div>
+                        <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">السلوك الافتراضي حسب طريقة الدفع</label>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">اختر متى تُفعّل الضريبة تلقائياً</p>
+                        <div className="grid grid-cols-3 gap-3">
+                          {[
+                            { key: 'cash' as const, label: 'كاش' },
+                            { key: 'card' as const, label: 'شبكة / بطاقة' },
+                            { key: 'online' as const, label: 'أونلاين' },
+                          ].map(pm => (
+                            <div key={pm.key} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                              <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{pm.label}</span>
+                              <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  className="sr-only peer"
+                                  checked={(localSettings.taxDefaultByPayment || { cash: true, card: true, online: true })[pm.key] !== false}
+                                  onChange={(e) => setLocalSettings({
+                                    ...localSettings,
+                                    taxDefaultByPayment: {
+                                      ...(localSettings.taxDefaultByPayment || { cash: true, card: true, online: true }),
+                                      [pm.key]: e.target.checked
+                                    }
+                                  })}
+                                />
+                                <div className="w-9 h-5 bg-zinc-300 dark:bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-200 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div>
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
@@ -1008,6 +1113,23 @@ export default function SettingsPage() {
                       <option value="daily">يدوي (ترحيل للمبيعات اليومية أولاً)</option>
                       <option value="auto">تلقائي (ترحيل للخزينة الرئيسية مباشرة)</option>
                     </select>
+                  </div>
+
+                  {/* Keypad Toggle */}
+                  <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800 transition-all hover:border-indigo-300 dark:hover:border-indigo-700">
+                    <div>
+                      <p className="font-bold text-zinc-900 dark:text-white">اللوحة الرقمية المنبثقة</p>
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400">تفعيل لوحة الأرقام المنبثقة عند نقطة البيع</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={localSettings.enableKeypad !== false}
+                        onChange={(e) => setLocalSettings({ ...localSettings, enableKeypad: e.target.checked })}
+                      />
+                      <div className="w-11 h-6 bg-zinc-300 dark:bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div>
+                    </label>
                   </div>
                 </div>
               </div>
@@ -1031,7 +1153,7 @@ export default function SettingsPage() {
                         checked={localSettings.preventBelowCost}
                         onChange={handleChange}
                       />
-                      <div className="w-11 h-6 bg-zinc-200 dark:bg-zinc-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                      <div className="w-11 h-6 bg-zinc-300 dark:bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div>
                     </label>
                   </div>
                   <div>

@@ -12,8 +12,19 @@ export function calculateCartSummary(
   settings: Settings
 ): { subtotal: number; tax: number; total: number; profit: number } {
   const subtotal = calcSubtotal(cart);
-  const tax = calcTax(subtotal, settings.taxRate, settings.enableTax);
-  const total = roundMoney(subtotal + tax);
+  const effectiveRate = Math.min(settings.taxRate, 100);
+  let tax: number;
+  let total: number;
+
+  if (settings.taxMode === 'inclusive' && settings.enableTax) {
+    // Tax is included in the price — extract it
+    tax = roundMoney(subtotal - (subtotal / (1 + effectiveRate / 100)));
+    total = subtotal;
+  } else {
+    tax = calcTax(subtotal, effectiveRate, settings.enableTax);
+    total = roundMoney(subtotal + tax);
+  }
+
   const profit = calcProfit(cart);
   return { subtotal, tax, total, profit };
 }
@@ -58,12 +69,13 @@ export function buildOrder(params: {
 
   const today = new Date().toISOString().split("T")[0];
   const dailyNumber = orders.filter((o) => o.date.startsWith(today)).length + 1;
+  const sequentialNumber = orders.length + 1;
 
   const isCash = paymentMethod === "cash" || paymentMethod === "split";
   const vault = isCash ? (settings.cashTransferMode === "auto" ? "main" : "daily") : undefined;
 
   return {
-    id: `ORD-${crypto.randomUUID().slice(0, 8)}`,
+    id: `ORD-${String(sequentialNumber).padStart(4, '0')}`,
     dailyNumber,
     date: new Date().toISOString(),
     subtotal,

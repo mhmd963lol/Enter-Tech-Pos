@@ -6,6 +6,48 @@ import { motion, AnimatePresence } from "motion/react";
 import { useRef } from "react";
 import { APP_VERSION } from "../version";
 
+// Small analog clock component
+function MiniAnalogClock({ time }: { time: Date }) {
+    const hours = time.getHours() % 12;
+    const minutes = time.getMinutes();
+    const seconds = time.getSeconds();
+
+    const hourAngle = (hours + minutes / 60) * 30; // 360/12 = 30 degrees per hour
+    const minuteAngle = (minutes + seconds / 60) * 6; // 360/60 = 6 degrees per minute
+    const secondAngle = seconds * 6;
+
+    return (
+        <svg width="22" height="22" viewBox="0 0 22 22" className="shrink-0">
+            <circle cx="11" cy="11" r="10" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.3" />
+            {/* Hour markers */}
+            {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map(angle => (
+                <line
+                    key={angle}
+                    x1="11"
+                    y1="2.5"
+                    x2="11"
+                    y2={angle % 90 === 0 ? "4" : "3.5"}
+                    stroke="currentColor"
+                    strokeWidth={angle % 90 === 0 ? "1" : "0.5"}
+                    opacity="0.5"
+                    transform={`rotate(${angle} 11 11)`}
+                />
+            ))}
+            {/* Hour hand */}
+            <line x1="11" y1="11" x2="11" y2="5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" transform={`rotate(${hourAngle} 11 11)`} />
+            {/* Minute hand */}
+            <line x1="11" y1="11" x2="11" y2="3.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" transform={`rotate(${minuteAngle} 11 11)`} />
+            {/* Second hand */}
+            <line x1="11" y1="12" x2="11" y2="3" stroke="#ef4444" strokeWidth="0.5" strokeLinecap="round" transform={`rotate(${secondAngle} 11 11)`} />
+            {/* Center dot */}
+            <circle cx="11" cy="11" r="1" fill="currentColor" />
+        </svg>
+    );
+}
+
+// Arabic day names
+const arabicDays = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+
 export default function StatusBar() {
     const { settings, orders, isPrivacyMode, playSound, user, logout, exchangeRate, cart, isCartOpen, setIsCartOpen, isOnline, syncStatus } = useAppContext();
     const [time, setTime] = useState(new Date());
@@ -39,20 +81,16 @@ export default function StatusBar() {
         .filter((o) => o.date.startsWith(today) && o.status === "completed")
         .reduce((sum, o) => sum + o.total, 0);
 
-    // Format date in Arabic explicitly if language is AR
-    const dateOptions: Intl.DateTimeFormatOptions = {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    };
-    const formattedDate = time.toLocaleDateString(settings.language === 'ar' ? 'ar-EG' : 'en-US', dateOptions);
+    // Format date: "الأربعاء 18/3/2026"
+    const dayName = arabicDays[time.getDay()];
+    const formattedDate = `${dayName} ${time.getDate()}/${time.getMonth() + 1}/${time.getFullYear()}`;
 
-    // Format time (HH:MM:SS)
-    const formattedTime = time.toLocaleTimeString(settings.language === 'ar' ? 'ar-EG' : 'en-US', {
+    // Format time using Western Arabic numerals (HH:MM:SS)
+    const formattedTime = time.toLocaleTimeString('en-US', {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
+        hour12: false,
     });
 
     const handleSalesClick = () => {
@@ -65,8 +103,8 @@ export default function StatusBar() {
 
             {/* Right side: Time and Date */}
             <div className="flex items-center gap-4 sm:gap-6">
-                <div className="flex items-center gap-1.5 font-semibold tracking-wider">
-                    <Clock size={14} className="text-indigo-300" />
+                <div className="flex items-center gap-2 font-semibold tracking-wider">
+                    <MiniAnalogClock time={time} />
                     <span className="w-20 text-right font-mono">{formattedTime}</span>
                 </div>
                 <div className="hidden md:flex items-center gap-1.5 text-indigo-200">

@@ -86,6 +86,11 @@ export default function POS() {
   const [isKeypadOpen, setIsKeypadOpen] = useState(false);
   const [activeKeypadInput, setActiveKeypadInput] = useState<"amountPaid" | "splitCash" | "splitCard" | null>("amountPaid");
 
+  // Per-sale tax toggle (initialized from settings defaults)
+  const [isTaxEnabledForSale, setIsTaxEnabledForSale] = useState(() => {
+    return settings.taxDefaultEnabled !== false && settings.enableTax;
+  });
+
   // PIN states for Sell-at-Loss at checkout
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinInput, setPinInput] = useState("");
@@ -130,14 +135,38 @@ export default function POS() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [cart]);
 
-  // Precision-safe cart calculations with useMemo (only recalculates when cart/settings change)
+  // Update per-sale tax toggle when payment method changes (respect per-payment defaults)
+  useEffect(() => {
+    if (!settings.enableTax) { setIsTaxEnabledForSale(false); return; }
+    const defaults = settings.taxDefaultByPayment;
+    if (defaults) {
+      if (paymentMethod === 'cash') setIsTaxEnabledForSale(defaults.cash !== false);
+      else if (paymentMethod === 'card') setIsTaxEnabledForSale(defaults.card !== false);
+      else setIsTaxEnabledForSale(settings.taxDefaultEnabled !== false);
+    }
+  }, [paymentMethod, settings.enableTax, settings.taxDefaultByPayment, settings.taxDefaultEnabled]);
+
+  // Precision-safe cart calculations with useMemo
   const { cartTotal, tax, grandTotal, change } = useMemo(() => {
     const total = calcSubtotal(cart);
-    const t = calcTax(total, settings.taxRate, settings.enableTax);
-    const grand = roundMoney(total + t);
+    const effectiveTaxRate = Math.min(settings.taxRate, 100);
+    const taxEnabled = isTaxEnabledForSale && settings.enableTax;
+    let t = 0;
+    let grand = total;
+    if (taxEnabled) {
+      if (settings.taxMode === 'inclusive') {
+        // Tax is included in the price: extract it
+        t = roundMoney(total - (total / (1 + effectiveTaxRate / 100)));
+        grand = total; // Price already includes tax
+      } else {
+        // Exclusive: tax added on top
+        t = calcTax(total, effectiveTaxRate, true);
+        grand = roundMoney(total + t);
+      }
+    }
     const ch = amountPaid ? Math.max(0, roundMoney(Number(amountPaid) - grand)) : 0;
     return { cartTotal: total, tax: t, grandTotal: grand, change: ch };
-  }, [cart, settings.enableTax, settings.taxRate, amountPaid]);
+  }, [cart, settings.enableTax, settings.taxRate, settings.taxMode, isTaxEnabledForSale, amountPaid]);
 
   const handleCheckout = () => {
     if (cart.length === 0) return;
@@ -205,17 +234,18 @@ export default function POS() {
     }
   };
 
+  // Price change: apply immediately, show warning badge. PIN check deferred to checkout.
   const handlePriceChange = (productId: string, newPrice: number) => {
-    const product = products.find(p => p.id === productId);
-    if (product && newPrice < (product.costPrice || 0) && settings.preventBelowCost) {
-      setPendingPriceUpdate({ productId, newPrice });
-      setShowPinModal(true);
-      setPinInput("");
-      setPinError("");
-    } else {
-      updateCartItemPrice(productId, newPrice);
-    }
+    updateCartItemPrice(productId, newPrice);
   };
+
+  // Check if any item is being sold below cost (used for visual warning)
+  const hasBelowCostItems = useMemo(() => {
+    return cart.some(item => {
+      const product = products.find(p => p.id === item.id);
+      return product && (item.customPrice ?? item.price) < (product.costPrice || 0);
+    });
+  }, [cart, products]);
 
   // Global Keydown listener for focusing search input and ENTER for checkout
   useEffect(() => {
@@ -265,8 +295,8 @@ export default function POS() {
   const filteredProducts = products.filter(
     (p) =>
       p.isActive !== false &&
-      (p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.sku.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()))) &&
       (!selectedCategoryId || p.categoryId === selectedCategoryId || p.category === categories.find(c => c.id === selectedCategoryId)?.name),
   );
 
@@ -576,8 +606,9 @@ export default function POS() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setIsKeypadOpen(!isKeypadOpen)}
-                        className={`p-2 rounded-xl transition-all ${isKeypadOpen ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-indigo-600 hover:bg-indigo-50"} `}
+                        className={`p-2 rounded-xl transition-all ${isKeypadOpen ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-indigo-600 hover:bg-indigo-50"} ${settings.enableKeypad === false ? 'hidden' : ''}`}
                         title="لوحة الأرقام السريعة"
+                        data-keypad-toggle="true"
                       >
                         <Calculator className="w-5 h-5" />
                       </button>
@@ -629,7 +660,7 @@ export default function POS() {
                                     onChange={(val) =>
                                       handlePriceChange(item.id, Number(val))
                                     }
-                                    className="w-24 px-2 py-1 text-sm bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:text-white text-left font-mono"
+                                    className={`w-24 px-2 py-1 text-sm bg-white dark:bg-zinc-950 border rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:text-white text-left font-mono ${(() => { const p = products.find(pr => pr.id === item.id); return p && (item.customPrice ?? item.price) < (p.costPrice || 0) ? 'border-amber-400 dark:border-amber-600' : 'border-zinc-200 dark:border-zinc-700'; })()}`}
                                     min="0"
                                     step="0.01"
                                     allowDecimal
@@ -638,6 +669,14 @@ export default function POS() {
                                   <span className="text-xs text-zinc-500 dark:text-zinc-400">
                                     {settings.currency}
                                   </span>
+                                  {(() => {
+                                    const p = products.find(pr => pr.id === item.id);
+                                    return p && (item.customPrice ?? item.price) < (p.costPrice || 0) ? (
+                                      <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-700 whitespace-nowrap">
+                                        تحت التكلفة
+                                      </span>
+                                    ) : null;
+                                  })()}
                                 </div>
                               </div>
                               <button
@@ -689,14 +728,36 @@ export default function POS() {
                   {/* Fixed Checkout Panel */}
                   <div className="p-3 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 space-y-3 shrink-0 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] dark:shadow-[0_-4px_10px_rgba(0,0,0,0.1)]">
                     <div className="space-y-1 text-sm pb-1 border-b border-zinc-200 dark:border-zinc-800">
+                      {/* Per-sale tax toggle */}
+                      {settings.enableTax && (
+                        <div className="flex items-center justify-between mb-2 p-2 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                          <span className="text-xs font-bold text-zinc-600 dark:text-zinc-400">ضريبة لهذه البيعة</span>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              className="sr-only peer"
+                              checked={isTaxEnabledForSale}
+                              onChange={(e) => setIsTaxEnabledForSale(e.target.checked)}
+                            />
+                            <div className="w-9 h-5 bg-zinc-300 dark:bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-200 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div>
+                          </label>
+                        </div>
+                      )}
+
                       <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
                         <span>المجموع الفرعي</span>
                         <span>{cartTotal.toFixed(2)} {settings.currency}</span>
                       </div>
-                      {settings.enableTax && (
+                      {isTaxEnabledForSale && settings.enableTax && (
                         <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
-                          <span>الضريبة ({settings.taxRate}%)</span>
+                          <span>الضريبة ({Math.min(settings.taxRate, 100)}%{settings.taxMode === 'inclusive' ? ' شاملة' : ''})</span>
                           <span>{tax.toFixed(2)} {settings.currency}</span>
+                        </div>
+                      )}
+                      {hasBelowCostItems && settings.preventBelowCost && (
+                        <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 text-[10px] font-bold">
+                          <AlertTriangle className="w-3 h-3" />
+                          <span>يوجد أصناف تحت سعر التكلفة - سيُطلب PIN عند الدفع</span>
                         </div>
                       )}
                       <div className="flex justify-between text-lg font-bold text-zinc-900 dark:text-white pt-1">

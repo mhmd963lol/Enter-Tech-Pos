@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useAppContext } from "../context/AppContext";
 import {
   BarChart,
@@ -23,16 +23,20 @@ import {
   RotateCcw,
   XCircle,
   ShieldAlert,
+  Crown,
+  Calendar,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 
+type TimeFilter = 'day' | 'week' | 'month';
+
 const Dashboard = () => {
   const { orders, products, settings, logs, transactions } = useAppContext();
   const navigate = useNavigate();
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('month');
 
   const totalSales = useMemo(() => {
-    // Total income = (Orders amountPaid) + (Payment In Transactions)
     const salesInOrders = orders
       .filter((order) => order.status === "completed")
       .reduce((sum, order) => sum + order.amountPaid, 0);
@@ -52,15 +56,48 @@ const Dashboard = () => {
     .filter((p) => p.trackInventory !== false)
     .reduce((sum, p) => sum + p.costPrice * p.stock, 0), [products]);
 
-  // Generate real data for the chart (last 7 days)
+  // Get date range based on filter
+  const getFilterRange = (filter: TimeFilter) => {
+    const now = new Date();
+    const start = new Date();
+    if (filter === 'day') {
+      start.setHours(0, 0, 0, 0);
+    } else if (filter === 'week') {
+      start.setDate(now.getDate() - 7);
+    } else {
+      start.setDate(now.getDate() - 30);
+    }
+    return { start, end: now };
+  };
+
+  // Generate chart data based on selected filter
   const chartData = useMemo(() => {
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const { start } = getFilterRange(timeFilter);
+    const dayCount = timeFilter === 'day' ? 24 : timeFilter === 'week' ? 7 : 30;
+
+    if (timeFilter === 'day') {
+      // Hourly breakdown for today
+      return Array.from({ length: 24 }, (_, i) => {
+        const hourStart = new Date();
+        hourStart.setHours(i, 0, 0, 0);
+        const hourEnd = new Date();
+        hourEnd.setHours(i + 1, 0, 0, 0);
+
+        const sales = orders
+          .filter(o => o.status === "completed" && new Date(o.date) >= hourStart && new Date(o.date) < hourEnd)
+          .reduce((sum, o) => sum + o.amountPaid, 0);
+
+        return { name: `${String(i).padStart(2, '0')}:00`, sales };
+      }).filter((_, i) => i >= 6 && i <= 23); // Show only 6AM-11PM
+    }
+
+    const days = Array.from({ length: dayCount }, (_, i) => {
       const d = new Date();
-      d.setDate(d.getDate() - (6 - i));
+      d.setDate(d.getDate() - (dayCount - 1 - i));
       return d;
     });
 
-    return last7Days.map((date) => {
+    return days.map((date) => {
       const dateString = date.toISOString().split("T")[0];
       const dailySales = orders
         .filter((o) => o.status === "completed" && o.date.startsWith(dateString))
@@ -70,10 +107,35 @@ const Dashboard = () => {
         .filter(t => t.type === "payment_in" && t.date.startsWith(dateString))
         .reduce((sum, t) => sum + t.amount, 0);
 
-      const dayName = date.toLocaleDateString("ar-SA", { weekday: "long" });
-      return { name: dayName.replace("يوم ", ""), sales: dailySales + collections };
+      const label = timeFilter === 'week'
+        ? date.toLocaleDateString("ar-SA", { weekday: "short" })
+        : `${date.getDate()}/${date.getMonth() + 1}`;
+
+      return { name: label, sales: dailySales + collections };
     });
-  }, [orders, transactions]);
+  }, [orders, transactions, timeFilter]);
+
+  // Top selling products based on filter
+  const topProducts = useMemo(() => {
+    const { start } = getFilterRange(timeFilter);
+    const filteredOrders = orders.filter(
+      o => o.status === "completed" && new Date(o.date) >= start
+    );
+
+    const productMap = new Map<string, { name: string; qty: number; revenue: number }>();
+    filteredOrders.forEach(order => {
+      order.items.forEach(item => {
+        const existing = productMap.get(item.id) || { name: item.name, qty: 0, revenue: 0 };
+        existing.qty += item.quantity;
+        existing.revenue += (item.customPrice ?? item.price) * item.quantity;
+        productMap.set(item.id, existing);
+      });
+    });
+
+    return Array.from(productMap.values())
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 5);
+  }, [orders, timeFilter]);
 
   const layout = settings.dashboardLayout || {};
 
@@ -129,6 +191,12 @@ const Dashboard = () => {
       : []),
   ];
 
+  const filterLabels: Record<TimeFilter, string> = {
+    day: 'اليوم',
+    week: 'أسبوع',
+    month: 'شهر',
+  };
+
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center justify-between">
@@ -164,14 +232,29 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Charts and Tables */}
+      {/* Sales Analysis + Recent Orders */}
       <div className={`grid grid-cols-1 ${layout.showChart !== false && layout.showRecentOrders !== false ? 'lg:grid-cols-4' : layout.showChart !== false || layout.showRecentOrders !== false ? 'lg:grid-cols-2' : ''} gap-6`}>
         {layout.showChart !== false && (
           <div className={`${layout.showRecentOrders !== false ? 'lg:col-span-2' : 'lg:col-span-full'} bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800`}>
-            <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-6">
-              المبيعات الأسبوعية
-            </h3>
-            <div className="w-full" style={{ height: 320, minHeight: 320 }}>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-zinc-900 dark:text-white">
+                تحليل المبيعات
+              </h3>
+              <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl p-1">
+                {(Object.keys(filterLabels) as TimeFilter[]).map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setTimeFilter(f)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${timeFilter === f
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'}`}
+                  >
+                    {filterLabels[f]}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="w-full" style={{ height: 300, minHeight: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
                   <CartesianGrid
@@ -183,7 +266,7 @@ const Dashboard = () => {
                     dataKey="name"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: "#71717a" }}
+                    tick={{ fill: "#71717a", fontSize: 11 }}
                   />
                   <YAxis
                     axisLine={false}
@@ -202,10 +285,36 @@ const Dashboard = () => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
+
+            {/* Top Selling Products */}
+            {topProducts.length > 0 && (
+              <div className="mt-6 pt-5 border-t border-zinc-100 dark:border-zinc-800">
+                <h4 className="text-sm font-bold text-zinc-900 dark:text-white mb-3 flex items-center gap-2">
+                  <Crown className="w-4 h-4 text-amber-500" />
+                  أكثر المنتجات مبيعاً ({filterLabels[timeFilter]})
+                </h4>
+                <div className="space-y-2">
+                  {topProducts.map((p, i) => (
+                    <div key={i} className="flex items-center justify-between p-2.5 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black ${i === 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'}`}>
+                          {i + 1}
+                        </span>
+                        <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200">{p.name}</span>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs">
+                        <span className="text-zinc-500 dark:text-zinc-400">{p.qty} قطعة</span>
+                        <span className="font-bold text-indigo-600 dark:text-indigo-400">{p.revenue.toFixed(2)} {settings.currency}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Recent Orders - Expanded */}
+        {/* Recent Orders */}
         {layout.showRecentOrders !== false && (
           <div className="lg:col-span-2 bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800">
             <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-6">
@@ -215,12 +324,12 @@ const Dashboard = () => {
             <table className="w-full text-right">
               <thead>
                 <tr className="text-sm text-zinc-500 border-b border-zinc-100 dark:border-zinc-800">
-                  <th className="pb-4 font-medium">الطلب</th>
-                  <th className="pb-4 font-medium">الأصناف</th>
-                  <th className="pb-4 font-medium">الموظف</th>
+                  <th className="pb-4 font-medium">المنتجات</th>
+                  <th className="pb-4 font-medium">العميل</th>
                   <th className="pb-4 font-medium text-left">الإجمالي</th>
                   <th className="pb-4 font-medium text-left">الربح</th>
                   <th className="pb-4 font-medium text-center">الحالة</th>
+                  <th className="pb-4 font-medium text-left">الطلب</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-50 dark:divide-zinc-900">
@@ -236,10 +345,6 @@ const Dashboard = () => {
 
                   return (
                     <tr key={order.id} className="text-sm group hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
-                      <td className="py-4">
-                        <p className="font-bold text-zinc-900 dark:text-white">#{order.dailyNumber || order.id.slice(-4)}</p>
-                        <p className="text-[10px] text-zinc-500">{new Date(order.date).toLocaleTimeString("ar-SA")}</p>
-                      </td>
                       <td className="py-4">
                         <p className="text-xs text-zinc-600 dark:text-zinc-400 max-w-[250px] leading-relaxed break-words" title={itemsSummary}>
                           {itemsSummary}
@@ -282,6 +387,10 @@ const Dashboard = () => {
                                   <div className="flex items-center gap-1 bg-zinc-50 dark:bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-100 dark:border-zinc-800"> {order.paymentMethod}</div>}
                           </div>
                         </div>
+                      </td>
+                      <td className="py-4 text-left">
+                        <p className="font-bold text-zinc-900 dark:text-white text-xs">#{order.dailyNumber || order.id.slice(-4)}</p>
+                        <p className="text-[10px] text-zinc-500">{new Date(order.date).toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' })}</p>
                       </td>
                     </tr>
                   );

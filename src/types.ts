@@ -209,6 +209,12 @@ export interface Settings {
   adminPin: string; // 4-digit PIN for overrides
   fontFamily?: string; // CSS font-family string
   disableAnimations?: boolean; // New: Option to turn off animations
+  // Advanced Tax Settings
+  taxDefaultEnabled?: boolean; // Default tax state for new sales
+  taxDefaultByPayment?: { cash: boolean; card: boolean; online: boolean };
+  taxMode?: 'exclusive' | 'inclusive'; // exclusive = added on top, inclusive = included in price
+  // Keypad
+  enableKeypad?: boolean; // Enable/disable numeric keypad popups
   dashboardLayout?: {
     showSales?: boolean;
     showOrders?: boolean;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Calculator, Delete, X, Check } from 'lucide-react';
 
@@ -13,6 +13,29 @@ interface CustomKeypadProps {
 }
 
 export default function CustomKeypad({ isOpen, onClose, onKeyPress, onEnter, title, value, onClear }: CustomKeypadProps) {
+    const keypadRef = useRef<HTMLDivElement>(null);
+
+    // Click outside to dismiss
+    useEffect(() => {
+        if (!isOpen) return;
+        function handleClickOutside(event: MouseEvent) {
+            if (keypadRef.current && !keypadRef.current.contains(event.target as Node)) {
+                // Check if the click target is NOT a calculator toggle button
+                const target = event.target as HTMLElement;
+                if (!target.closest('[data-keypad-toggle]')) {
+                    onClose();
+                }
+            }
+        }
+        // Small delay to avoid closing immediately on the same click that opened it
+        const timer = setTimeout(() => {
+            document.addEventListener("mousedown", handleClickOutside);
+        }, 100);
+        return () => {
+            clearTimeout(timer);
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isOpen, onClose]);
 
     const handleKeyClick = (key: string) => {
         if (key === 'clear') {
@@ -28,6 +51,7 @@ export default function CustomKeypad({ isOpen, onClose, onKeyPress, onEnter, tit
         <AnimatePresence>
             {isOpen && (
                 <motion.div
+                    ref={keypadRef}
                     initial={{ opacity: 0, x: -50, scale: 0.95 }}
                     animate={{ opacity: 1, x: 0, scale: 1 }}
                     exit={{ opacity: 0, x: -50, scale: 0.95 }}

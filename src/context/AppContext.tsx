@@ -169,8 +169,12 @@ const defaultSettings: Settings = {
   animationSpeed: "normal",
   enableSounds: true,
   preventBelowCost: true,
-  adminPin: "",  // No default PIN — admin must set from Settings on first use
+  adminPin: "",
   disableAnimations: false,
+  taxDefaultEnabled: true,
+  taxDefaultByPayment: { cash: true, card: true, online: true },
+  taxMode: 'exclusive',
+  enableKeypad: true,
   dashboardLayout: {
     showSales: true,
     showOrders: true,

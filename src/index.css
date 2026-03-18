@@ -162,6 +162,18 @@ body {
   text-wrap: pretty;
 }
 
+/* Prevent random text selection across the UI */
+#root {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Re-enable selection in input fields and selectable elements */
+input, textarea, select, [contenteditable="true"], .selectable, pre, code {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 /* Global text overflow prevention */
 td,
 th {
