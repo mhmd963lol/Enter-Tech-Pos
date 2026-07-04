@@ -401,7 +401,7 @@ export default function Products() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-right">
-            <thead>
+            <thead className="hidden md:table-header-group">
               <tr className="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 text-sm">
                 {canEdit && (
                   <th className="px-6 py-4 font-medium w-12 text-center">
@@ -423,7 +423,7 @@ export default function Products() {
                 <th className="px-6 py-4 font-medium">الإجراءات</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <tbody className="flex flex-col md:table-row-group gap-4 p-4 md:p-0 md:divide-y md:divide-zinc-100 dark:md:divide-zinc-800">
               <AnimatePresence>
                 {Array.from(
                   new Map(filteredProducts.map((p) => [p.id, p])).values(),
@@ -435,32 +435,27 @@ export default function Products() {
                     ? category.name
                     : product.category;
 
-                  // Custom animations per master theme
                   let masterVariants = {};
                   const master = settings.masterTheme || "default";
                   if (master === "gaming") {
-                    // Shatter / Zoom out fast
                     masterVariants = {
                       initial: { opacity: 0, scale: 0.8, x: -20 },
                       animate: { opacity: 1, scale: 1, x: 0 },
                       exit: { opacity: 0, scale: 0.5, y: -50, rotate: 10, transition: { duration: 0.2 } },
                     };
                   } else if (master === "luxury") {
-                    // Smooth slide down
                     masterVariants = {
                       initial: { opacity: 0, y: 20 },
                       animate: { opacity: 1, y: 0 },
                       exit: { opacity: 0, y: 50, transition: { duration: 0.4, ease: "easeIn" } },
                     };
                   } else if (master === "carbon") {
-                    // Slide out right fast
                     masterVariants = {
                       initial: { opacity: 0, x: 30 },
                       animate: { opacity: 1, x: 0 },
                       exit: { opacity: 0, x: -100, transition: { duration: 0.25 } },
                     };
                   } else {
-                    // Default
                     masterVariants = {
                       initial: { opacity: 0, y: 10 },
                       animate: { opacity: 1, y: 0 },
@@ -476,14 +471,15 @@ export default function Products() {
                       exit="exit"
                       variants={masterVariants}
                       key={product.id}
-                      className={
+                      className={`flex flex-col md:table-row bg-white dark:bg-zinc-950 md:bg-transparent border border-zinc-200 dark:border-zinc-800 md:border-none rounded-xl md:rounded-none overflow-hidden transition-colors ${
                         selectedProductIds.has(product.id)
-                          ? "bg-indigo-50/50 dark:bg-indigo-900/20 transition-colors"
-                          : "hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors"
-                      }
+                          ? "md:bg-indigo-50/50 dark:md:bg-indigo-900/20"
+                          : "md:hover:bg-zinc-50/50 dark:md:hover:bg-zinc-900/50"
+                      }`}
                     >
                       {canEdit && (
-                        <td className="px-6 py-4 w-12 text-center">
+                        <td className="px-4 py-3 md:px-6 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none md:w-12 md:text-center">
+                          <span className="md:hidden font-medium text-zinc-500 text-sm">تحديد</span>
                           <input
                             type="checkbox"
                             className="w-4 h-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
@@ -492,7 +488,8 @@ export default function Products() {
                           />
                         </td>
                       )}
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3 md:px-6 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none">
+                        <span className="md:hidden font-medium text-zinc-500 text-sm">المنتج</span>
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0">
                             <img
@@ -523,21 +520,26 @@ export default function Products() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-zinc-500 dark:text-zinc-400 font-mono text-sm">
-                        {product.barcode}
+                      <td className="px-4 py-3 md:px-6 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none text-zinc-500 dark:text-zinc-400 font-mono text-sm">
+                        <span className="md:hidden font-medium text-zinc-500 text-sm">الباركود</span>
+                        <span>{product.barcode}</span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3 md:px-6 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none">
+                        <span className="md:hidden font-medium text-zinc-500 text-sm">القسم</span>
                         <span className="px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-full text-xs font-medium">
                           {categoryName}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-medium text-zinc-600 dark:text-zinc-400 sensitive">
-                        {product.costPrice || 0} {settings.currency}
+                      <td className="px-4 py-3 md:px-6 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none font-medium text-zinc-600 dark:text-zinc-400 sensitive">
+                        <span className="md:hidden font-medium text-zinc-500 text-sm">سعر التكلفة</span>
+                        <span>{product.costPrice || 0} {settings.currency}</span>
                       </td>
-                      <td className="px-6 py-4 font-bold text-indigo-600 dark:text-indigo-400">
-                        {product.price} {settings.currency}
+                      <td className="px-4 py-3 md:px-6 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none font-bold text-indigo-600 dark:text-indigo-400">
+                        <span className="md:hidden font-medium text-zinc-500 text-sm">سعر البيع</span>
+                        <span>{product.price} {settings.currency}</span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3 md:px-6 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none">
+                        <span className="md:hidden font-medium text-zinc-500 text-sm">المخزون</span>
                         {product.trackInventory === false ? (
                           <span className="text-zinc-500 dark:text-zinc-400 font-medium">
                             ∞
@@ -550,7 +552,8 @@ export default function Products() {
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3 md:px-6 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none">
+                        <span className="md:hidden font-medium text-zinc-500 text-sm">الحالة</span>
                         <label className={`relative inline-flex items-center ${canEdit ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}>
                           <input
                             type="checkbox"
@@ -562,7 +565,8 @@ export default function Products() {
                           <div className="w-11 h-6 bg-zinc-200 dark:bg-zinc-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 dark:peer-checked:bg-indigo-600"></div>
                         </label>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3 md:px-6 md:py-4 flex justify-between items-center md:table-cell">
+                        <span className="md:hidden font-medium text-zinc-500 text-sm">الإجراءات</span>
                         {canEdit && (
                           <div className="flex items-center gap-2">
                             <button

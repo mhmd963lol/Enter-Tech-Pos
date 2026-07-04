@@ -118,7 +118,7 @@ export default function Orders() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-right">
-            <thead>
+            <thead className="hidden md:table-header-group">
               <tr className="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 text-sm">
                 <th className="px-4 py-4 font-medium">المنتجات</th>
                 <th className="px-4 py-4 font-medium">الكمية</th>
@@ -130,16 +130,17 @@ export default function Orders() {
                 <th className="px-4 py-4 font-medium">التاريخ</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <tbody className="flex flex-col md:table-row-group gap-4 p-4 md:p-0 md:divide-y md:divide-zinc-100 dark:md:divide-zinc-800">
                 {filteredOrders.map((order) => {
                   const totalQty = order.items.reduce((sum, item) => sum + item.quantity, 0);
                   return (
                     <tr
                       key={order.id}
-                      className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors"
+                      className="flex flex-col md:table-row bg-white dark:bg-zinc-950 md:bg-transparent border border-zinc-200 dark:border-zinc-800 md:border-none rounded-xl md:rounded-none overflow-hidden hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors"
                     >
                       {/* Products */}
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-3 md:px-4 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none">
+                        <span className="md:hidden font-medium text-zinc-500 text-sm">المنتجات</span>
                         <div className="flex flex-col gap-1">
                           {order.items.slice(0, 3).map((item, index) => (
                             <div key={index} className="flex items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-400">
@@ -155,59 +156,85 @@ export default function Orders() {
                       </td>
 
                       {/* Quantity */}
-                      <td className="px-4 py-4 font-bold text-zinc-700 dark:text-zinc-300 text-sm">
-                        {totalQty}
+                      <td className="px-4 py-3 md:px-4 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none font-bold text-zinc-700 dark:text-zinc-300 text-sm">
+                        <span className="md:hidden font-medium text-zinc-500 text-sm">الكمية</span>
+                        <span>{totalQty}</span>
                       </td>
 
                       {/* Customer */}
-                      <td className="px-4 py-4 text-zinc-700 dark:text-zinc-300 text-sm">
-                        {order.customerName || "عميل نقدي"}
+                      <td className="px-4 py-3 md:px-4 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none text-zinc-700 dark:text-zinc-300 text-sm">
+                        <span className="md:hidden font-medium text-zinc-500 text-sm">العميل</span>
+                        <span>{order.customerName || "عميل نقدي"}</span>
                       </td>
 
                       {/* Total */}
-                      <td className="px-4 py-4 font-bold text-indigo-600 dark:text-indigo-400 text-sm">
-                        {order.total.toFixed(2)} {settings.currency}
+                      <td className="px-4 py-3 md:px-4 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none font-bold text-indigo-600 dark:text-indigo-400 text-sm">
+                        <span className="md:hidden font-medium text-zinc-500 text-sm">الإجمالي</span>
+                        <span>{order.total.toFixed(2)} {settings.currency}</span>
                       </td>
 
                       {/* Status + Payment */}
-                      <td className="px-4 py-4">
-                        <div className="flex flex-col items-center gap-1.5">
+                      <td className="px-4 py-3 md:px-4 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none">
+                        <span className="md:hidden font-medium text-zinc-500 text-sm">الحالة</span>
+                        <div className="flex flex-row md:flex-col items-center gap-1.5">
                           {getStatusBadge(order.status)}
                           {getPaymentIcon(order.paymentMethod)}
                         </div>
                       </td>
 
+                      {/* Order Number */}
+                      <td className="px-4 py-3 md:px-4 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none">
+                        <span className="md:hidden font-medium text-zinc-500 text-sm">رقم الطلب</span>
+                        <span className="text-xs font-bold text-zinc-900 dark:text-white bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-lg">
+                          {order.id}
+                        </span>
+                      </td>
+
+                      {/* Date + Time */}
+                      <td className="px-4 py-3 md:px-4 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none text-sm">
+                        <span className="md:hidden font-medium text-zinc-500 text-sm">التاريخ</span>
+                        <div className="text-left md:text-right">
+                          <p className="font-medium text-zinc-700 dark:text-zinc-300">
+                            {new Date(order.date).toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" })}
+                          </p>
+                          <p className="text-[10px] text-zinc-400 mt-0.5">
+                            {new Date(order.date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })}
+                          </p>
+                        </div>
+                      </td>
+
                       {/* Actions */}
-                      <td className="px-4 py-4">
-                        <div className="flex items-center justify-center gap-1">
+                      <td className="px-4 py-3 md:px-4 md:py-4 flex flex-col sm:flex-row justify-between sm:items-center md:table-cell gap-3 sm:gap-0">
+                        <span className="md:hidden font-medium text-zinc-500 text-sm">الإجراءات</span>
+                        <div className="flex items-center justify-end md:justify-center gap-2 md:gap-1">
                           {order.status !== "cancelled" && order.status !== "returned" && (
                             <button
                               onClick={() => handleReturn(order)}
-                              className="p-1.5 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                              className="p-2 md:p-1.5 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 bg-zinc-50 md:bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors border border-zinc-200 md:border-none dark:border-zinc-700"
                               title="استرجاع"
                             >
-                              <RotateCcw className="w-4 h-4" />
+                              <RotateCcw className="w-4 h-4 md:w-4 md:h-4" />
                             </button>
                           )}
                           <button
                             onClick={() => handleViewInvoice(order)}
-                            className="p-1.5 text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                            className="p-2 md:p-1.5 text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-zinc-50 md:bg-transparent hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors border border-zinc-200 md:border-none dark:border-zinc-700"
                             title="عرض التفاصيل"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="w-4 h-4 md:w-4 md:h-4" />
                           </button>
                           <button
                             onClick={() => {
                               handleViewInvoice(order);
                               setTimeout(() => window.print(), 500);
                             }}
-                            className="p-1.5 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                            className="p-2 md:p-1.5 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 bg-zinc-50 md:bg-transparent hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors border border-zinc-200 md:border-none dark:border-zinc-700"
                             title="طباعة الفاتورة"
                           >
-                            <Printer className="w-4 h-4" />
+                            <Printer className="w-4 h-4 md:w-4 md:h-4" />
                           </button>
                           <select
-                            className="text-[10px] bg-transparent border border-zinc-200 dark:border-zinc-700 rounded-lg px-1 py-0.5 focus:ring-1 focus:ring-indigo-500 cursor-pointer dark:text-white dark:bg-zinc-900"
+                            className="text-xs md:text-[10px] bg-zinc-50 md:bg-transparent border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1.5 md:px-1 md:py-0.5 focus:ring-2 md:focus:ring-1 focus:ring-indigo-500 cursor-pointer dark:text-white dark:bg-zinc-900 w-full sm:w-auto"
                             value={order.status}
                             onChange={(e) => updateOrderStatus(order.id, e.target.value as any)}
                           >
@@ -218,23 +245,6 @@ export default function Orders() {
                             <option value="cancelled">ملغي</option>
                           </select>
                         </div>
-                      </td>
-
-                      {/* Order Number */}
-                      <td className="px-4 py-4">
-                        <span className="text-xs font-bold text-zinc-900 dark:text-white bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-lg">
-                          {order.id}
-                        </span>
-                      </td>
-
-                      {/* Date + Time */}
-                      <td className="px-4 py-4 text-sm">
-                        <p className="font-medium text-zinc-700 dark:text-zinc-300">
-                          {new Date(order.date).toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" })}
-                        </p>
-                        <p className="text-[10px] text-zinc-400 mt-0.5">
-                          {new Date(order.date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })}
-                        </p>
                       </td>
                     </tr>
                   );

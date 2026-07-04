@@ -97,7 +97,7 @@ export default function Maintenance() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-right">
-            <thead>
+            <thead className="hidden md:table-header-group">
               <tr className="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 text-sm">
                 <th className="px-6 py-4 font-medium">العميل</th>
                 <th className="px-6 py-4 font-medium">الجهاز</th>
@@ -110,7 +110,7 @@ export default function Maintenance() {
                 <th className="px-6 py-4 font-medium">الإجراءات</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <tbody className="flex flex-col md:table-row-group gap-4 p-4 md:p-0 md:divide-y md:divide-zinc-100 dark:md:divide-zinc-800">
               <AnimatePresence>
                 {filteredJobs.map((job) => (
                   <motion.tr
@@ -118,36 +118,47 @@ export default function Maintenance() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     key={job.id}
-                    className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors"
+                    className="flex flex-col md:table-row bg-white dark:bg-zinc-950 md:bg-transparent border border-zinc-200 dark:border-zinc-800 md:border-none rounded-xl md:rounded-none overflow-hidden hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors"
                   >
-                    <td className="px-6 py-4 font-medium text-zinc-900 dark:text-white">
-                      {job.customerName}
+                    <td className="px-4 py-3 md:px-6 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none font-medium text-zinc-900 dark:text-white">
+                      <span className="md:hidden font-medium text-zinc-500 text-sm">العميل</span>
+                      <span>{job.customerName}</span>
                     </td>
-                    <td className="px-6 py-4 text-zinc-600 dark:text-zinc-300">
-                      {job.device}
+                    <td className="px-4 py-3 md:px-6 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none text-zinc-600 dark:text-zinc-300">
+                      <span className="md:hidden font-medium text-zinc-500 text-sm">الجهاز</span>
+                      <span>{job.device}</span>
                     </td>
-                    <td className="px-6 py-4 text-zinc-600 dark:text-zinc-300">
-                      {job.issue}
+                    <td className="px-4 py-3 md:px-6 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none text-zinc-600 dark:text-zinc-300">
+                      <span className="md:hidden font-medium text-zinc-500 text-sm">العطل</span>
+                      <span>{job.issue}</span>
                     </td>
-                    <td className="px-6 py-4 text-indigo-600 dark:text-indigo-400 font-medium">
-                      {job.cost} {settings.currency}
+                    <td className="px-4 py-3 md:px-6 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none text-indigo-600 dark:text-indigo-400 font-medium">
+                      <span className="md:hidden font-medium text-zinc-500 text-sm">التكلفة المتوقعة</span>
+                      <span>{job.cost} {settings.currency}</span>
                     </td>
-                    <td className="px-6 py-4 text-zinc-600 dark:text-zinc-400 font-medium">
-                      {job.partsCost} {settings.currency}
+                    <td className="px-4 py-3 md:px-6 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none text-zinc-600 dark:text-zinc-400 font-medium">
+                      <span className="md:hidden font-medium text-zinc-500 text-sm">تكلفة القطع</span>
+                      <span>{job.partsCost} {settings.currency}</span>
                     </td>
-                    <td className="px-6 py-4 text-zinc-500 dark:text-zinc-400 text-sm">
-                      {new Date(job.date).toLocaleDateString("en-US")}
+                    <td className="px-4 py-3 md:px-6 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none text-zinc-500 dark:text-zinc-400 text-sm">
+                      <span className="md:hidden font-medium text-zinc-500 text-sm">التاريخ</span>
+                      <span>{new Date(job.date).toLocaleDateString("en-US")}</span>
                     </td>
-                    <td className="px-6 py-4 text-zinc-500 dark:text-zinc-400 text-sm">
-                      {job.receivedBy || "-"}
+                    <td className="px-4 py-3 md:px-6 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none text-zinc-500 dark:text-zinc-400 text-sm">
+                      <span className="md:hidden font-medium text-zinc-500 text-sm">المستلم</span>
+                      <span>{job.receivedBy || "-"}</span>
                     </td>
-                    <td className="px-6 py-4">{getStatusBadge(job.status)}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
+                    <td className="px-4 py-3 md:px-6 md:py-4 flex justify-between items-center md:table-cell border-b border-zinc-100 dark:border-zinc-800 md:border-none">
+                      <span className="md:hidden font-medium text-zinc-500 text-sm">الحالة</span>
+                      <span>{getStatusBadge(job.status)}</span>
+                    </td>
+                    <td className="px-4 py-3 md:px-6 md:py-4 flex flex-col sm:flex-row justify-between sm:items-center md:table-cell gap-3 sm:gap-0">
+                      <span className="md:hidden font-medium text-zinc-500 text-sm">الإجراءات</span>
+                      <div className="flex items-center justify-end md:justify-center gap-2">
                         {job.status === "in_progress" && (
                           <button
                             onClick={() => openEditModal(job)}
-                            className="p-1.5 text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                            className="p-2 md:p-1.5 text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-zinc-50 md:bg-transparent hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors border border-zinc-200 md:border-none dark:border-zinc-700"
                             title="تعديل التكلفة"
                           >
                             <Edit className="w-4 h-4" />
@@ -162,7 +173,7 @@ export default function Maintenance() {
                                 "_blank",
                               );
                             }}
-                            className="p-1.5 text-zinc-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                            className="p-2 md:p-1.5 text-zinc-400 hover:text-green-600 dark:hover:text-green-400 bg-zinc-50 md:bg-transparent hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors border border-zinc-200 md:border-none dark:border-zinc-700"
                             title="إرسال رسالة واتساب"
                           >
                             <MessageSquare className="w-4 h-4" />
@@ -172,7 +183,7 @@ export default function Maintenance() {
                           onClick={() => {
                             setTimeout(() => window.print(), 500);
                           }}
-                          className="p-1.5 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                          className="p-2 md:p-1.5 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 bg-zinc-50 md:bg-transparent hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors border border-zinc-200 md:border-none dark:border-zinc-700"
                           title="طباعة إيصال"
                         >
                           <Printer className="w-4 h-4" />
@@ -185,7 +196,7 @@ export default function Maintenance() {
                               e.target.value as MaintenanceJob["status"],
                             )
                           }
-                          className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2"
+                          className="text-xs md:text-sm bg-zinc-50 md:bg-transparent border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1.5 md:p-2 focus:ring-2 md:focus:ring-1 focus:ring-indigo-500 cursor-pointer dark:text-white dark:bg-zinc-900 w-full sm:w-auto"
                         >
                           <option value="in_progress">جاري العمل</option>
                           <option value="ready">جاهز للتسليم</option>
