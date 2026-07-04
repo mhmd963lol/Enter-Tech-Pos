@@ -321,6 +321,40 @@ export default function POS() {
                 className="w-full pr-10 pl-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const term = searchTerm.trim().toLowerCase();
+                    if (!term) return;
+
+                    // Search for exact barcode, SKU, name, or alias
+                    const matchedProduct = products.find(
+                      (p) =>
+                        p.barcode?.toLowerCase() === term ||
+                        p.sku?.toLowerCase() === term ||
+                        p.name?.toLowerCase() === term ||
+                        (Array.isArray(p.aliases) &&
+                          p.aliases.some((a) => a.toLowerCase() === term))
+                    );
+
+                    if (matchedProduct) {
+                      if (matchedProduct.isActive === false) {
+                        toast.error("هذا المنتج غير نشط");
+                        return;
+                      }
+                      if (matchedProduct.trackInventory !== false && matchedProduct.stock === 0) {
+                        toast.error("المنتج غير متوفر في المخزون");
+                        return;
+                      }
+                      addToCart(matchedProduct);
+                      if (playSound) playSound("success");
+                      setSearchTerm("");
+                      toast.success(`تمت إضافة ${matchedProduct.name}`);
+                    } else {
+                      toast.error("لم يتم العثور على منتج مطابق");
+                    }
+                  }
+                }}
               />
               {searchTerm && (
                 <button
@@ -677,6 +711,11 @@ export default function POS() {
                                       </span>
                                     ) : null;
                                   })()}
+                                  {item.customPrice !== undefined && item.customPrice < item.price && (
+                                    <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-900/50 whitespace-nowrap">
+                                      خصم: {(item.price - item.customPrice).toFixed(2)} {settings.currency}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                               <button
