@@ -191,7 +191,7 @@ table {
 body {
   background-color: var(--custom-bg);
   transition: background-color var(--anim-duration) ease, color var(--anim-duration) ease;
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* Dark mode default body background */
@@ -266,7 +266,7 @@ body {
 
 /* Fluid typography and layout scaling utilities */
 html {
-  font-size: clamp(12px, 0.8vw + 0.5rem, 16px);
+  font-size: 16px;
   scroll-behavior: smooth;
 }
 
@@ -1026,10 +1026,7 @@ html:not(.dark) body.theme-master-cashier-tech .text-indigo-600 {
    GLOBAL INTERACTIVE MICRO-ANIMATIONS
    ========================================= */
 
-/* Global Transition Override */
-* {
-  transition-duration: var(--anim-duration);
-}
+/* Global Transition Override - Removed for Performance */
 
 .product-card-hover {
   transition: transform var(--anim-duration) cubic-bezier(0.4, 0, 0.2, 1);

@@ -296,12 +296,13 @@ export default function POS() {
     (p) =>
       p.isActive !== false &&
       (p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()))) &&
+        (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (p.aliases && p.aliases.toLowerCase().includes(searchTerm.toLowerCase()))) &&
       (!selectedCategoryId || p.categoryId === selectedCategoryId || p.category === categories.find(c => c.id === selectedCategoryId)?.name),
   );
 
   return (
-    <div className="flex flex-col h-[calc(100vh-7rem)] min-h-0" dir="rtl">
+    <div className="flex flex-col h-[calc(100dvh-7rem)] min-h-0" dir="rtl">
       <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0 overflow-hidden">
         {/* Main Content Area */}
         <motion.div
@@ -489,7 +490,6 @@ export default function POS() {
                   {filteredProducts.map((product) => (
                     <motion.div
                       key={product.id}
-                      layout
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
                       transition={{ duration: 0.1 }}
@@ -739,7 +739,7 @@ export default function POS() {
                               checked={isTaxEnabledForSale}
                               onChange={(e) => setIsTaxEnabledForSale(e.target.checked)}
                             />
-                            <div className="w-9 h-5 bg-zinc-300 dark:bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-200 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div>
+                            <div className="w-9 h-5 bg-zinc-300 dark:bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-200 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 dark:peer-checked:bg-indigo-600 transition-colors"></div>
                           </label>
                         </div>
                       )}

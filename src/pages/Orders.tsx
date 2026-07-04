@@ -44,7 +44,7 @@ export default function Orders() {
     const matchesSearch =
       order.id.includes(searchTerm) ||
       (order.customerName && order.customerName.includes(searchTerm)) ||
-      order.items.some(item => item.name?.includes(searchTerm));
+      order.items.some(item => item.name?.includes(searchTerm) || item.aliases?.includes(searchTerm));
     const matchesStatus =
       statusFilter === "all" || order.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -131,14 +131,10 @@ export default function Orders() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-              <AnimatePresence>
                 {filteredOrders.map((order) => {
                   const totalQty = order.items.reduce((sum, item) => sum + item.quantity, 0);
                   return (
-                    <motion.tr
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
+                    <tr
                       key={order.id}
                       className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors"
                     >
@@ -240,10 +236,9 @@ export default function Orders() {
                           {new Date(order.date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })}
                         </p>
                       </td>
-                    </motion.tr>
+                    </tr>
                   );
                 })}
-              </AnimatePresence>
             </tbody>
           </table>
         </div>

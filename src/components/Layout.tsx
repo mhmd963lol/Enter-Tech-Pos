@@ -332,7 +332,7 @@ export default function Layout() {
   };
 
   return (
-    <div className={`flex h-screen bg-[#F8F9FA] dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-100 overflow-hidden theme-master-${settings.masterTheme} ${isPrivacyMode ? "privacy-mode" : ""}`} dir="rtl">
+    <div className={`flex h-screen h-[100dvh] bg-[#F8F9FA] dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-100 overflow-hidden theme-master-${settings.masterTheme} ${isPrivacyMode ? "privacy-mode" : ""}`} dir="rtl">
       {/* Mobile Backdrop */}
       <AnimatePresence>
         {isMobileMenuOpen && (

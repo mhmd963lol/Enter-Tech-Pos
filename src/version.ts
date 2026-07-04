@@ -6,11 +6,11 @@
  */
 export const APP_VERSION_CONFIG = {
   major: 1,
-  minor: 1,
+  minor: 2,
   patch: 0,
   channel: "Beta" as "Beta" | "Stable" | "Dev",
   plan: "Pro" as "Free" | "Pro" | "Enterprise",
-  buildDate: "2026-03-14",
+  buildDate: "2026-07-04",
 };
 
 /** Formatted version for display: "v1.1 Pro (Beta)" */

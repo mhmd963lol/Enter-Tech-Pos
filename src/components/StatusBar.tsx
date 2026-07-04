@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Clock, Calendar, DollarSign, TrendingUp, ShoppingCart, LogOut, Users, Settings, Wifi, WifiOff, RefreshCcw, AlertCircle } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import { useNavigate, NavLink } from "react-router-dom";
@@ -77,9 +77,11 @@ export default function StatusBar() {
 
     // Today's Sales Calculation
     const today = new Date().toISOString().split("T")[0];
-    const todaysSales = orders
-        .filter((o) => o.date.startsWith(today) && o.status === "completed")
-        .reduce((sum, o) => sum + o.total, 0);
+    const todaysSales = useMemo(() => {
+        return orders
+            .filter((o) => o.date.startsWith(today) && o.status === "completed")
+            .reduce((sum, o) => sum + o.total, 0);
+    }, [orders, today]);
 
     // Format date: "الأربعاء 18/3/2026"
     const dayName = arabicDays[time.getDay()];
@@ -133,7 +135,6 @@ export default function StatusBar() {
                         }
                     </span>
                     <span className="relative flex h-2 w-2 mr-1">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                     </span>
                 </div>

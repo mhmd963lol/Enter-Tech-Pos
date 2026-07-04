@@ -18,6 +18,7 @@ export interface Product {
   isActive?: boolean;
   trackInventory?: boolean;
   minStockAlert?: number;
+  aliases?: string;
 }
 
 export interface AppNotification {

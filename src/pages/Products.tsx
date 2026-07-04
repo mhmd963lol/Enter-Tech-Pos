@@ -62,6 +62,7 @@ export default function Products() {
     isActive: true,
     trackInventory: true,
     minStockAlert: "5",
+    aliases: "",
   });
 
   const canEdit = user?.role === "admin" || user?.permissions?.canEditProducts;
@@ -124,6 +125,7 @@ export default function Products() {
         isActive: newProduct.isActive,
         trackInventory: newProduct.trackInventory,
         minStockAlert: Number(newProduct.minStockAlert),
+        aliases: newProduct.aliases,
       });
     } else {
       addProduct({
@@ -140,6 +142,7 @@ export default function Products() {
         isActive: newProduct.isActive,
         trackInventory: newProduct.trackInventory,
         minStockAlert: Number(newProduct.minStockAlert),
+        aliases: newProduct.aliases,
       });
     }
     closeModal();
@@ -159,6 +162,7 @@ export default function Products() {
       isActive: product.isActive ?? true,
       trackInventory: product.trackInventory ?? true,
       minStockAlert: product.minStockAlert?.toString() || "5",
+      aliases: product.aliases || "",
     });
     setIsAddModalOpen(true);
   };
@@ -178,6 +182,7 @@ export default function Products() {
       isActive: true,
       trackInventory: true,
       minStockAlert: "5",
+      aliases: "",
     });
   };
 
@@ -328,9 +333,10 @@ export default function Products() {
                   categoryId: "", // missing in original reset
                   barcode: "",
                   image: "https://picsum.photos/seed/product/200/200",
-                  isActive: true, // missing in original reset
-                  trackInventory: true, // missing in original reset
-                  minStockAlert: "5" // missing in original reset
+                  isActive: true,
+                  trackInventory: true,
+                  minStockAlert: "5",
+                  aliases: ""
                 });
                 setIsAddModalOpen(true);
               }}
@@ -548,7 +554,7 @@ export default function Products() {
                             disabled={!canEdit}
                             onChange={() => toggleStatus(product)}
                           />
-                          <div className="w-11 h-6 bg-zinc-200 dark:bg-zinc-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                          <div className="w-11 h-6 bg-zinc-200 dark:bg-zinc-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 dark:peer-checked:bg-indigo-600"></div>
                         </label>
                       </td>
                       <td className="px-6 py-4">
@@ -724,7 +730,7 @@ export default function Products() {
                           })
                         }
                       />
-                      <div className="w-11 h-6 bg-zinc-200 dark:bg-zinc-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                      <div className="w-11 h-6 bg-zinc-200 dark:bg-zinc-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 dark:peer-checked:bg-indigo-600"></div>
                     </label>
                     <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                       {newProduct.isActive
@@ -745,7 +751,7 @@ export default function Products() {
                           })
                         }
                       />
-                      <div className="w-11 h-6 bg-zinc-200 dark:bg-zinc-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                      <div className="w-11 h-6 bg-zinc-200 dark:bg-zinc-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 dark:peer-checked:bg-indigo-600"></div>
                     </label>
                     <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                       تتبع المخزون
@@ -785,6 +791,21 @@ export default function Products() {
                         e.preventDefault();
                       }
                     }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    الكلمات الدلالية / بدائل (اختياري)
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white text-right"
+                    dir="rtl"
+                    placeholder="مثال: A30, A40"
+                    value={newProduct.aliases || ""}
+                    onChange={(e) =>
+                      setNewProduct({ ...newProduct, aliases: e.target.value })
+                    }
                   />
                 </div>
                 <div>
