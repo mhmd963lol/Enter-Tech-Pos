@@ -323,33 +323,62 @@ export default function Products() {
           </motion.button>
           
           {canEdit && (
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                setEditingProduct(null);
-                setNewProduct({
-                  name: "",
-                  price: "",
-                  costPrice: "",
-                  stock: "",
-                  category: "",
-                  categoryId: "", // missing in original reset
-                  barcode: "",
-                  image: "https://picsum.photos/seed/product/200/200",
-                  isActive: true,
-                  trackInventory: true,
-                  minStockAlert: "5",
-                  aliases: []
-                });
-                setAliasInput("");
-                setIsAddModalOpen(true);
-              }}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors shadow-sm"
-            >
-              <Plus className="w-5 h-5" />
-              إضافة منتج جديد
-            </motion.button>
+            <>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setEditingProduct(null);
+                  setNewProduct({
+                    name: "",
+                    price: "",
+                    costPrice: "",
+                    stock: "",
+                    category: "",
+                    categoryId: "",
+                    barcode: "",
+                    image: "https://picsum.photos/seed/product/200/200",
+                    isActive: true,
+                    trackInventory: true,
+                    minStockAlert: "5",
+                    aliases: []
+                  });
+                  setAliasInput("");
+                  setIsAddModalOpen(true);
+                }}
+                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors shadow-sm"
+              >
+                <Plus className="w-5 h-5" />
+                إضافة منتج جديد
+              </motion.button>
+
+              {/* Floating Action Button (FAB) for Mobile */}
+              <button
+                onClick={() => {
+                  setEditingProduct(null);
+                  setNewProduct({
+                    name: "",
+                    price: "",
+                    costPrice: "",
+                    stock: "",
+                    category: "",
+                    categoryId: "",
+                    barcode: "",
+                    image: "https://picsum.photos/seed/product/200/200",
+                    isActive: true,
+                    trackInventory: true,
+                    minStockAlert: "5",
+                    aliases: []
+                  });
+                  setAliasInput("");
+                  setIsAddModalOpen(true);
+                }}
+                className="sm:hidden fixed bottom-6 left-6 z-50 flex items-center justify-center w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg active:scale-95 transition-all"
+                title="إضافة منتج جديد"
+              >
+                <Plus className="w-6 h-6" />
+              </button>
+            </>
           )}
         </div>
       </div>

@@ -74,11 +74,20 @@ export default function Maintenance() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors shadow-sm"
+          className="hidden sm:flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors shadow-sm"
         >
           <Plus className="w-5 h-5" />
           استلام جهاز جديد
         </motion.button>
+
+        {/* Floating Action Button (FAB) for Mobile */}
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="sm:hidden fixed bottom-6 left-6 z-50 flex items-center justify-center w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg active:scale-95 transition-all"
+          title="استلام جهاز جديد"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
       </div>
 
       <div className="bg-white dark:bg-zinc-950 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden">
