@@ -62,8 +62,10 @@ export default function Products() {
     isActive: true,
     trackInventory: true,
     minStockAlert: "5",
-    aliases: "",
+    aliases: [] as string[],
   });
+
+  const [aliasInput, setAliasInput] = useState("");
 
   const canEdit = user?.role === "admin" || user?.permissions?.canEditProducts;
 
@@ -162,8 +164,9 @@ export default function Products() {
       isActive: product.isActive ?? true,
       trackInventory: product.trackInventory ?? true,
       minStockAlert: product.minStockAlert?.toString() || "5",
-      aliases: product.aliases || "",
+      aliases: Array.isArray(product.aliases) ? product.aliases : (product.aliases ? [product.aliases as string] : []),
     });
+    setAliasInput("");
     setIsAddModalOpen(true);
   };
 
@@ -182,8 +185,9 @@ export default function Products() {
       isActive: true,
       trackInventory: true,
       minStockAlert: "5",
-      aliases: "",
+      aliases: [],
     });
+    setAliasInput("");
   };
 
   const toggleStatus = (product: Product) => {
@@ -336,8 +340,9 @@ export default function Products() {
                   isActive: true,
                   trackInventory: true,
                   minStockAlert: "5",
-                  aliases: ""
+                  aliases: []
                 });
+                setAliasInput("");
                 setIsAddModalOpen(true);
               }}
               className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors shadow-sm"
@@ -797,16 +802,99 @@ export default function Products() {
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                     الكلمات الدلالية / بدائل (اختياري)
                   </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white text-right"
-                    dir="rtl"
-                    placeholder="مثال: A30, A40"
-                    value={newProduct.aliases || ""}
-                    onChange={(e) =>
-                      setNewProduct({ ...newProduct, aliases: e.target.value })
-                    }
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      className="flex-1 px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white text-right"
+                      dir="rtl"
+                      placeholder="مثال: A30"
+                      value={aliasInput}
+                      onChange={(e) => setAliasInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const term = aliasInput.trim();
+                          if (!term) return;
+                          
+                          if (newProduct.aliases.includes(term)) {
+                            setAliasInput("");
+                            return;
+                          }
+                          
+                          const exists = products.some(
+                            (p) =>
+                              p.name.trim().toLowerCase() === term.toLowerCase() ||
+                              p.barcode === term ||
+                              (Array.isArray(p.aliases) &&
+                                p.aliases.some((a) => a.toLowerCase() === term.toLowerCase()))
+                          );
+                          
+                          if (exists) {
+                            if (!window.confirm(`الصنف "${term}" موجود مسبقاً في المخزون، هل أنت متأكد من إضافته كبديل هنا؟`)) {
+                              setAliasInput("");
+                              return;
+                            }
+                          }
+                          
+                          setNewProduct({ ...newProduct, aliases: [...newProduct.aliases, term] });
+                          setAliasInput("");
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const term = aliasInput.trim();
+                        if (!term) return;
+                        
+                        if (newProduct.aliases.includes(term)) {
+                          setAliasInput("");
+                          return;
+                        }
+                        
+                        const exists = products.some(
+                          (p) =>
+                            p.name.trim().toLowerCase() === term.toLowerCase() ||
+                            p.barcode === term ||
+                            (Array.isArray(p.aliases) &&
+                              p.aliases.some((a) => a.toLowerCase() === term.toLowerCase()))
+                        );
+                        
+                        if (exists) {
+                          if (!window.confirm(`الصنف "${term}" موجود مسبقاً في المخزون، هل أنت متأكد من إضافته كبديل هنا؟`)) {
+                            setAliasInput("");
+                            return;
+                          }
+                        }
+                        
+                        setNewProduct({ ...newProduct, aliases: [...newProduct.aliases, term] });
+                        setAliasInput("");
+                      }}
+                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors whitespace-nowrap"
+                    >
+                      إضافة
+                    </button>
+                  </div>
+                  {newProduct.aliases && newProduct.aliases.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {newProduct.aliases.map((alias, index) => (
+                        <div key={index} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 rounded-lg text-sm font-medium border border-indigo-100 dark:border-indigo-800/50">
+                          <span>{alias}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newAliases = [...newProduct.aliases];
+                              newAliases.splice(index, 1);
+                              setNewProduct({ ...newProduct, aliases: newAliases });
+                            }}
+                            className="p-0.5 hover:bg-indigo-200 dark:hover:bg-indigo-800 rounded-md transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">

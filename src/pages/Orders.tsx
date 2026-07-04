@@ -44,7 +44,7 @@ export default function Orders() {
     const matchesSearch =
       order.id.includes(searchTerm) ||
       (order.customerName && order.customerName.includes(searchTerm)) ||
-      order.items.some(item => item.name?.includes(searchTerm) || item.aliases?.includes(searchTerm));
+      order.items.some(item => item.name?.includes(searchTerm) || (Array.isArray(item.aliases) && item.aliases.some(a => a.includes(searchTerm))));
     const matchesStatus =
       statusFilter === "all" || order.status === statusFilter;
     return matchesSearch && matchesStatus;

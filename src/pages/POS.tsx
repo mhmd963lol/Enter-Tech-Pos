@@ -297,7 +297,7 @@ export default function POS() {
       p.isActive !== false &&
       (p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (p.aliases && p.aliases.toLowerCase().includes(searchTerm.toLowerCase()))) &&
+        (Array.isArray(p.aliases) && p.aliases.some((a) => a.toLowerCase().includes(searchTerm.toLowerCase())))) &&
       (!selectedCategoryId || p.categoryId === selectedCategoryId || p.category === categories.find(c => c.id === selectedCategoryId)?.name),
   );
 

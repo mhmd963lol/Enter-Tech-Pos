@@ -6,7 +6,7 @@
  */
 export const APP_VERSION_CONFIG = {
   major: 1,
-  minor: 2,
+  minor: 3,
   patch: 0,
   channel: "Beta" as "Beta" | "Stable" | "Dev",
   plan: "Pro" as "Free" | "Pro" | "Enterprise",
